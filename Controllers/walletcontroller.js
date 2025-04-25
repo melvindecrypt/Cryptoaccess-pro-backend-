@@ -4,21 +4,49 @@ const User = require('../models/User');
 const Wallet = require('../models/Wallet');
 const Decimal = require('decimal.js');
 
-const SUPPORTED_CURRENCIES = ['BTC', 'ETH', 'USDT', 'BNB', 'SOL'];
+// Supported currencies with real wallet addresses
+const REAL_WALLET_ADDRESSES = Object.freeze({
+  BTC: "bc1qrhmqgnwml62udh5c5wnyukx65rdtqdsa58p54l",
+  ETH: "0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767",
+  SOL: "ChbMRwr4xbH9hQSJA5Ei5MmRWAjn5MPUsVpNUMabsf5K",
+  BNB: "0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767",
+  USDT: "0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767",
+  USDC: "0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767",
+  DAI: "0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767",
+  XRP: "rGcSBHz3dURpsh3Tg4y2qpbMMpMaxTMQL7",
+  DOGE: "DJWWvsfk7cZLFjeWhb9KDyustcZ4vVu7ik",
+  TRX: "TJ3JRojmo9USXSZ7Sindzycz15EHph3ZYP",
+  LTC: "ltc1qp36qqd669xnvtmehyst3ht9suu8z73qasgnxps",
+  MNT: "0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767"
+});
+
+const SUPPORTED_CURRENCIES = Object.keys(REAL_WALLET_ADDRESSES);
 const MAX_WITHDRAWAL = new Decimal(1000000);
+
+// Unified currency validation
+const validateCurrency = (currency) => {
+  if (!SUPPORTED_CURRENCIES.includes(currency)) {
+    throw new Error(`Unsupported currency. Supported: ${SUPPORTED_CURRENCIES.join(', ')}`);
+  }
+};
 
 exports.getWallet = async (req, res) => {
   try {
-    const wallet = await Wallet.findOne({ userId: req.user._id });
-    if (!wallet) return res.status(404).json(formatResponse(false, 'Wallet not found'));
-    
-    res.json(formatResponse(true, 'Wallet fetched', {
+    const wallet = await Wallet.findOne({ userId: req.user._id })
+      .select('balances transactions')
+      .lean();
+
+    if (!wallet) {
+      return res.status(404).json(formatResponse(false, 'Wallet not found'));
+    }
+
+    res.json(formatResponse(true, 'Wallet retrieved successfully', {
       balances: wallet.balances,
-      transactions: wallet.transactions.slice(-20) // Last 20 transactions
+      recentTransactions: wallet.transactions.slice(-20)
     }));
   } catch (error) {
     logger.error(`Wallet fetch error: ${error.message}`);
-    res.status(500).json(formatResponse(false, 'Server error'));
+    res.status(500).json(formatResponse(false, 'Server error while fetching wallet'));
   }
 };
 
@@ -27,8 +55,10 @@ exports.depositFunds = async (req, res) => {
     const { currency, amount } = req.body;
     const numericAmount = new Decimal(amount);
 
-    if (!SUPPORTED_CURRENCIES.includes(currency) || numericAmount.lessThanOrEqualTo(0)) {
-      return res.status(400).json(formatResponse(false, 'Invalid deposit data'));
+    // Validate input
+    validateCurrency(currency);
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
     }
 
     const wallet = await Wallet.findOneAndUpdate(
@@ -41,19 +71,22 @@ exports.depositFunds = async (req, res) => {
             currency,
             amount: numericAmount.toNumber(),
             status: 'COMPLETED',
-            timestamp: new Date()
+            timestamp: new Date(),
+            targetAddress: REAL_WALLET_ADDRESSES[currency]
           }
         }
       },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
-    res.json(formatResponse(true, 'Deposit successful', {
-      newBalance: wallet.balances[currency]
+    res.json(formatResponse(true, 'Deposit initialized', {
+      depositAddress: REAL_WALLET_ADDRESSES[currency],
+      requiredConfirmations: 3,
+      estimatedArrival: Date.now() + 3600000 // 1 hour
     }));
   } catch (error) {
     logger.error(`Deposit error: ${error.message}`);
-    res.status(500).json(formatResponse(false, 'Deposit failed'));
+    res.status(400).json(formatResponse(false, error.message));
   }
 };
 
@@ -62,39 +95,46 @@ exports.withdrawFunds = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { currency, amount } = req.body;
+    const { currency, amount, destinationAddress } = req.body;
     const user = await User.findById(req.user._id);
-    const wallet = await Wallet.findOne({ userId: user._id }).session(session);
+    const numericAmount = new Decimal(amount);
 
-    // Validation checks
+    // Validate request
+    validateCurrency(currency);
+    if (!destinationAddress) {
+      throw new Error('Destination address required');
+    }
+
     if (!user.isProPlus || user.kycStatus !== 'VERIFIED') {
-      throw new Error('Pro+ and KYC verification required');
+      throw new Error('Pro+ subscription and KYC verification required');
     }
 
+    // Check balance with 8 decimal precision
+    const wallet = await Wallet.findOne({ userId: user._id }).session(session);
     const currentBalance = new Decimal(wallet.balances[currency] || 0);
-    const withdrawalAmount = new Decimal(amount);
-
-    if (currentBalance.lessThan(withdrawalAmount)) {
-      throw new Error('Insufficient funds');
+    
+    if (currentBalance.lessThan(numericAmount)) {
+      throw new Error(`Insufficient ${currency} balance`);
     }
 
-    // Update balance
-    wallet.balances[currency] = currentBalance.minus(withdrawalAmount).toNumber();
-    
-    // Record transaction
+    // Update balance and record transaction
+    wallet.balances[currency] = currentBalance.minus(numericAmount).toNumber();
     wallet.transactions.push({
       type: 'withdrawal',
-      amount: withdrawalAmount.toNumber(),
       currency,
+      amount: numericAmount.toNumber(),
+      destinationAddress,
       status: 'PENDING',
-      timestamp: new Date()
+      timestamp: new Date(),
+      networkFee: new Decimal(0.0005).toNumber() // Example fee
     });
 
     await wallet.save({ session });
     await session.commitTransaction();
 
-    res.json(formatResponse(true, 'Withdrawal pending approval', {
-      remainingBalance: wallet.balances[currency]
+    res.json(formatResponse(true, 'Withdrawal request received', {
+      processingTime: '1-3 business days',
+      transactionFee: 0.0005
     }));
   } catch (error) {
     await session.abortTransaction();
@@ -102,5 +142,21 @@ exports.withdrawFunds = async (req, res) => {
     res.status(400).json(formatResponse(false, error.message));
   } finally {
     session.endSession();
+  }
+};
+
+exports.getDepositAddress = async (req, res) => {
+  try {
+    const { currency } = req.query;
+    validateCurrency(currency);
+
+    res.json(formatResponse(true, 'Deposit address retrieved', {
+      currency,
+      address: REAL_WALLET_ADDRESSES[currency],
+      memo: 'Use this address for deposits only',
+      qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${REAL_WALLET_ADDRESSES[currency]}`
+    }));
+  } catch (error) {
+    res.status(400).json(formatResponse(false, error.message));
   }
 };
