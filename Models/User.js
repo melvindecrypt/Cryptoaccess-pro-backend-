@@ -208,3 +208,28 @@ userSchema.statics = {
 };
 
 module.exports = mongoose.model('User', userSchema);
+
+const userSchema = new mongoose.Schema({
+  // ... existing fields ...
+  subscription: {
+    isProPlus: { type: Boolean, default: false },
+    subscribedAt: Date,
+    expiresAt: Date,
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: null
+    },
+    paymentEvidence: {
+      transactionId: String,
+      screenshot: String, // URL to uploaded proof
+      timestamp: Date
+    }
+  },
+  subscriptionHistory: [{
+    startDate: Date,
+    endDate: Date,
+    verifiedBy: mongoose.Schema.Types.ObjectId,
+    paymentEvidence: Object
+  }]
+}, { timestamps: true });
