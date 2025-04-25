@@ -1,10 +1,12 @@
 const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
+const User = require('../models/User'); // Make sure the path is correct
 
 module.exports = async (req, res, next) => {
   try {
+    // Get the token from cookies or Authorization header
     const token = req.cookies.adminToken || req.headers.authorization?.split(' ')[1];
-    
+
     if (!token) {
       logger.warn('Admin access attempt without token', { ip: req.ip });
       return res.status(401).json({
@@ -14,10 +16,12 @@ module.exports = async (req, res, next) => {
       });
     }
 
+    // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    if (!decoded.isAdmin) {
-      logger.warn('Non-admin JWT usage attempt', { userId: decoded.id });
+
+    // Check if the user is admin and has specific permissions
+    if (!decoded.isAdmin || !decoded.permissions.includes('admin')) {
+      logger.warn('Non-admin or insufficient permissions', { userId: decoded.id });
       return res.status(403).json({
         status: 'error',
         code: 'ADMIN_REQUIRED',
@@ -25,18 +29,20 @@ module.exports = async (req, res, next) => {
       });
     }
 
-    // Verify admin status in database
+    // Verify admin status in the database
     const adminUser = await User.findById(decoded.id);
-    if (!adminUser?.isAdmin) {
+    if (!adminUser?.isAdmin || !adminUser?.permissions.includes('admin')) {
       throw new Error('Admin privileges revoked');
     }
 
+    // Attach the admin data to the request object
     req.admin = {
       id: decoded.id,
       email: decoded.email,
       permissions: decoded.permissions
     };
 
+    // Proceed to the next middleware or route handler
     next();
   } catch (error) {
     logger.error(`Admin auth failure: ${error.message}`);
