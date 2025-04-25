@@ -1,15 +1,15 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 
-// Constants for better maintainability
+// Constants
 const PASSWORD_REGEX = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,}$/;
 const WALLET_PREFIX = 'WALLET-';
 const REFERRAL_CODE_LENGTH = 8;
 
 const userSchema = new mongoose.Schema({
-  // Core User Information
+  // ----- Core User Info (Both Versions) -----
   email: { 
     type: String,
     required: [true, 'Email is required'],
@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
     select: false
   },
 
-  // Wallet & Financial Features
+  // ----- Financial Features (Enhanced from New) -----
   walletId: {
     type: String,
     unique: true,
@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
   }],
 
-  // Referral System
+  // ----- Referral System (Both Versions) -----
   referralCode: {
     type: String,
     unique: true,
@@ -67,15 +67,37 @@ const userSchema = new mongoose.Schema({
     ref: 'User'
   }],
 
-  // Account Status & Permissions
+  // ----- Subscription System (New Version Additions) -----
+  subscription: {
+    isProPlus: { type: Boolean, default: false },
+    subscribedAt: Date,
+    expiresAt: Date,
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: null
+    },
+    paymentEvidence: {
+      transactionId: String,
+      screenshot: String,
+      timestamp: Date
+    }
+  },
+  subscriptionHistory: [{
+    startDate: Date,
+    endDate: Date,
+    verifiedBy: mongoose.Schema.Types.ObjectId,
+    paymentEvidence: Object
+  }],
+
+  // ----- Account Status (Merged Flags) -----
   isAdmin: { type: Boolean, default: false, select: false, index: true },
   isVerified: { type: Boolean, default: false },
   isApproved: { type: Boolean, default: false },
   isSuspended: { type: Boolean, default: false },
-  hasPaid: { type: Boolean, default: false },
-  isPro: { type: Boolean, default: false },
+  hasPaid: { type: Boolean, default: false }, // Old version flag
 
-  // KYC/AML Compliance
+  // ----- KYC System (Both Versions) -----
   kycStatus: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],
@@ -91,7 +113,7 @@ const userSchema = new mongoose.Schema({
     }
   }],
 
-  // Security Features
+  // ----- Security Features (Both Versions) -----
   verificationToken: String,
   verificationExpires: Date,
   failedLoginAttempts: { type: Number, default: 0 },
@@ -115,11 +137,10 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Generate unique wallet ID with retry logic
+// ================== Utility Functions ==================
 const generateUniqueWalletId = async () => {
   let isUnique = false;
   let walletId;
-
   while (!isUnique) {
     walletId = WALLET_PREFIX + uuidv4().replace(/-/g, '').substring(0, 16).toUpperCase();
     const existingUser = await mongoose.model('User').findOne({ walletId });
@@ -128,25 +149,22 @@ const generateUniqueWalletId = async () => {
   return walletId;
 };
 
-// Generate referral code
 const generateReferralCode = () => uuidv4().slice(0, REFERRAL_CODE_LENGTH).toUpperCase();
 
-// Pre-save hooks
+// ================== Hooks ==================
 userSchema.pre('save', async function(next) {
   try {
-    // Password hashing
+    // Password Management (Both Versions)
     if (this.isModified('password')) {
       const salt = await bcrypt.genSalt(10);
       this.password = await bcrypt.hash(this.password, salt);
-
-      // Store last 3 passwords
       this.passwordHistory = [
         { password: this.password, changedAt: new Date() },
         ...this.passwordHistory.slice(0, 2)
       ];
     }
 
-    // Wallet ID generation
+    // Wallet ID Generation (Both Versions)
     if (!this.walletId) {
       this.walletId = await generateUniqueWalletId();
     }
@@ -157,37 +175,35 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Instance Methods
+// ================== Instance Methods ==================
 userSchema.methods = {
+  // Security Methods (Both Versions)
   comparePassword: async function(candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
   },
-
   generateVerificationToken: function() {
     const token = crypto.randomBytes(20).toString('hex');
     this.verificationToken = crypto.createHash('sha256').update(token).digest('hex');
-    this.verificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    this.verificationExpires = Date.now() + 24 * 60 * 60 * 1000;
     return token;
   },
-
   isVerificationTokenValid: function(token) {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     return this.verificationToken === hashedToken && this.verificationExpires > Date.now();
   },
 
+  // Login Management (Both Versions)
   trackLoginSuccess: function() {
     this.lastLogin = new Date();
     return this.save();
   },
-
   handleFailedLogin: async function() {
     this.failedLoginAttempts += 1;
     if (this.failedLoginAttempts >= 5) {
-      this.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      this.lockUntil = new Date(Date.now() + 15 * 60 * 1000);
     }
     return this.save();
   },
-
   resetLoginAttempts: function() {
     this.failedLoginAttempts = 0;
     this.lockUntil = undefined;
@@ -195,12 +211,11 @@ userSchema.methods = {
   }
 };
 
-// Static Methods
+// ================== Static Methods ==================
 userSchema.statics = {
   findByEmail: function(email) {
     return this.findOne({ email }).select('+password +failedLoginAttempts');
   },
-
   isWalletIdUnique: async function(walletId) {
     const count = await this.countDocuments({ walletId });
     return count === 0;
@@ -208,28 +223,3 @@ userSchema.statics = {
 };
 
 module.exports = mongoose.model('User', userSchema);
-
-const userSchema = new mongoose.Schema({
-  // ... existing fields ...
-  subscription: {
-    isProPlus: { type: Boolean, default: false },
-    subscribedAt: Date,
-    expiresAt: Date,
-    paymentStatus: {
-      type: String,
-      enum: ['pending', 'verified', 'rejected'],
-      default: null
-    },
-    paymentEvidence: {
-      transactionId: String,
-      screenshot: String, // URL to uploaded proof
-      timestamp: Date
-    }
-  },
-  subscriptionHistory: [{
-    startDate: Date,
-    endDate: Date,
-    verifiedBy: mongoose.Schema.Types.ObjectId,
-    paymentEvidence: Object
-  }]
-}, { timestamps: true });
