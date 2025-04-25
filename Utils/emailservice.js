@@ -1,28 +1,30 @@
-// utils/emailService.js
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'your-email@gmail.com',
-    pass: 'your-app-password', // Use Gmail app password, not your real password
-  },
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
 });
 
 const sendWelcomeEmail = async (email, walletId) => {
-  const mailOptions = {
-    from: 'Binance Pro <your-email@gmail.com>',
-    to: email,
-    subject: 'Welcome to Binance Pro!',
-    html: `
-      <h2>Welcome to Binance Pro</h2>
-      <p>Thank you for registering with us.</p>
-      <p>Your Wallet ID: <strong>${walletId}</strong></p>
-      <p>If you have any questions, contact support: <a href="mailto:melvindecrypt@gmail.com">melvindecrypt@gmail.com</a></p>
-    `
-  };
-
-  return transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail({
+      from: `"CryptoAccess Pro" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Welcome to CryptoAccess Pro!',
+      html: `
+        <h2>Account Registration Successful</h2>
+        <p>Your wallet ID: <strong>${walletId}</strong></p>
+        <p>Start trading after admin approval and KYC verification.</p>
+        <p>Contact support: ${process.env.SUPPORT_EMAIL}</p>
+      `
+    });
+  } catch (error) {
+    console.error('Email sending error:', error);
+    throw new Error('Failed to send welcome email');
+  }
 };
 
 module.exports = { sendWelcomeEmail };
