@@ -302,23 +302,56 @@ router.post('/send-funds', async (req, res) => {
       return res.status(404).json(formatResponse(false, 'User not found'));
     }
 
-    // Add funds to the user's virtual balance
-    user.virtualBalances[currency] = (user.virtualBalances[currency] || 0) + amount;
-    await user.save();
+// Add to your admin.js routes (after auth middleware)
+router.post('/send-funds', async (req, res) => {
+  try {
+    const { recipientEmail, currency, amount } = req.body;
+    
+    // Validate input
+    if (!recipientEmail || !currency || typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json(formatResponse(false, 
+        'Valid recipient email, currency, and positive amount required'
+      ));
+    }
 
-    logger.info('Admin sent virtual funds', {
-      adminId: req.user.userId,
-      recipientEmail,
-      currency,
-      amount
+    // Get supported currencies from User model
+    const SUPPORTED_CURRENCIES = Object.keys(User.schema.path('virtualBalances').schema.paths);
+    if (!SUPPORTED_CURRENCIES.includes(currency)) {
+      return res.status(400).json(formatResponse(false, 
+        `Unsupported currency. Valid options: ${SUPPORTED_CURRENCIES.join(', ')}`
+      ));
+    }
+
+    const result = await handleAdminAction('send-funds', req, async (session) => {
+      // Transactional update
+      const user = await User.findOneAndUpdate(
+        { email: recipientEmail },
+        { $inc: { [`virtualBalances.${currency}`]: amount } },
+        { new: true, session }
+      );
+
+      if (!user) throw new Error('Recipient not found');
+      
+      // Log transaction
+      user.transactions.push({
+        type: 'admin-credit',
+        currency,
+        amount,
+        adminId: req.user.userId,
+        timestamp: new Date()
+      });
+
+      await user.save({ session });
+      return user;
     });
 
-    res.json(formatResponse(true, `Funds transferred successfully to ${recipientEmail}`, {
-      recipient: user.email,
-      balance: user.virtualBalances[currency]
+    res.json(formatResponse(true, 'Funds transferred successfully', {
+      recipient: result.email,
+      newBalance: result.virtualBalances[currency],
+      currency
     }));
 
   } catch (err) {
-    res.status(500).json(formatResponse(false, err.message));
+    res.status(err.statusCode || 500).json(formatResponse(false, err.message));
   }
 });
