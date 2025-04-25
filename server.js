@@ -103,11 +103,13 @@ app.use('/admin', adminRoutes);
 const authRoutes = require('./routes/authRoute');
 const paymentRoute = require('./routes/paymentRoute');
 const walletRoutes = require('./routes/wallet');
+const walletTransferRoutes = require('./routes/walletTransfer');
 const investmentRoutes = require('./routes/investments');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', paymentRoute);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/wallet/transfer', walletTransferRoutes); // or /wallet-transfers
 app.use('/api/investments', investmentRoutes);
 
 // Server setup
