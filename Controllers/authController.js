@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Wallet = require('../models/Wallet');
-// const Referral = require('../models/Referral'); // Optional if tracking referrals
 
 exports.register = async (req, res) => {
   const session = await mongoose.startSession();
@@ -13,9 +12,19 @@ exports.register = async (req, res) => {
   try {
     const { email, password, referralCode } = req.body;
 
-    // Validate email
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation Error',
+        message: 'Email and password are required'
+      });
+    }
+
+    // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({
+        success: false,
         error: 'Validation Error',
         message: 'Invalid email format'
       });
@@ -24,6 +33,7 @@ exports.register = async (req, res) => {
     // Validate password strength
     if (password.length < 12 || !/\d/.test(password) || !/[A-Z]/.test(password)) {
       return res.status(400).json({
+        success: false,
         error: 'Validation Error',
         message: 'Password must be at least 12 characters with a number and uppercase letter'
       });
@@ -34,6 +44,7 @@ exports.register = async (req, res) => {
     if (existingUser) {
       await session.abortTransaction();
       return res.status(409).json({
+        success: false,
         error: 'Conflict',
         message: 'Email already registered'
       });
@@ -56,6 +67,9 @@ exports.register = async (req, res) => {
       }
     }
 
+    // Generate referral code for new user
+    const newReferralCode = uuidv4().slice(0, 8);
+
     // Create new user
     const user = new User({
       email,
@@ -63,29 +77,43 @@ exports.register = async (req, res) => {
       walletId: `WALLET-${uuidv4().replace(/-/g, '').substring(0, 16)}`,
       referredBy,
       kycStatus: 'pending', // Auto trigger KYC status
-      referralCode: uuidv4().slice(0, 8) // generate their own referral code
+      referralCode: newReferralCode // generate their own referral code
     });
 
     await user.save({ session });
 
-    // Create wallet
+    // Create wallet for the new user
     const wallet = new Wallet({ userId: user._id });
     await wallet.save({ session });
 
     // Send welcome email
     await sendWelcomeEmail(user.email, user.walletId);
 
+    // Commit transaction
     await session.commitTransaction();
 
+    // Respond with success
     res.status(201).json({
       success: true,
       message: 'Registration successful. Check your email for wallet details. KYC pending.',
+      token: jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      ),
+      user: {
+        id: user._id,
+        email: user.email,
+        walletId: user.walletId,
+        referralCode: newReferralCode,
+      },
       referralUsed: !!referredBy
     });
 
   } catch (error) {
     await session.abortTransaction();
     res.status(500).json({
+      success: false,
       error: 'Registration Failed',
       message: error.message
     });
