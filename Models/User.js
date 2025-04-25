@@ -131,7 +131,6 @@ const userSchema = new mongoose.Schema({
     default: ['view']
   }
 
-
 }, {
   timestamps: true,
   versionKey: false,
