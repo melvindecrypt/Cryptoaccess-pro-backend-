@@ -36,28 +36,34 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 
 ```plaintext
 .  
+
 ├── config/
 │   ├── db.js
-├── controllers/  
-│   ├── authController.js  
-│   ├── investmentController.js  
-│   ├── userController.js  
-│   └── walletController.js  
-├── middleware/  
-│   ├── adminAuth.js  
-│   ├── authMiddleware.js  
-│   └── requireKyc.js  
-├── models/  
-│   ├── User.js  
-│   └── Wallet.js  
-├── routes/  
-│   ├── admin.js  
-│   ├── auth.js  
-│   ├── investments.js  
-│   ├── payments.js  
-│   └── wallets.js  
-├── utils/ 
+├── controllers/
+│   ├── authController.js
+│   ├── investmentController.js
+│   ├── userController.js
+│   ├── walletController.js
+│   └── subscriptionController.js
+├── middleware/
+│   ├── adminAuth.js
+│   ├── authMiddleware.js
+│   └── requireKyc.js
+├── models/
+│   ├── User.js
+│   ├── Wallet.js
+│   └── Transaction.js
+├── routes/
+│   ├── admin.js
+│   ├── auth.js
+│   ├── investments.js
+│   ├── payments.js
+│   ├── wallets.js
+│   ├── subscription.js
+│   └── walletTransfer.js
+├── utils/
 │   ├── emailservice.js
 │   ├── logger.js
-├── server.js  
-└── package.json
+├── server.js
+├── package.json
+└── package-lock.json
