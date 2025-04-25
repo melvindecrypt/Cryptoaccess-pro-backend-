@@ -1,20 +1,36 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 const authenticate = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    if (!token) throw new Error('Authentication required');
+    const token = req.cookies.token || 
+                 req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+        message: 'No token provided'
+      });
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.userId)
-      .select('-password -__v')
-      .lean();
+    const user = await User.findById(decoded.id).select('-password');
 
-    if (!req.user) throw new Error('User not found');
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token',
+        message: 'User not found'
+      });
+    }
+
+    req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ 
-      error: 'Unauthorized',
+    res.status(401).json({
+      success: false,
+      error: 'Authentication failed',
       message: error.message
     });
   }
@@ -22,7 +38,8 @@ const authenticate = async (req, res, next) => {
 
 const isAdmin = (req, res, next) => {
   if (!req.user?.isAdmin) {
-    return res.status(403).json({ 
+    return res.status(403).json({
+      success: false,
       error: 'Forbidden',
       message: 'Admin privileges required'
     });
