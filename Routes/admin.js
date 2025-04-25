@@ -4,44 +4,52 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
-const adminAuth = require('../middleware/adminAuth');
+const { authenticate, isAdmin } = require('../middlewares/authMiddleware');
 const logger = require('../utils/logger');
 const { formatResponse } = require('../utils/helpers');
 
-// --------------------
-// Rate Limit for Admin Login
-// --------------------
+// ================== Rate Limiting ==================
 const adminLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  message: formatResponse(false, 'Too many login attempts, try again later')
+  message: formatResponse(false, 'Too many login attempts, try again later'),
+  skipSuccessfulRequests: true
 });
 
-// --------------------
-// PUBLIC: Admin Login
-// --------------------
-router.post('/admin/login', adminLoginLimiter, async (req, res) => {
+// ================== Admin Login ==================
+router.post('/login', adminLoginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Validate input format
     if (!email || !password || !/^\S+@\S+\.\S+$/.test(email)) {
       return res.status(400).json(formatResponse(false, 'Valid email and password required'));
     }
 
-    const user = await User.findOne({ email }).select('+password');
-    if (!user || !user.isAdmin) {
+    // Find admin user with password
+    const user = await User.findOne({ email })
+      .select('+password +isAdmin +isSuspended')
+      .lean();
+
+    // Security checks
+    if (!user?.isAdmin) {
+      logger.warn('Admin login attempt failed: Invalid credentials', { email });
       return res.status(403).json(formatResponse(false, 'Access denied'));
     }
 
     if (user.isSuspended) {
-      return res.status(403).json(formatResponse(false, 'Your account has been suspended by admin'));
+      logger.warn('Suspended admin login attempt', { userId: user._id });
+      return res.status(403).json(formatResponse(false, 'Account suspended'));
     }
 
+    // Password verification
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      logger.warn('Admin login failed: Password mismatch', { email });
       return res.status(401).json(formatResponse(false, 'Invalid credentials'));
     }
 
+    // JWT Token generation
     const token = jwt.sign({
       userId: user._id,
       email: user.email,
@@ -50,59 +58,77 @@ router.post('/admin/login', adminLoginLimiter, async (req, res) => {
       authFreshness: Date.now()
     }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
-    logger.info('Admin login successful', { adminId: user._id, ip: req.ip });
-
+    // Secure cookie settings
     res.cookie('adminToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 900000
+      maxAge: 900000 // 15 minutes
     });
 
-    res.json(formatResponse(true, 'Admin login successful', {
-      token,
+    logger.info('Admin login successful', { userId: user._id });
+
+    // Response without sensitive data
+    res.json(formatResponse(true, 'Authentication successful', {
       user: {
         id: user._id,
-        email: user.email
+        email: user.email,
+        lastLogin: user.lastLogin
       }
     }));
+
   } catch (err) {
-    logger.error('Admin login error', { error: err.message });
+    logger.error('Admin login error', { error: err.stack });
     res.status(500).json(formatResponse(false, 'Internal server error'));
   }
 });
 
-// --------------------
-// PROTECTED ADMIN ROUTES
-// --------------------
-router.use(adminAuth);
+// ================== Protected Routes ==================
+router.use(authenticate);
+router.use(isAdmin);
 
-// Admin Helper Handler
-const handleAdminAction = async (actionName, res, operation) => {
+// ================== Admin Actions Handler ==================
+const handleAdminAction = async (actionName, req, operation) => {
+  const session = await User.startSession();
+  session.startTransaction();
+  
   try {
-    const result = await operation();
+    const result = await operation(session);
+    await session.commitTransaction();
+    
     logger.info(`Admin action: ${actionName}`, {
-      adminId: res.locals.admin.id,
+      adminId: req.user.userId,
       target: result.email
     });
+
     return result;
   } catch (err) {
+    await session.abortTransaction();
     logger.error(`Admin action failed: ${actionName}`, {
-      adminId: res.locals.admin.id,
-      error: err.message
+      adminId: req.user.userId,
+      error: err.message,
+      stack: err.stack
     });
     throw err;
+  } finally {
+    session.endSession();
   }
 };
 
-// Approve user
+// ================== User Management Endpoints ==================
+
+// Approve user account
 router.patch('/approve-user', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json(formatResponse(false, 'Email is required'));
+    if (!email) return res.status(400).json(formatResponse(false, 'Email required'));
 
-    const user = await handleAdminAction('approve-user', res, async () =>
-      User.findOneAndUpdate({ email }, { isApproved: true }, { new: true }).select('-password -__v')
+    const user = await handleAdminAction('approve-user', req, async (session) => 
+      User.findOneAndUpdate(
+        { email },
+        { isApproved: true, approvedBy: req.user.userId },
+        { new: true, session }
+      ).select('-password -__v')
     );
 
     if (!user) return res.status(404).json(formatResponse(false, 'User not found'));
@@ -112,14 +138,21 @@ router.patch('/approve-user', async (req, res) => {
   }
 });
 
-// Bypass payment
+// Bypass payment requirement
 router.patch('/bypass-payment', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json(formatResponse(false, 'Email is required'));
+    if (!email) return res.status(400).json(formatResponse(false, 'Email required'));
 
-    const user = await handleAdminAction('bypass-payment', res, async () =>
-      User.findOneAndUpdate({ email }, { hasPaid: true }, { new: true }).select('-password -__v')
+    const user = await handleAdminAction('bypass-payment', req, async (session) => 
+      User.findOneAndUpdate(
+        { email },
+        { 
+          hasPaid: true,
+          $push: { paymentHistory: { adminOverride: req.user.userId } }
+        },
+        { new: true, session }
+      ).select('-password -__v')
     );
 
     if (!user) return res.status(404).json(formatResponse(false, 'User not found'));
@@ -129,31 +162,47 @@ router.patch('/bypass-payment', async (req, res) => {
   }
 });
 
-// Grant Pro+
+// Grant Pro+ subscription
 router.patch('/grant-pro-plus', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json(formatResponse(false, 'Email is required'));
+    if (!email) return res.status(400).json(formatResponse(false, 'Email required'));
 
-    const user = await handleAdminAction('grant-pro-plus', res, async () =>
-      User.findOneAndUpdate({ email }, { isPro: true }, { new: true }).select('-password -__v')
+    const user = await handleAdminAction('grant-pro-plus', req, async (session) => 
+      User.findOneAndUpdate(
+        { email },
+        { 
+          'subscription.isProPlus': true,
+          'subscription.subscribedAt': new Date(),
+          'subscription.expiresAt': new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        },
+        { new: true, session }
+      ).select('-password -__v')
     );
 
     if (!user) return res.status(404).json(formatResponse(false, 'User not found'));
-    res.json(formatResponse(true, 'Pro+ access granted', user));
+    res.json(formatResponse(true, 'Pro+ granted', user));
   } catch (err) {
     res.status(500).json(formatResponse(false, err.message));
   }
 });
 
-// Verify KYC
+// Verify KYC documents
 router.patch('/verify-kyc', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json(formatResponse(false, 'Email is required'));
+    if (!email) return res.status(400).json(formatResponse(false, 'Email required'));
 
-    const user = await handleAdminAction('verify-kyc', res, async () =>
-      User.findOneAndUpdate({ email }, { kycStatus: 'approved' }, { new: true }).select('-password -__v')
+    const user = await handleAdminAction('verify-kyc', req, async (session) => 
+      User.findOneAndUpdate(
+        { email },
+        { 
+          kycStatus: 'approved',
+          'kycDocuments.$[].status': 'verified',
+          kycVerifiedBy: req.user.userId
+        },
+        { new: true, session }
+      ).select('-password -__v')
     );
 
     if (!user) return res.status(404).json(formatResponse(false, 'User not found'));
@@ -163,35 +212,53 @@ router.patch('/verify-kyc', async (req, res) => {
   }
 });
 
-// Edit user balance
-router.patch('/edit-balance', async (req, res) => {
+// Update user balance (using new virtualBalances structure)
+router.patch('/update-balance', async (req, res) => {
   try {
-    const { email, amount } = req.body;
-    if (!email || typeof amount !== 'number') {
-      return res.status(400).json(formatResponse(false, 'Email and valid amount required'));
+    const { email, currency, amount } = req.body;
+    if (!email || !currency || typeof amount !== 'number') {
+      return res.status(400).json(formatResponse(false, 'Invalid parameters'));
     }
 
-    const user = await handleAdminAction('edit-balance', res, async () =>
-      User.findOneAndUpdate({ email }, { $set: { balance: amount } }, { new: true }).select('-password -__v')
+    const user = await handleAdminAction('update-balance', req, async (session) => 
+      User.findOneAndUpdate(
+        { email },
+        { $set: { [`virtualBalances.${currency}`]: amount } },
+        { new: true, session }
+      ).select('-password -__v')
     );
 
     if (!user) return res.status(404).json(formatResponse(false, 'User not found'));
-    res.json(formatResponse(true, 'Balance updated', user));
+    res.json(formatResponse(true, 'Balance updated', {
+      currency,
+      newBalance: user.virtualBalances[currency]
+    }));
   } catch (err) {
     res.status(500).json(formatResponse(false, err.message));
   }
 });
 
-// Suspend or unsuspend user
+// Suspend/Unsuspend account
 router.patch('/suspend-user', async (req, res) => {
   try {
-    const { email, suspend } = req.body;
+    const { email, reason, suspend = true } = req.body;
     if (!email || typeof suspend !== 'boolean') {
-      return res.status(400).json(formatResponse(false, 'Email and suspend status required'));
+      return res.status(400).json(formatResponse(false, 'Invalid parameters'));
     }
 
-    const user = await handleAdminAction('suspend-user', res, async () =>
-      User.findOneAndUpdate({ email }, { isSuspended: suspend }, { new: true }).select('-password -__v')
+    const user = await handleAdminAction('suspend-user', req, async (session) => 
+      User.findOneAndUpdate(
+        { email },
+        { 
+          isSuspended: suspend,
+          $push: { suspensionHistory: { 
+            date: new Date(), 
+            admin: req.user.userId, 
+            reason 
+          }}
+        },
+        { new: true, session }
+      ).select('-password -__v')
     );
 
     if (!user) return res.status(404).json(formatResponse(false, 'User not found'));
@@ -201,25 +268,57 @@ router.patch('/suspend-user', async (req, res) => {
   }
 });
 
-// --------------------
-// Logout
-// --------------------
+// ================== Session Management ==================
 router.post('/logout', (req, res) => {
   res.clearCookie('adminToken');
-  logger.info('Admin logout successful', { adminId: res.locals.admin?.id });
-  res.json(formatResponse(true, 'Logout successful'));
+  logger.info('Admin logout', { userId: req.user.userId });
+  res.json(formatResponse(true, 'Session terminated'));
 });
 
-// --------------------
-// Global Error Handler
-// --------------------
+// ================== Error Handling ==================
 router.use((err, req, res, next) => {
-  logger.error(`Admin Route Error: ${err.message}`, {
+  const statusCode = err.statusCode || 500;
+  logger.error(`Admin route error: ${err.message}`, {
     path: req.path,
-    adminId: res.locals.admin?.id,
+    userId: req.user?.userId,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
-  res.status(500).json(formatResponse(false, 'Internal server error'));
+  res.status(statusCode).json(formatResponse(false, err.message));
 });
 
 module.exports = router;
+
+// Admin sends virtual funds to a user
+router.post('/send-funds', async (req, res) => {
+  try {
+    const { recipientEmail, currency, amount } = req.body;
+    if (!recipientEmail || !currency || typeof amount !== 'number') {
+      return res.status(400).json(formatResponse(false, 'Invalid parameters'));
+    }
+
+    // Ensure the recipient exists
+    const user = await User.findOne({ email: recipientEmail });
+    if (!user) {
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    // Add funds to the user's virtual balance
+    user.virtualBalances[currency] = (user.virtualBalances[currency] || 0) + amount;
+    await user.save();
+
+    logger.info('Admin sent virtual funds', {
+      adminId: req.user.userId,
+      recipientEmail,
+      currency,
+      amount
+    });
+
+    res.json(formatResponse(true, `Funds transferred successfully to ${recipientEmail}`, {
+      recipient: user.email,
+      balance: user.virtualBalances[currency]
+    }));
+
+  } catch (err) {
+    res.status(500).json(formatResponse(false, err.message));
+  }
+});
