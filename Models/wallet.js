@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { formatResponse } = require('../utils/helpers');
 const Transaction = require('./Transaction');
 const User = require('./User');
+const Decimal = require('decimal.js');
 
 const SUPPORTED_CURRENCIES = ['BTC', 'ETH', 'USDT', 'BNB'];
 const MIN_BALANCE = 0;
