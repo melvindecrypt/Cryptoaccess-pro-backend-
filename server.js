@@ -3,117 +3,110 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { body } = require('express-validator');
+const logger = require('./utils/logger');
+const { formatResponse } = require('./utils/helpers');
 
 // Load environment variables
 dotenv.config();
 
-// Import routes and models
-const adminRoutes = require('./routes/admin');
-const User = require('./models/User');
-const { sendWelcomeEmail } = require('./utils/emailService');
-
+// Initialize Express app
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// ================== Security Middleware ==================
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https://*.stripe.com'],
+      connectSrc: ["'self'", 'https://api.stripe.com']
+    }
+  }
+}));
+
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
+
+// ================== Rate Limiting ==================
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: formatResponse(false, 'Too many requests from this IP')
+});
+app.use('/api/', limiter);
+
+// ================== Body Parsing ==================
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+// ================== Database Connection ==================
+require('./config/db')();
 
-// Auth Routes
-app.post('/api/signup', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = new User({ email, password });
-    await user.save();
-    
-    // Send welcome email
-    await sendWelcomeEmail(email, user.walletId);
-    
-    res.json({ 
-      success: true,
-      message: 'Signup successful. Awaiting admin approval.'
-    });
-  } catch (err) {
-    res.status(500).json({ 
-      success: false,
-      error: 'Signup failed',
-      message: err.message
-    });
-  }
+// ================== Request Logging ==================
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.originalUrl}`);
+  next();
 });
 
-app.post('/api/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-
-    if (!user || !user.isApproved) {
-      return res.status(401).json({ 
-        success: false,
-        error: 'Unauthorized',
-        message: 'Account not approved or user not found'
-      });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials'
-      });
-    }
-
-    // JWT Token generation
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: 'user' },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    res.json({
-      success: true,
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        walletId: user.walletId
-      }
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      error: 'Login failed',
-      message: err.message
-    });
-  }
-});
-
-// Routes
-app.use('/admin', adminRoutes);
-const authRoutes = require('./routes/authRoute');
-const paymentRoute = require('./routes/paymentRoute');
+// ================== Route Imports ==================
+const adminRoutes = require('./routes/admin');
+const authRoutes = require('./routes/auth');
+const paymentRoutes = require('./routes/payments');
 const walletRoutes = require('./routes/wallets');
-const walletTransferRoutes = require('./routes/walletTransfer');
+const transferRoutes = require('./routes/walletTransfer');
 const investmentRoutes = require('./routes/investments');
+const subscriptionRoutes = require('./routes/subscription');
 
+// ================== Route Definitions ==================
+app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api', paymentRoute);
-app.use('/api/wallet', walletRoutes);
-app.use('/api/wallets/transfer', walletTransferRoutes); // or /wallet-transfers
+app.use('/api/payments', paymentRoutes);
+app.use('/api/wallets', walletRoutes);
+app.use('/api/transfers', transferRoutes);
 app.use('/api/investments', investmentRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
-// Server setup
+// ================== HTTPS Redirection ==================
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    return next();
+  });
+}
+
+// ================== Error Handling ==================
+app.use((req, res) => {
+  res.status(404).json(formatResponse(false, 'Endpoint not found'));
+});
+
+app.use((err, req, res, next) => {
+  logger.error(`Server Error: ${err.stack}`);
+  res.status(err.statusCode || 500).json(formatResponse(false, 
+    process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  ));
+});
+
+// ================== Server Initialization ==================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+});
 
 module.exports = app;
