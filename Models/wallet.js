@@ -1,111 +1,108 @@
-router.get('/deposit-address', authenticate, walletController.getDepositAddress);
-router.post('/withdraw', authenticate, requireKYC, walletController.withdrawFunds);
+const mongoose = require('mongoose');
+const { formatResponse } = require('../utils/helpers');
+const Transaction = require('./Transaction');
+const User = require('./User');
 
-const express = require('express');
-const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const Wallet = require('../models/Wallet');
-const User = require('../models/User');
-const logger = require('../utils/logger');
-const { formatResponse } = require('../utils/helpers'); // Use consistent response format
+const SUPPORTED_CURRENCIES = ['BTC', 'ETH', 'USDT', 'BNB'];
+const MIN_BALANCE = 0;
 
-// Supported currencies from your Wallet model
-const SUPPORTED_CURRENCIES = ['BTC', 'ETH', 'USDT', 'BNB', 'SOL'];
-
-// Transfer funds between wallets
-router.post('/transfer', authMiddleware, async (req, res) => {
-  const session = await Wallet.startSession();
-  session.startTransaction();
-
-  try {
-    const { toWalletId, amount, currency } = req.body;
-    const senderUserId = req.user._id;
-
-    // Validate input
-    if (!toWalletId || !amount || !currency) {
-      return res.status(400).json(formatResponse(false, 'To wallet ID, amount, and currency are required'));
+const walletSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'User ID is required'],
+      index: true
+    },
+    currency: {
+      type: String,
+      enum: SUPPORTED_CURRENCIES,
+      required: [true, 'Currency type is required'],
+      uppercase: true
+    },
+    balance: {
+      type: Number,
+      default: 0,
+      min: [MIN_BALANCE, `Balance cannot be less than ${MIN_BALANCE}`]
+    },
+    transactions: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Transaction'
+    }],
+    isActive: {
+      type: Boolean,
+      default: true
     }
-
-    if (typeof amount !== 'number' || amount <= 0) {
-      return res.status(400).json(formatResponse(false, 'Amount must be a positive number'));
-    }
-
-    if (!SUPPORTED_CURRENCIES.includes(currency)) {
-      return res.status(400).json(formatResponse(false, `Unsupported currency. Supported: ${SUPPORTED_CURRENCIES.join(', ')}`));
-    }
-
-    // Check sender restrictions
-    const senderUser = await User.findById(senderUserId).session(session);
-    if (!senderUser.isApproved || senderUser.kycStatus !== 'VERIFIED') {
-      return res.status(403).json(formatResponse(false, 'Account must be approved and KYC verified to transfer funds'));
-    }
-
-    // Find and validate sender wallet
-    const senderWallet = await Wallet.findOne({ userId: senderUserId }).session(session);
-    if (!senderWallet || senderWallet.balances[currency] < amount) {
-      return res.status(400).json(formatResponse(false, 'Insufficient funds or invalid currency'));
-    }
-
-    // Find and validate recipient wallet
-    const recipientWallet = await Wallet.findById(toWalletId).session(session);
-    if (!recipientWallet || !SUPPORTED_CURRENCIES.includes(currency)) {
-      return res.status(404).json(formatResponse(false, 'Recipient wallet not found or invalid currency'));
-    }
-
-    // Prevent self-transfer
-    if (senderWallet._id.equals(recipientWallet._id)) {
-      return res.status(400).json(formatResponse(false, 'Cannot transfer to same wallet'));
-    }
-
-    // Create transaction ID for audit tracking
-    const transactionId = `TX-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    // Perform the transfer
-    senderWallet.balances[currency] = Number((senderWallet.balances[currency] - amount).toFixed(8));
-    recipientWallet.balances[currency] = Number((recipientWallet.balances[currency] + amount).toFixed(8));
-
-    // Record transactions
-    const transactionData = {
-      type: 'transfer',
-      amount,
-      currency,
-      timestamp: new Date(),
-      transactionId,
-      counterparty: senderUserId // For recipient's record
-    };
-
-    senderWallet.transactions.push({
-      ...transactionData,
-      amount: -amount,
-      counterparty: recipientWallet.userId
-    });
-
-    recipientWallet.transactions.push(transactionData);
-
-    // Save changes
-    await Promise.all([
-      senderWallet.save({ session }),
-      recipientWallet.save({ session })
-    ]);
-
-    await session.commitTransaction();
-    logger.info(`Transfer successful: ${transactionId}`);
-
-    res.json(formatResponse(true, 'Transfer successful', {
-      transactionId,
-      newBalance: senderWallet.balances[currency],
-      currency
-    }));
-
-  } catch (error) {
-    await session.abortTransaction();
-    logger.error(`Transfer failed: ${error.message}`);
-    res.status(500).json(formatResponse(false, 'Transfer failed', { 
-      error: process.env.NODE_ENV === 'development' ? error.message : null 
-    }));
-  } finally {
-    session.endSession();
+  },
+  { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
-});
+);
 
-module.exports = router;
+// Static Methods
+walletSchema.statics = {
+  async createWallet(userId, currency = 'BTC') {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      // Check user existence and approval status
+      const user = await User.findById(userId).session(session);
+      if (!user) throw new Error('User not found');
+      if (!user.isApproved) throw new Error('User account not approved');
+
+      const wallet = new this({ userId, currency });
+      await wallet.save({ session });
+      
+      // Update user's wallet references
+      user.wallets.push(wallet._id);
+      await user.save({ session });
+      
+      await session.commitTransaction();
+      return wallet;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+};
+
+// Instance Methods
+walletSchema.methods = {
+  async deposit(amount, session = null) {
+    if (amount <= 0) throw new Error('Invalid deposit amount');
+    
+    this.balance = Number((this.balance + amount).toFixed(8));
+    const transaction = await Transaction.create({
+      userId: this.userId,
+      walletId: this._id,
+      type: 'deposit',
+      amount
+    });
+    
+    this.transactions.push(transaction._id);
+    return this.save({ session });
+  },
+
+  async withdraw(amount, session = null) {
+    if (amount <= 0) throw new Error('Invalid withdrawal amount');
+    if (this.balance < amount) throw new Error('Insufficient funds');
+    
+    this.balance = Number((this.balance - amount).toFixed(8));
+    const transaction = await Transaction.create({
+      userId: this.userId,
+      walletId: this._id,
+      type: 'withdrawal',
+      amount
+    });
+    
+    this.transactions.push(transaction._id);
+    return this.save({ session });
+  }
+};
+
+module.exports = mongoose.model('Wallet', walletSchema);
