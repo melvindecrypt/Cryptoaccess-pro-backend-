@@ -8,6 +8,7 @@ const Wallet = require('../models/Wallet');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 const { formatResponse } = require('../utils/helpers'); // Use consistent response format
+const Decimal = require('decimal.js');
 
 // Supported currencies from your Wallet model
 const SUPPORTED_CURRENCIES = ['BTC', 'ETH', 'USDT', 'BNB', 'SOL'];
@@ -60,9 +61,13 @@ router.post('/transfer', authMiddleware, async (req, res) => {
     // Create transaction ID for audit tracking
     const transactionId = `TX-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Perform the transfer
-    senderWallet.balances[currency] = Number((senderWallet.balances[currency] - amount).toFixed(8));
-    recipientWallet.balances[currency] = Number((recipientWallet.balances[currency] + amount).toFixed(8));
+    // Perform the transfer using Decimal for precision
+    const senderBalance = new Decimal(senderWallet.balances[currency]);
+    const recipientBalance = new Decimal(recipientWallet.balances[currency]);
+
+    senderWallet.balances[currency] = senderBalance.minus(amount).toFixed(8);
+    recipientWallet.balances[currency] = recipientBalance.plus(amount).toFixed(8);
+
 
     // Record transactions
     const transactionData = {
