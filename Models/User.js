@@ -123,6 +123,15 @@ const userSchema = new mongoose.Schema({
     password: String,
     changedAt: Date
   }]
+
+// ----- Admin Permissions -----
+  permissions: {
+    type: [String],
+    enum: ['view', 'edit', 'delete'], // Adjust permissions as needed
+    default: ['view']
+  }
+
+
 }, {
   timestamps: true,
   versionKey: false,
