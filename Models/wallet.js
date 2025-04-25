@@ -1,3 +1,6 @@
+router.get('/deposit-address', authenticate, walletController.getDepositAddress);
+router.post('/withdraw', authenticate, requireKYC, walletController.withdrawFunds);
+
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
