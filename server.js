@@ -109,4 +109,14 @@ app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
+// ===== Graceful Shutdown on Termination =====
+const gracefulShutdown = async () => {
+  await mongoose.connection.close();
+  logger.info('MongoDB disconnected on app termination');
+  process.exit(0);
+};
+
+process.on('SIGINT', gracefulShutdown); // For manual termination (Ctrl+C)
+process.on('SIGTERM', gracefulShutdown); // For hosting platforms like Heroku/Vercel
+
 module.exports = app;
