@@ -75,35 +75,43 @@ walletSchema.statics = {
 // Instance Methods
 walletSchema.methods = {
   async deposit(amount, session = null) {
-    if (amount <= 0) throw new Error('Invalid deposit amount');
-    
-    this.balance = Number((this.balance + amount).toFixed(8));
-    const transaction = await Transaction.create({
-      userId: this.userId,
-      walletId: this._id,
-      type: 'deposit',
-      amount
-    });
-    
-    this.transactions.push(transaction._id);
-    return this.save({ session });
-  },
+  if (amount <= 0) throw new Error('Invalid deposit amount');
+
+  const current = new Decimal(this.balance);
+  const updated = current.plus(new Decimal(amount));
+
+  this.balance = Number(updated.toFixed(8));
+  const transaction = await Transaction.create({
+    userId: this.userId,
+    walletId: this._id,
+    type: 'deposit',
+    amount
+  });
+
+  this.transactions.push(transaction._id);
+  return this.save({ session });
+},
 
   async withdraw(amount, session = null) {
-    if (amount <= 0) throw new Error('Invalid withdrawal amount');
-    if (this.balance < amount) throw new Error('Insufficient funds');
-    
-    this.balance = Number((this.balance - amount).toFixed(8));
-    const transaction = await Transaction.create({
-      userId: this.userId,
-      walletId: this._id,
-      type: 'withdrawal',
-      amount
-    });
-    
-    this.transactions.push(transaction._id);
-    return this.save({ session });
-  }
-};
+  if (amount <= 0) throw new Error('Invalid withdrawal amount');
+
+  const current = new Decimal(this.balance);
+  const subtract = new Decimal(amount);
+
+  if (current.lessThan(subtract)) throw new Error('Insufficient funds');
+
+  const updated = current.minus(subtract);
+
+  this.balance = Number(updated.toFixed(8));
+  const transaction = await Transaction.create({
+    userId: this.userId,
+    walletId: this._id,
+    type: 'withdrawal',
+    amount
+  });
+
+  this.transactions.push(transaction._id);
+  return this.save({ session });
+}
 
 module.exports = mongoose.model('Wallet', walletSchema);
