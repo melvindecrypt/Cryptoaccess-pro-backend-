@@ -1,14 +1,15 @@
 const User = require('../models/User');
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
+const Decimal = require('decimal.js');  // Import decimal.js
 
 // View available investment plans
 exports.viewPlans = async (req, res) => {
   try {
     // Example of available investment plans
     const plans = [
-      { id: 1, name: 'Plan A', minAmount: 500, maxAmount: 10000, roi: 20, duration: '6 months' },
-      { id: 2, name: 'Plan B', minAmount: 1000, maxAmount: 50000, roi: 25, duration: '12 months' }
+      { id: 1, name: 'Plan A', minAmount: new Decimal(500), maxAmount: new Decimal(10000), roi: new Decimal(20), duration: '6 months' },
+      { id: 2, name: 'Plan B', minAmount: new Decimal(1000), maxAmount: new Decimal(50000), roi: new Decimal(25), duration: '12 months' }
     ];
 
     res.json(formatResponse(true, 'Investment plans fetched successfully', plans));
@@ -29,6 +30,9 @@ exports.invest = async (req, res) => {
       return res.status(400).json(formatResponse(false, 'Valid plan ID and amount required'));
     }
 
+    // Convert amount to Decimal
+    const decimalAmount = new Decimal(amount);
+
     // Fetch user and check KYC status
     const user = await User.findById(userId);
     if (user.kycStatus !== 'approved') {
@@ -37,8 +41,8 @@ exports.invest = async (req, res) => {
 
     // Fetch investment plans (mocked for now)
     const plans = [
-      { id: 1, name: 'Plan A', minAmount: 500, maxAmount: 10000, roi: 20, duration: '6 months' },
-      { id: 2, name: 'Plan B', minAmount: 1000, maxAmount: 50000, roi: 25, duration: '12 months' }
+      { id: 1, name: 'Plan A', minAmount: new Decimal(500), maxAmount: new Decimal(10000), roi: new Decimal(20), duration: '6 months' },
+      { id: 2, name: 'Plan B', minAmount: new Decimal(1000), maxAmount: new Decimal(50000), roi: new Decimal(25), duration: '12 months' }
     ];
 
     const plan = plans.find(p => p.id === planId);
@@ -46,15 +50,19 @@ exports.invest = async (req, res) => {
       return res.status(404).json(formatResponse(false, 'Investment plan not found'));
     }
 
-    if (amount < plan.minAmount || amount > plan.maxAmount) {
-      return res.status(400).json(formatResponse(false, 'Amount must be within the plan\'s limits'));
+    // Check if the amount is within the allowed range using Decimal.js
+    if (decimalAmount.lessThan(plan.minAmount) || decimalAmount.greaterThan(plan.maxAmount)) {
+      return res.status(400).json(formatResponse(false, `Amount must be between ${plan.minAmount} and ${plan.maxAmount}`));
     }
+
+    // Calculate the expected ROI using Decimal.js
+    const roiAmount = decimalAmount.times(plan.roi).dividedBy(100); // ROI calculation with precision
 
     // Simulate the investment process
     const investment = {
       planId,
-      amount,
-      roi: plan.roi,
+      amount: decimalAmount.toString(),  // Store as string to preserve precision
+      roi: roiAmount.toString(),         // Store as string to preserve precision
       duration: plan.duration,
       startDate: new Date(),
       status: 'ACTIVE'
