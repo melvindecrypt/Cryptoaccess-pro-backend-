@@ -52,3 +52,15 @@ exports.createWithdrawal = async (req, res) => {
     session.endSession();
   }
 };
+
+// In admin withdrawal handler
+await notificationService.create(
+  withdrawal.user,
+  'withdrawal',
+  `Withdrawal ${action}`,
+  `Your ${withdrawal.currency} withdrawal has been ${action}`,
+  { 
+    amount: withdrawal.amount,
+    status: action 
+  }
+);
