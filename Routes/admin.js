@@ -355,3 +355,75 @@ router.post('/send-funds', async (req, res) => {
     res.status(err.statusCode || 500).json(formatResponse(false, err.message));
   }
 });
+
+  // Add this to routes/admin.js (after other routes)
+router.get('/users', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status, isProPlus } = req.query;
+    const filter = {};
+
+    // Add filters
+    if (status) filter.kycStatus = status; // e.g., 'pending', 'approved'
+    if (isProPlus) filter['subscription.isProPlus'] = isProPlus === 'true';
+
+    const users = await User.find(filter)
+      .select('-password -__v -verificationToken')
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .lean();
+
+    res.json(formatResponse(true, 'Users fetched', { users }));
+  } catch (err) {
+    logger.error(`Admin user list error: ${err.message}`);
+    res.status(500).json(formatResponse(false, 'Failed to fetch users'));
+  }
+});
+
+  router.patch('/verify-email', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { email, verify = true } = req.body;
+    const user = await User.findOneAndUpdate(
+      { email },
+      { isVerified: verify },
+      { new: true }
+    ).select('email isVerified');
+
+    if (!user) {
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    logger.info(`Admin ${req.user.email} ${verify ? 'verified' : 'unverified'} ${email}`);
+    res.json(formatResponse(true, `Email ${verify ? 'verified' : 'unverified'}`));
+  } catch (err) {
+    logger.error(`Email verification error: ${err.message}`);
+    res.status(500).json(formatResponse(false, 'Failed to update verification'));
+  }
+});
+
+  router.delete('/users/:id', authenticate, isAdmin, async (req, res) => {
+  const session = await User.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findById(req.params.id).session(session);
+    if (!user) {
+      await session.abortTransaction();
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    // Optional: Archive user data before deletion
+    await ArchiveUser.create({ ...user.toObject(), deletedBy: req.user._id });
+
+    await User.deleteOne({ _id: req.params.id }).session(session);
+    await session.commitTransaction();
+
+    logger.info(`Admin ${req.user.email} deleted user ${user.email}`);
+    res.json(formatResponse(true, 'User deleted permanently'));
+  } catch (err) {
+    await session.abortTransaction();
+    logger.error(`User deletion error: ${err.message}`);
+    res.status(500).json(formatResponse(false, 'Deletion failed'));
+  } finally {
+    session.endSession();
+  }
+});
