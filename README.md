@@ -48,6 +48,7 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 ├── middleware/
 │   ├── adminAuth.js
 │   ├── authMiddleware.js
+│   ├── requireVerifiedEmail.js
 │   └── requireKyc.js
 ├── models/
 │   ├── User.js
