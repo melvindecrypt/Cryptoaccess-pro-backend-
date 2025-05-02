@@ -113,16 +113,25 @@ const userSchema = new mongoose.Schema({
     }
   }],
 
-  // ----- Security Features (Both Versions) -----
-  verificationToken: String,
-  verificationExpires: Date,
-  failedLoginAttempts: { type: Number, default: 0 },
-  lockUntil: Date,
-  lastLogin: Date,
-  passwordHistory: [{
-    password: String,
-    changedAt: Date
-  }]
+ // ----- Security Features (Both Versions) -----
+verificationToken: { 
+  type: String, 
+  select: false 
+  comment: 'Hashed token for email verification'
+},
+verificationExpires: Date,
+isVerified: { 
+  type: Boolean, 
+  default: false 
+  comment: 'True after email verification'
+},
+failedLoginAttempts: { type: Number, default: 0 },
+lockUntil: Date,
+lastLogin: Date,
+passwordHistory: [{
+  password: String,
+  changedAt: Date
+}]
 
 // ----- Admin Permissions -----
   permissions: {
