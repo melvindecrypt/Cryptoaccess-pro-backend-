@@ -400,29 +400,75 @@ router.get('/users', authenticate, isAdmin, async (req, res) => {
   }
 });
 
-  router.delete('/users/:id', authenticate, isAdmin, async (req, res) => {
-  const session = await User.startSession();
+router.delete('/users/:id', authenticate, isAdmin, async (req, res) => {
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const user = await User.findById(req.params.id).session(session);
-    if (!user) {
+    // 1. Validate the target user
+    const targetUser = await User.findById(req.params.id)
+      .session(session)
+      .select('email isAdmin');
+    
+    if (!targetUser) {
       await session.abortTransaction();
       return res.status(404).json(formatResponse(false, 'User not found'));
     }
 
-    // Optional: Archive user data before deletion
-    await ArchiveUser.create({ ...user.toObject(), deletedBy: req.user._id });
+    // 2. Prevent self-deletion and admin deletion
+    if (targetUser._id.equals(req.user._id)) {
+      await session.abortTransaction();
+      return res.status(403).json(formatResponse(false, 'Cannot delete yourself'));
+    }
 
-    await User.deleteOne({ _id: req.params.id }).session(session);
+    if (targetUser.isAdmin) {
+      await session.abortTransaction();
+      return res.status(403).json(formatResponse(false, 'Cannot delete other admins'));
+    }
+
+    // 3. Archive user data (including related records)
+    const archiveData = {
+      user: targetUser.toObject(),
+      deletedBy: req.user._id,
+      deletedAt: new Date(),
+      reason: req.body.reason || 'No reason provided'
+    };
+
+    await ArchiveUser.create([archiveData], { session });
+
+    // 4. Cascade delete related data
+    await Promise.all([
+      Wallet.deleteMany({ userId: targetUser._id }).session(session),
+      Transaction.deleteMany({ userId: targetUser._id }).session(session),
+      // Add other models as needed (Investments, etc.)
+    ]);
+
+    // 5. Delete the user
+    await User.deleteOne({ _id: targetUser._id }).session(session);
+
+    // 6. Commit the transaction
     await session.commitTransaction();
 
-    logger.info(`Admin ${req.user.email} deleted user ${user.email}`);
-    res.json(formatResponse(true, 'User deleted permanently'));
+    // 7. Log and respond
+    logger.warn(`ADMIN ACTION: User deleted`, {
+      admin: req.user.email,
+      target: targetUser.email,
+      ip: req.ip
+    });
+
+    res.json(formatResponse(true, 'User and all associated data deleted permanently', {
+      userId: targetUser._id,
+      archived: true
+    }));
+
   } catch (err) {
     await session.abortTransaction();
-    logger.error(`User deletion error: ${err.message}`);
-    res.status(500).json(formatResponse(false, 'Deletion failed'));
+    logger.error(`USER DELETION FAILED: ${err.message}`, {
+      stack: err.stack,
+      admin: req.user?.email,
+      targetId: req.params.id
+    });
+    res.status(500).json(formatResponse(false, 'Deletion failed. Please try again.'));
   } finally {
     session.endSession();
   }
