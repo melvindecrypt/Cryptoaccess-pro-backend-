@@ -23,6 +23,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
     "nodemailer": "^6.9.8",
+    "nodemailer-express-handlebars": "^6.0.0",
     "uuid": "^9.0.1",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^4.5.0",
