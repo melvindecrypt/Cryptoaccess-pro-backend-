@@ -62,6 +62,8 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── wallets.js
 │   ├── subscription.js
 │   └── walletTransfer.js
+├──services/
+│   ├──payoutservice.js
 ├── utils/
 │   ├── emailservice.js
 │   ├── logger.js
