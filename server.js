@@ -120,3 +120,26 @@ process.on('SIGINT', gracefulShutdown); // For manual termination (Ctrl+C)
 process.on('SIGTERM', gracefulShutdown); // For hosting platforms like Heroku/Vercel
 
 module.exports = app;
+
+// Add to server.js
+const { Server } = require('socket.io');
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL,
+    methods: ["GET", "POST"]
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('Client connected');
+  
+  // Join user-specific room
+  socket.on('authenticate', (token) => {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.join(`user_${decoded.id}`);
+    } catch (error) {
+      socket.disconnect();
+    }
+  });
+});
