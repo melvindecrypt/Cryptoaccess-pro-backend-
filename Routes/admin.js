@@ -589,3 +589,69 @@ const secureLocalAccess = require('../middlewares/localStorageAccess');
 router.get('/kyc-preview', authenticate, isAdmin, secureLocalAccess, (req, res) => {
   res.sendFile(req.localFilePath);
 });
+
+
+// File: routes/admin.js
+router.get('/withdrawals/pending', authenticate, isAdmin, async (req, res) => {
+  try {
+    const withdrawals = await Withdrawal.find({ status: 'pending' })
+      .populate('user', 'email')
+      .sort({ createdAt: -1 });
+
+    res.json(formatResponse(true, 'Pending withdrawals', withdrawals));
+  } catch (error) {
+    res.status(500).json(formatResponse(false, error.message));
+  }
+});
+
+router.patch('/withdrawals/:id', authenticate, isAdmin, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { action, transactionHash, adminNotes } = req.body;
+    const withdrawal = await Withdrawal.findById(req.params.id).session(session);
+
+    if (!withdrawal) throw new Error('Withdrawal not found');
+
+    // Process action
+    switch (action) {
+      case 'approve':
+        withdrawal.status = 'approved';
+        withdrawal.adminNotes = adminNotes;
+        break;
+
+      case 'reject':
+        withdrawal.status = 'rejected';
+        withdrawal.adminNotes = adminNotes;
+        
+        // Refund user
+        await User.findByIdAndUpdate(
+          withdrawal.user,
+          { $inc: { [`virtualBalances.${withdrawal.currency}`]: withdrawal.amount } },
+          { session }
+        );
+        break;
+
+      case 'complete':
+        withdrawal.status = 'processed';
+        withdrawal.processedAt = new Date();
+        withdrawal.transactionHash = transactionHash;
+        break;
+
+      default:
+        throw new Error('Invalid action');
+    }
+
+    await withdrawal.save({ session });
+    await session.commitTransaction();
+
+    res.json(formatResponse(true, `Withdrawal ${action}d`, withdrawal));
+
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+});
