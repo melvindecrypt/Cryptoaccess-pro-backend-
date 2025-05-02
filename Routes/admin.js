@@ -473,3 +473,85 @@ router.delete('/users/:id', authenticate, isAdmin, async (req, res) => {
     session.endSession();
   }
 });
+
+// File: routes/admin.js
+router.patch('/adjust-balance', authenticate, isAdmin, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { userId, currency, amount, reason } = req.body;
+    const numericAmount = new Decimal(amount);
+
+    // Validate input
+    if (!/^[A-Z]{3,5}$/.test(currency)) {
+      return res.status(400).json(formatResponse(false, 'Invalid currency format'));
+    }
+
+    const user = await User.findById(userId).session(session);
+    if (!user) throw new Error('User not found');
+
+    // Initialize to 0 if currency doesn't exist
+    const currentBalance = new Decimal(user.virtualBalances[currency] || 0);
+    const newBalance = currentBalance.plus(numericAmount);
+
+    // Update balance
+    user.virtualBalances[currency] = newBalance.toNumber();
+    
+    // Audit log
+    user.transactions.push({
+      type: 'admin_adjustment',
+      currency,
+      amount: numericAmount.toNumber(),
+      admin: req.user._id,
+      reason: reason || 'No reason provided',
+      timestamp: new Date()
+    });
+
+    await user.save({ session });
+    await session.commitTransaction();
+
+    res.json(formatResponse(true, 'Balance updated', {
+      currency,
+      newBalance: user.virtualBalances[currency]
+    }));
+
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+});
+
+const payoutService = require('../services/payoutService');
+
+// Manual trigger
+router.post('/process-payouts', authenticate, isAdmin, async (req, res) => {
+  try {
+    await payoutService.processROIPayouts();
+    res.json(formatResponse(true, 'ROI payouts processed'));
+  } catch (error) {
+    res.status(500).json(formatResponse(false, error.message));
+  }
+});
+
+// File: routes/admin.js
+router.get('/user-wallet/:userId', authenticate, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select('virtualBalances transactions email');
+    
+    if (!user) {
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    res.json(formatResponse(true, 'Wallet retrieved', {
+      email: user.email,
+      balances: user.virtualBalances,
+      transactions: user.transactions
+    }));
+  } catch (error) {
+    res.status(500).json(formatResponse(false, error.message));
+  }
+});
