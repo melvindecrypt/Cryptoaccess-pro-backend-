@@ -555,3 +555,37 @@ router.get('/user-wallet/:userId', authenticate, isAdmin, async (req, res) => {
     res.status(500).json(formatResponse(false, error.message));
   }
 });
+
+// routes/admin.js
+router.get('/kyc-docs/:userId', authenticate, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select('kycDocuments kycStatus email');
+
+    if (!user) {
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    res.json(formatResponse(true, 'KYC documents retrieved', {
+      email: user.email,
+      kycStatus: user.kycStatus,
+      documents: user.kycDocuments.map(doc => ({
+        docType: doc.docType,
+        fileUrl: `/api/admin/kyc-preview?path=${encodeURIComponent(doc.fileUrl)}`,
+        status: doc.status,
+        uploadedAt: doc.uploadedAt
+      }))
+    }));
+
+  } catch (error) {
+    logger.error(`KYC docs access error: ${error.message}`);
+    res.status(500).json(formatResponse(false, 'Failed to retrieve documents'));
+  }
+});
+
+// routes/admin.js
+const secureLocalAccess = require('../middlewares/localStorageAccess');
+
+router.get('/kyc-preview', authenticate, isAdmin, secureLocalAccess, (req, res) => {
+  res.sendFile(req.localFilePath);
+});
