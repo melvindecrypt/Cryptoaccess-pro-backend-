@@ -19,3 +19,22 @@ router.post('/deposit', requireAuth, depositFunds);
 router.post('/withdraw', requireAuth, requireKYC, withdrawFunds);
 
 module.exports = router;
+
+// File: routes/wallets.js
+router.post('/withdraw', 
+  requireAuth, 
+  requireKYC, 
+  withdrawalController.createWithdrawal
+);
+
+// File: routes/wallets.js
+router.get('/withdrawals', requireAuth, async (req, res) => {
+  try {
+    const withdrawals = await Withdrawal.find({ user: req.user._id })
+      .sort({ createdAt: -1 });
+
+    res.json(formatResponse(true, 'Withdrawal history', withdrawals));
+  } catch (error) {
+    res.status(500).json(formatResponse(false, error.message));
+  }
+});
