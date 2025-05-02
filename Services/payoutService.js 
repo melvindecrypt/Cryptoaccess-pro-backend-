@@ -1,0 +1,36 @@
+// File: services/payoutService.js
+const User = require('../models/User');
+const Decimal = require('decimal.js');
+const logger = require('../utils/logger');
+
+class PayoutService {
+  async processROIPayouts() {
+    const users = await User.find({
+      'subscription.isProPlus': true,
+      'investments.status': 'ACTIVE'
+    });
+
+    for (const user of users) {
+      for (const investment of user.investments) {
+        if (investment.status === 'ACTIVE') {
+          const roi = new Decimal(investment.amount)
+            .times(investment.roiPercentage)
+            .dividedBy(100);
+
+          user.virtualBalances[investment.currency] = 
+            new Decimal(user.virtualBalances[investment.currency] || 0)
+            .plus(roi)
+            .toNumber();
+
+          investment.payouts.push({
+            amount: roi.toNumber(),
+            payoutDate: new Date()
+          });
+        }
+      }
+      await user.save();
+    }
+  }
+}
+
+module.exports = new PayoutService();
