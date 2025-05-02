@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer');
+const hbs = require('nodemailer-express-handlebars');
+const path = require('path');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -8,6 +10,34 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Configure handlebars template engine
+transporter.use('compile', hbs({
+  viewEngine: {
+    extname: '.hbs',
+    partialsDir: path.resolve('./templates/emails'),
+    defaultLayout: false
+  },
+  viewPath: path.resolve('./templates/emails'),
+  extName: '.hbs'
+}));
+
+// Send dynamic template email
+const sendEmail = async ({ to, subject, template, data }) => {
+  try {
+    await transporter.sendMail({
+      from: `"CryptoAccess Pro" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      template, // e.g. 'kycApproved'
+      context: data // e.g. { name: 'Alice' }
+    });
+  } catch (error) {
+    console.error('Email sending error:', error);
+    throw new Error('Failed to send email');
+  }
+};
+
+// Send static HTML email (like your welcome email)
 const sendWelcomeEmail = async (email, walletId) => {
   try {
     await transporter.sendMail({
@@ -27,4 +57,7 @@ const sendWelcomeEmail = async (email, walletId) => {
   }
 };
 
-module.exports = { sendWelcomeEmail };
+module.exports = {
+  sendEmail,
+  sendWelcomeEmail
+};
