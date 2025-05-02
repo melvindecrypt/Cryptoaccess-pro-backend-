@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
 
 /**
  * Middleware to ensure that the user has completed and passed KYC verification.
