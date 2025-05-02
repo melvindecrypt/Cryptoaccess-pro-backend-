@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const requireAuth = require('../middlewares/requireAuth');
+const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
 const requireKYC = require('../middlewares/requireKYC');
 
 // Controllers (assume these are implemented in controllers/investmentController.js)
