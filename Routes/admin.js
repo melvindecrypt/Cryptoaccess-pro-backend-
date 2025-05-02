@@ -212,6 +212,22 @@ router.patch('/verify-kyc', async (req, res) => {
   }
 });
 
+// In admin.js KYC approval handler
+await notificationService.create(
+  user._id,
+  'kyc',
+  'KYC Approved',
+  'Your identity verification has been approved',
+  { kycStatus: 'approved' }
+);
+
+await notificationService.sendEmailNotification(
+  user.email,
+  'KYC Approved',
+  'kycApproved',
+  { name: user.firstName }
+);
+
 // Update user balance (using new virtualBalances structure)
 router.patch('/update-balance', async (req, res) => {
   try {
