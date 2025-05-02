@@ -4,6 +4,7 @@ router.post('/withdraw', authenticate, requireKYC, walletController.withdrawFund
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
+const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
 const Wallet = require('../models/Wallet');
 const User = require('../models/User');
 const logger = require('../utils/logger');
