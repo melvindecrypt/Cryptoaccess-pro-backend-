@@ -208,6 +208,12 @@ userSchema.methods = {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     return this.verificationToken === hashedToken && this.verificationExpires > Date.now();
   },
+isDeleted: {
+  type: Boolean,
+  default: false,
+  select: false
+},
+deletionMarkedAt: Date
 
   // Login Management (Both Versions)
   trackLoginSuccess: function() {
