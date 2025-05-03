@@ -17,13 +17,11 @@ const verifyAdmin = (req, res, next) => {
 module.exports = verifyAdmin;
 
 // routes/auth.js
-router.post('/login', 
+router.post('/login',authController.login,
   auditLog('login', { 
     metadataFields: ['email'],
     status: req => req.authSuccessful ? 'success' : 'failed'
-  }),
-  authController.login
-);
+  });
 
 router.post('/logout', 
   requireAuth,
