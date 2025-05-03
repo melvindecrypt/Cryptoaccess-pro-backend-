@@ -44,3 +44,8 @@ class AuditService {
 }
 
 module.exports = new AuditService();
+
+// Add bulk insert for high-volume operations
+async bulkLog(actions) {
+  return AuditLog.insertMany(actions);
+}
