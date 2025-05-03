@@ -187,6 +187,11 @@ router.patch('/grant-pro-plus', async (req, res) => {
   }
 });
 
+// Add to grant-pro-plus:
+   if (user.subscription.isProPlus) {
+     return res.status(400).json(formatResponse(false, 'User already has Pro+'));
+   }
+
 // Verify KYC documents
 router.patch('/verify-kyc', async (req, res) => {
   try {
