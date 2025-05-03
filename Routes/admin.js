@@ -683,3 +683,77 @@ router.patch('/users/:id',
   }),
   adminController.updateUser
 );
+
+const mongoose = require('mongoose');
+const User = require('../models/User');
+const ArchiveUser = require('../models/ArchiveUser'); // New model
+const logger = require('../utils/logger');
+
+/**
+ * @route DELETE /api/admin/users/:id
+ * @desc Permanently delete a user account (admin only)
+ * @access Private/Admin
+ */
+router.delete('/users/:id', authenticate, isAdmin, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // 1. Find user to delete
+    const user = await User.findById(req.params.id).session(session);
+    if (!user) {
+      await session.abortTransaction();
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // 2. Prevent self-deletion
+    if (user._id.equals(req.user._id)) {
+      await session.abortTransaction();
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot delete your own account'
+      });
+    }
+
+    // 3. Archive user data first
+    await ArchiveUser.create([{
+      originalId: user._id,
+      email: user.email,
+      deletedBy: req.user._id,
+      deletionReason: req.body.reason || 'No reason provided',
+      userData: user.toObject()
+    }], { session });
+
+    // 4. Perform deletion
+    await User.deleteOne({ _id: user._id }).session(session);
+
+    // 5. Commit transaction
+    await session.commitTransaction();
+
+    logger.warn(`User ${user.email} deleted by admin ${req.user.email}`, {
+      adminId: req.user._id,
+      userId: user._id
+    });
+
+    res.json({
+      success: true,
+      message: 'User permanently deleted'
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`User deletion failed: ${error.message}`, {
+      adminId: req.user._id,
+      error: error.message
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Deletion failed'
+    });
+  } finally {
+    session.endSession();
+  }
+});
