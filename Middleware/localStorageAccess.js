@@ -13,6 +13,13 @@ module.exports = (req, res, next) => {
       return res.status(400).json(formatResponse(false, 'Invalid file path'));
     }
 
+// Add after path validation
+const allowedTypes = ['.jpg', '.png', '.pdf'];
+const fileExt = path.extname(fullPath).toLowerCase();
+if (!allowedTypes.includes(fileExt)) {
+  return res.status(400).json(formatResponse(false, 'Invalid file type'));
+}
+
     // Check if file exists
     if (!fs.existsSync(fullPath)) {
       return res.status(404).json(formatResponse(false, 'File not found'));
