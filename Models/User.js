@@ -246,3 +246,10 @@ userSchema.statics = {
 };
 
 module.exports = mongoose.model('User', userSchema);
+
+// ================== Add to User schema: ==================
+  withdrawalWhitelist: [{
+    address: String,
+    currency: String,
+    label: String
+  }]
