@@ -1,16 +1,17 @@
 const nodemailer = require('nodemailer');
 const hbs = require('nodemailer-express-handlebars');
 const path = require('path');
+const logger = require('../utils/logger');
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: process.env.EMAIL_SERVICE || 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
   }
 });
 
-// Configure handlebars template engine
+// Enable handlebars for dynamic templates
 transporter.use('compile', hbs({
   viewEngine: {
     extname: '.hbs',
@@ -21,23 +22,23 @@ transporter.use('compile', hbs({
   extName: '.hbs'
 }));
 
-// Send dynamic template email
+// Send .hbs templated email
 const sendEmail = async ({ to, subject, template, data }) => {
   try {
     await transporter.sendMail({
       from: `"CryptoAccess Pro" <${process.env.EMAIL_USER}>`,
       to,
       subject,
-      template, // e.g. 'kycApproved'
-      context: data // e.g. { name: 'Alice' }
+      template, // matches the .hbs file name
+      context: data
     });
   } catch (error) {
-    console.error('Email sending error:', error);
-    throw new Error('Failed to send email');
+    logger.error('Templated email error:', error.message);
+    throw new Error('Failed to send templated email');
   }
 };
 
-// Send static HTML email (like your welcome email)
+// Send static HTML email (no .hbs)
 const sendWelcomeEmail = async (email, walletId) => {
   try {
     await transporter.sendMail({
@@ -48,16 +49,39 @@ const sendWelcomeEmail = async (email, walletId) => {
         <h2>Account Registration Successful</h2>
         <p>Your wallet ID: <strong>${walletId}</strong></p>
         <p>Start trading after admin approval and KYC verification.</p>
-        <p>Contact support: ${process.env.SUPPORT_EMAIL}</p>
+        <p>Need help? Contact support at: ${process.env.SUPPORT_EMAIL}</p>
       `
     });
   } catch (error) {
-    console.error('Email sending error:', error);
+    logger.error('Welcome email error:', error.message);
     throw new Error('Failed to send welcome email');
+  }
+};
+
+// Send admin KYC notification (static HTML or convert to template later)
+const sendKYCNotification = async ({ userEmail, userId, adminEmail }) => {
+  try {
+    await transporter.sendMail({
+      from: `"KYC System" <${process.env.EMAIL_USER}>`,
+      to: adminEmail,
+      subject: 'New KYC Submission Requires Review',
+      html: `
+        <h2>New KYC Submission</h2>
+        <p><strong>User:</strong> ${userEmail}</p>
+        <p><strong>User ID:</strong> ${userId}</p>
+        <p>Please review the documents in the admin panel.</p>
+        <a href="${process.env.ADMIN_URL}/kyc-review/${userId}">
+          Review KYC Submission
+        </a>
+      `
+    });
+  } catch (error) {
+    logger.error(`KYC notification email failed: ${error.message}`);
   }
 };
 
 module.exports = {
   sendEmail,
-  sendWelcomeEmail
+  sendWelcomeEmail,
+  sendKYCNotification
 };
