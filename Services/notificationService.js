@@ -41,3 +41,13 @@ class NotificationService {
 }
 
 module.exports = new NotificationService();
+
+// Implement priority queue for high-volume notifications
+const { NotificationQueue } = require('./queues');
+emitToUser(userId, notification) {
+  NotificationQueue.add({
+    userId,
+    event: 'new_notification',
+    payload: notification
+  });
+}
