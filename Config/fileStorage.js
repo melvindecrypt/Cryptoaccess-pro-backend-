@@ -42,3 +42,10 @@ module.exports = multer({
     fileSize: 5 * 1024 * 1024 // 5MB
   }
 });
+
+// Add virus scanning integration
+const { scanFile } = require('./virusScanner');
+fileFilter: async (req, file, cb) => {
+  const isClean = await scanFile(file.path);
+  if (!isClean) return cb(new Error('File rejected: potential threat'));
+}
