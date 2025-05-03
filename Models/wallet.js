@@ -88,6 +88,16 @@ walletSchema.methods = {
     amount
   });
 
+// Add to instance methods:
+  validateAddress(address) {
+    const currencyValidators = {
+      BTC: /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
+      ETH: /^0x[a-fA-F0-9]{40}$/
+      // Add other currencies
+    };
+    return currencyValidators[this.currency].test(address);
+  }
+
   this.transactions.push(transaction._id);
   return this.save({ session });
 },
