@@ -19,3 +19,14 @@ module.exports = winston.createLogger({
     fileRotateTransport
   ]
 });
+
+// Add error tracking integration
+transports: [
+  new winston.transports.Console(),
+  fileRotateTransport,
+  new winston.transports.Http({
+    host: 'logs.example.com',
+    path: '/api/logs',
+    ssl: true
+  })
+]
