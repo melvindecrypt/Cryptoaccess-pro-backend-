@@ -39,33 +39,58 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 
 ├── config/
 │   ├── db.js
+│   ├── fileStorage.js
 ├── controllers/
 │   ├── authController.js
 │   ├── investmentController.js
+│   ├── kycController.js
+│   ├── subscriptionController.js
 │   ├── userController.js
 │   ├── walletController.js
-│   └── subscriptionController.js
+│   └── withdrawalController.js
 ├── middleware/
 │   ├── adminAuth.js
+│   ├── auditMiddleware,js
 │   ├── authMiddleware.js
+│   ├── localStorageAccess.js
 │   ├── requireVerifiedEmail.js
 │   └── requireKyc.js
 ├── models/
+│   ├── ArchiveUser.js
+│   ├── AuditLog.js
+│   ├── Notification.js
+│   ├── Transaction.js
 │   ├── User.js
 │   ├── Wallet.js
-│   └── Transaction.js
+│   └── Withdrawals.js
 ├── routes/
 │   ├── admin.js
+│   ├── audit.js
 │   ├── auth.js
 │   ├── investments.js
+│   ├── kyc.js
+│   ├── notifications.js
 │   ├── payments.js
-│   ├── wallets.js
 │   ├── subscription.js
+│   ├── wallets.js
 │   └── walletTransfer.js
-├──services/
-│   ├──payoutservice.js
+├── services/
+│   ├── auditService.js
+│   ├── notificationService.js
+│   └── payoutservice.js
+├── templates/
+│   ├── email/
+│   ├── investmentConfirmed.hbs
+│   ├── kycApproved.hbs
+│   ├── kycRejection.hbs
+│   ├── subscriptionSuccess.hbs
+│   ├── withdrawalProcessed.hbs
+│   └── withdrawalRejected.hbs
+├── uploads/
+│   ├── kyc/
 ├── utils/
 │   ├── emailservice.js
+│   ├── helpers.js
 │   ├── logger.js
 ├── server.js
 ├── package.json
