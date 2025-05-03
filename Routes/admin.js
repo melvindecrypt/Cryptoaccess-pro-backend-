@@ -671,3 +671,15 @@ router.patch('/withdrawals/:id', authenticate, isAdmin, async (req, res) => {
     session.endSession();
   }
 });
+
+// routes/admin.js
+router.patch('/users/:id',
+  authenticate,
+  isAdmin,
+  auditLog('admin_action', {
+    entityType: 'User',
+    entityId: req => req.params.id,
+    metadata: req => ({ action: 'user_update' })
+  }),
+  adminController.updateUser
+);
