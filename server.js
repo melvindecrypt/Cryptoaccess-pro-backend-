@@ -157,3 +157,14 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+// Serve static files
+app.use('/kyc', express.static('uploads/kyc'));
+
+// Error handling for file uploads
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json(formatResponse(false, err.message));
+  }
+  next(err);
+});
