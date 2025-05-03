@@ -143,3 +143,17 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+app.use((req, res, next) => {
+  auditService.log('api_request', {
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    metadata: {
+      method: req.method,
+      path: req.path,
+      params: req.params,
+      query: req.query
+    }
+  });
+  next();
+});
