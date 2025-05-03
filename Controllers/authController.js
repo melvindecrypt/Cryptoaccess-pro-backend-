@@ -121,3 +121,22 @@ exports.register = async (req, res) => {
     session.endSession();
   }
 };
+
+// Add JWT secret check
+if (!process.env.JWT_SECRET) {
+  throw new Error('Missing JWT_SECRET in environment');
+}
+
+// In register():
+const token = jwt.sign(
+  { 
+    id: user._id, 
+    email: user.email,
+    walletId: user.walletId // Include for frontend
+  },
+  process.env.JWT_SECRET,
+  { 
+    expiresIn: '24h', // Extended from 1h
+    algorithm: 'HS256' // Explicitly set
+  }
+);
