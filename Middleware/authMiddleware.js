@@ -64,3 +64,11 @@ exports.checkDeletionStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+// Add this error handler
+if (error.name === 'TokenExpiredError') {
+  return res.status(401).json({
+    code: 'TOKEN_EXPIRED',
+    message: 'Token expired. Please refresh your session'
+  });
+}
