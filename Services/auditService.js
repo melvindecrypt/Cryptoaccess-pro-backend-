@@ -1,30 +1,44 @@
-// services/auditService.js
 const AuditLog = require('../models/AuditLog');
 const logger = require('../utils/logger');
 
 class AuditService {
-  async log(action, {
-    userId = null,
-    ip = null,
-    userAgent = null,
-    entityType = null,
-    entityId = null,
-    metadata = {},
-    status = 'success'
-  }) {
+  async log(action, data) {
     try {
-      return await AuditLog.create({
-        userId,
-        ipAddress: ip,
-        userAgent,
+      const logEntry = await AuditLog.create({
         action,
-        entityType,
-        entityId,
-        metadata,
-        status
+        userId: data.userId,
+        entityType: data.entityType,
+        entityId: data.entityId,
+        ipAddress: data.ip,
+        userAgent: data.userAgent,
+        metadata: data.metadata,
+        status: data.status || 'success'
       });
+
+      logger.info(`Audit log created for ${action} action`, {
+        logId: logEntry._id,
+        ...data
+      });
+
+      return logEntry;
     } catch (error) {
-      logger.error(`Audit log failed: ${error.message}`);
+      logger.error(`Failed to create audit log: ${error.message}`, {
+        action,
+        error: error.message
+      });
+      throw error;
+    }
+  }
+
+  async getLogs(filter = {}, options = {}) {
+    try {
+      return await AuditLog.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(options.skip || 0)
+        .limit(options.limit || 50);
+    } catch (error) {
+      logger.error(`Failed to fetch audit logs: ${error.message}`);
+      throw error;
     }
   }
 }
