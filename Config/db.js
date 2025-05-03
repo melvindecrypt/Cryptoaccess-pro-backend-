@@ -30,3 +30,12 @@ process.on('SIGINT', async () => {
     process.exit(1); // Exit on disconnection failure
   }
 });
+
+// Add connection pooling
+const options = {
+  maxPoolSize: 50,
+  minPoolSize: 10,
+  socketTimeoutMS: 30000,
+  serverSelectionTimeoutMS: 5000
+};
+await mongoose.connect(process.env.MONGODB_URI, options);
