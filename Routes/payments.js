@@ -20,12 +20,9 @@ router.post('/payment-method', async (req, res) => {
     if (SUPPORTED_METHODS.includes(paymentMethod)) {
       return res.status(503).json(
         formatResponse(false, 
-          'Currently unavailable. Connect to our live agents or support through melvindecrypt@gmail.com',
-          { supportEmail: 'melvindecrypt@gmail.com' }
-        )
-      );
-    }
-
+    'Currently unavailable. Contact support',
+    { supportEmail: process.env.SUPPORT_EMAIL })
+       
     // Handle unknown payment methods
     return res.status(400).json(
       formatResponse(false, 'Invalid payment method')
