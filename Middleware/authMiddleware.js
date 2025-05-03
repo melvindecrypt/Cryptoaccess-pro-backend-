@@ -48,3 +48,19 @@ const isAdmin = (req, res, next) => {
 };
 
 module.exports = { authenticate, isAdmin };
+
+// Add to existing auth middleware
+exports.checkDeletionStatus = async (req, res, next) => {
+  try {
+    // For endpoints that shouldn't work for deleted users
+    if (req.user?.isDeleted) {
+      return res.status(410).json({
+        success: false,
+        message: 'Account no longer exists'
+      });
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
