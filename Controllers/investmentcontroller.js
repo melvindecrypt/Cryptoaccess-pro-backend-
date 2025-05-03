@@ -33,10 +33,8 @@ exports.invest = async (req, res) => {
     // Convert amount to Decimal
     const decimalAmount = new Decimal(amount);
 
-    // Fetch user and check KYC status
+    // Fetch user 
     const user = await User.findById(userId);
-    if (user.kycStatus !== 'approved') {
-      return res.status(403).json(formatResponse(false, 'KYC not approved'));
     }
 
     // Fetch investment plans (mocked for now)
