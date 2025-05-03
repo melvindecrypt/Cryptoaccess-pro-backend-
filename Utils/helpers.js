@@ -106,3 +106,11 @@ exports.formatCurrency = (amount, currency = 'USD') => {
 };
 
 module.exports = exports;
+
+// Add JWT helper
+exports.generateJWT = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    algorithm: 'RS256',
+    expiresIn: '1h'
+  });
+};
