@@ -51,3 +51,11 @@ emitToUser(userId, notification) {
     payload: notification
   });
 }
+
+// services/notificationService.js
+   const sendRealTimeNotification = (userId, message) => {
+     const userSocket = connectedUsers.get(userId);
+     if (userSocket) {
+       userSocket.emit("notification", { message });
+     }
+   };
