@@ -17,3 +17,13 @@ router.post(
 );
 
 module.exports = router;
+
+// routes/kyc.js
+     router.get('/documents/:file', authMiddleware, (req, res) => {
+       const filePath = path.join(__dirname, `../secure-storage/kyc/${req.user.id}/${req.params.file}`);
+       if (fs.existsSync(filePath)) {
+         res.sendFile(filePath);
+       } else {
+         res.status(404).send('File not found');
+       }
+     });
