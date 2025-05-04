@@ -53,3 +53,17 @@ module.exports = async (req, res, next) => {
     });
   }
 };
+
+// middleware/adminAuth.js
+  const verifyAdmin = (req, res, next) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    jwt.verify(token, process.env.ADMIN_JWT_SECRET, (err, decoded) => {
+      if (err || decoded.role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      req.adminId = decoded.id;
+      next();
+    });
+  };
