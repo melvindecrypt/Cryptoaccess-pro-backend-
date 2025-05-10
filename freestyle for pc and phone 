@@ -136,7 +136,7 @@ Main app pages
 
 Prompt for Bolt.new:
 
-> Create a modal on the payment and Pro+ subscription screens labeled "Upload Payment Proof". This modal should include:
+> Create a modal on the access fee payment and Pro+ subscription screens labeled "Upload Payment Proof". This modal should include:
 
 A file upload input labeled "Upload Screenshot/Receipt".
 
