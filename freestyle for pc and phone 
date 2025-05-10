@@ -108,6 +108,8 @@ export const translations = {
  * A mechanism for users to change their selected language after the initial selection. This could be a dropdown menu or a similar UI element in the app's settings or navigation. If you include this, the selection should update the selectedLanguage in localStorage and refresh the UI with the new translations.
 
 
+==================================
+
 
 Main app pages 
  Landing Page (/): This is the initial page users will see, showcasing the app's features and encouraging them to sign up. It includes the Hero Section, "WHAT WE OFFER," testimonials, etc.
@@ -128,3 +130,29 @@ Main app pages
  * Referrals (/settings > Referrals Tab or /referrals): Users can access their referral information and sharing options.
  * Logout (within user dropdown in the header): When a user is finished, they will typically use a logout option in a user dropdown menu (usually in the top right of the header) to securely log out of the application.
 
+
+===≈================================
+
+
+Prompt for Bolt.new:
+
+> Create a modal on the payment and Pro+ subscription screens labeled "Upload Payment Proof". This modal should include:
+
+A file upload input labeled "Upload Screenshot/Receipt".
+
+A submit button labeled "Submit Proof" that sends a POST request to /api/payments/upload-proof with the file (key: proof) using multipart/form-data.
+
+On success, show a toast: "Proof uploaded. Pending verification."
+
+
+Ensure that this file upload is compatible with the existing backend that stores files locally (uploads/paymentProofs) and links uploads to the logged-in user.
+
+Also create a dedicated section inside the Admin Panel for viewing all uploaded proofs. Use /api/payments/admin/proofs to list them with:
+
+User email
+
+Uploaded file (previewable or downloadable)
+
+Status (pending/approved/rejected)
+
+A dropdown to change status, which sends a PUT request to /api/payments/admin/proofs/:id with { status }.
