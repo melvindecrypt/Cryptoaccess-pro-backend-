@@ -37,3 +37,33 @@ router.post('/payment-method', async (req, res) => {
 });
 
 module.exports = router;
+
+// routes/payments.js (append the following)
+const express = require('express');
+const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const {
+  uploadPaymentProof,
+  getAllPaymentProofs,
+  updateProofStatus
+} = require('../controllers/paymentProofController');
+const auth = require('../middleware/authMiddleware');
+const adminAuth = require('../middleware/adminAuth');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/paymentProofs'),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
+
+// Routes
+router.post('/upload-proof', auth, upload.single('proof'), uploadPaymentProof);
+router.get('/admin/proofs', adminAuth, getAllPaymentProofs);
+router.put('/admin/proofs/:id', adminAuth, updateProofStatus);
+
+module.exports = router;
