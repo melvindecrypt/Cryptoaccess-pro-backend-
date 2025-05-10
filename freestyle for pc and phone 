@@ -106,3 +106,25 @@ export const translations = {
  * On subsequent visits after a language has been selected and saved in localStorage, the language selection modal should not appear automatically. The application should directly use the language preference stored in localStorage to display the translated text.
 7. Language Switching Mechanism:
  * A mechanism for users to change their selected language after the initial selection. This could be a dropdown menu or a similar UI element in the app's settings or navigation. If you include this, the selection should update the selectedLanguage in localStorage and refresh the UI with the new translations.
+
+
+
+Main app pages 
+ Landing Page (/): This is the initial page users will see, showcasing the app's features and encouraging them to sign up. It includes the Hero Section, "WHAT WE OFFER," testimonials, etc.
+ * Signup (/signup): Users who click "Get Started" or the "Signup" link in the navigation will land on this page to create a new account.
+ * Email Verification (Implied): After submitting the signup form, the user will likely see a temporary page or message instructing them to check their email for a verification link. This isn't a dedicated page they stay on for long, but a crucial step in the process.
+ * Login (/login): Existing users or those who have verified their email will use this page to log in to their account.
+ * Access Fee (/access-fee): New users who have logged in will be directed to this page to pay the one-time $99.90 access fee to unlock the main features of the app.
+ * Main Dashboard (/dashboard): Once the access fee is paid (and likely confirmed by the admin in the backend), users will land on their personalized dashboard. This is the central hub where they can see their wallet balances and navigate to other features.
+ * Exchange (/exchange): From the dashboard, users can navigate to the exchange section to simulate trading various crypto pairs.
+ * Investments (/dashboard > Investments Tab or /investments): Pro+ users (after upgrading and admin approval) will be able to access the investments tab or a dedicated investments page to participate in simulated investment plans.
+ * Charts (/charts?coin=...): Users can navigate to a specific chart view for different cryptocurrencies, often by clicking on a coin in their wallet overview.
+ * Deposit (/dashboard > Deposit or /deposit): Users can access a page to view the admin's wallet addresses for various cryptocurrencies if they wish to send real payments.
+ * Withdraw (/withdraw): Pro+ users who have completed KYC can access the withdrawal page to make simulated withdrawal requests.
+ * Settings (/settings): Users can access their settings to manage their profile, language, KYC status, and other preferences.
+ * Profile Edit (/profile/edit): Within the settings, users can navigate to edit their personal profile information.
+ * KYC Verification (/kyc): Users can access the KYC verification page through the settings to upload their identification documents.
+ * Pro+ Upgrade (/pro-plus): Users can navigate to this page to pay the one-time fee to upgrade to the Pro+ tier.
+ * Referrals (/settings > Referrals Tab or /referrals): Users can access their referral information and sharing options.
+ * Logout (within user dropdown in the header): When a user is finished, they will typically use a logout option in a user dropdown menu (usually in the top right of the header) to securely log out of the application.
+
