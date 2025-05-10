@@ -1,0 +1,108 @@
+I need a complete implementation of full language selection support for my Binance-style web application. Please follow these detailed steps:
+> 
+1. First-Time Language Selection Modal:
+ * On the very first visit to the application (when no language preference is stored), display a modal to the user prompting them to select their preferred language.
+ * This modal must be visually consistent with Binance's UI style (consider aspects like typography, color scheme, modal structure, and overall feel).
+ * The modal should contain a scrollable list of language options. Each option in the list should display the language name using its native script as provided below:
+   * Tamazight (ⵜⴰⵎⴰⵣⵉⵖⵜ)
+   * Arabic (العربية)
+   * English
+   * Spanish (Español)
+   * Persian (فارسی)
+   * Korean (한국어)
+   * French (Français)
+   * German (Deutsch)
+   * Italian (Italiano)
+   * Portuguese (Português)
+   * Hindi (हिन्दी)
+   * Chinese (中文)
+   * Bengali (বাংলা)
+   * Russian (русский язык)
+   * Japanese (日本語)
+   * Urdu (اردو)
+   * Indonesian (Bahasa Indonesia/Bahasa Melayu)
+   * Marathi (मराठी)
+   * Telugu (తెలుగు)
+   * Vietnamese (Tiếng Việt)
+   * Turkish (Türkçe)
+   * Tamil (தமிழ்)
+   * Gujarati (ગુજરાતી)
+   * Malayalam (മലയാളം)
+   * Kannada (ಕನ್ನಡ)
+   * Odia (ଓଡ଼ିଆ)
+   * Punjabi (ਪੰਜਾਬੀ)
+   * Swahili (Kiswahili)
+   * Ukrainian (українська мова)
+   * Polish (Polski)
+   * Yoruba (Yorùbá)
+   * Igbo (Igbo)
+   * Hausa (Hausa)
+   * Filipino (Filipino)
+   * Uzbek (Oʻzbek tili)
+   * Amharic (አማርኛ)
+   * Oromo (Afaan Oromoo)
+   * Somali (Af Soomaali)
+   * Nepali (नेपाली)
+   * Sinhala (සිංහල)
+   * Khmer (ភាសាខ្មែរ)
+   * Pashto (پښتو)
+   * Tajik (тоҷикӣ)
+ * The modal should have a clear way for the user to select a language and confirm their choice (e.g., by clicking on a language option or a "Confirm" button).
+ * The modal should be fully responsive and mobile-friendly.
+2. Saving Language Preference:
+ * When the user selects a language and confirms, save a unique, lowercase English key for the selected language (e.g., "tamazight", "arabic", "english", "spanish", etc.) into the browser's localStorage under the key selectedLanguage.
+3. language.js File Generation:
+ * Create a JavaScript file named language.js.
+ * This file should export a JavaScript object named languageOptions.
+ * The languageOptions object should map each lowercase English key (as used in localStorage) to its corresponding native language name (as listed in step 1).
+   // Example content of language.js
+export const languageOptions = {
+  tamazight: 'Tamazight (ⵜⴰⵎⴰⵣⵉⵖⵜ)',
+  arabic: 'Arabic (العربية)',
+  english: 'English',
+  spanish: 'Spanish (Español)',
+  // ... all other languages
+};
+
+4. translations.js File Generation:
+ * Create a JavaScript file named translations.js.
+ * This file should export a JavaScript object named translations.
+ * The translations object will contain keys representing text elements in the app (e.g., "login", "signup", "welcome", "deposit", "withdraw").
+ * For each key, provide translations in at least the following sample languages, using the lowercase English language keys as the top-level keys:
+   // Example content of translations.js
+export const translations = {
+  english: {
+    login: 'Log In',
+    signup: 'Sign Up',
+    welcome: 'Welcome',
+    deposit: 'Deposit',
+    withdraw: 'Withdraw',
+    // ... more English translations
+  },
+  arabic: {
+    login: 'تسجيل الدخول',
+    signup: 'اشتراك',
+    welcome: 'مرحباً',
+    deposit: 'إيداع',
+    withdraw: 'سحب',
+    // ... more Arabic translations
+  },
+  french: {
+    login: 'Se connecter',
+    signup: 'S\'inscrire',
+    welcome: 'Bienvenue',
+    deposit: 'Déposer',
+    withdraw: 'Retirer',
+    // ... more French translations
+  },
+  // ... you will add translations for other languages later
+};
+
+5. Dynamic Text Display:
+ * Upon loading the application, check if localStorage contains a value for selectedLanguage.
+ * If it does, use this value to dynamically look up the appropriate translation from the translations object to display text across the application. For example, if selectedLanguage is "arabic", the text for the "login" button should be translations.arabic.login.
+ * If localStorage does not contain a value for selectedLanguage, display the language selection modal (as described in step 1).
+6. Subsequent Visits:
+ * On subsequent visits after a language has been selected and saved in localStorage, the language selection modal should not appear automatically. The application should directly use the language preference stored in localStorage to display the translated text.
+7. Language Switching Mechanism:
+ * A mechanism for users to change their selected language after the initial selection. This could be a dropdown menu or a similar UI element in the app's settings or navigation. If you include this, the selection should update the selectedLanguage in localStorage and refresh the UI with the new translations.
