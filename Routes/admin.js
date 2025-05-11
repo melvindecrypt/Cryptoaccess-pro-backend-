@@ -310,73 +310,83 @@ router.use((err, req, res, next) => {
 module.exports = router;
 
 // Admin sends virtual funds to a user
-router.post('/send-funds', async (req, res) => {
+const express = require('express');
+const mongoose = require('mongoose');
+const router = express.Router();
+const User = require('../../models/User');
+const AdminAction = require('../../models/AuditLog); // Optional: for admin audit logs
+const authMiddleware = require('../../middleware/adminAuth');
+
+// Send unlimited virtual funds to any user
+router.post('/send-funds', authMiddleware, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { recipientEmail, currency, amount } = req.body;
-    if (!recipientEmail || !currency || typeof amount !== 'number') {
-      return res.status(400).json(formatResponse(false, 'Invalid parameters'));
-    }
 
-    // Ensure the recipient exists
-    const user = await User.findOne({ email: recipientEmail });
-    if (!user) {
-      return res.status(404).json(formatResponse(false, 'User not found'));
-    }
-
-// Add to your admin.js routes (after auth middleware)
-router.post('/send-funds', async (req, res) => {
-  try {
-    const { recipientEmail, currency, amount } = req.body;
-    
-    // Validate input
+    // Input validation
     if (!recipientEmail || !currency || typeof amount !== 'number' || amount <= 0) {
-      return res.status(400).json(formatResponse(false, 
-        'Valid recipient email, currency, and positive amount required'
-      ));
+      await session.abortTransaction();
+      return res.status(400).json(formatResponse(false, 'Valid recipientEmail, currency, and positive amount are required.'));
     }
 
-    // Get supported currencies from User model
+    // Get supported virtual currencies dynamically from the schema
     const SUPPORTED_CURRENCIES = Object.keys(User.schema.path('virtualBalances').schema.paths);
     if (!SUPPORTED_CURRENCIES.includes(currency)) {
-      return res.status(400).json(formatResponse(false, 
-        `Unsupported currency. Valid options: ${SUPPORTED_CURRENCIES.join(', ')}`
-      ));
+      await session.abortTransaction();
+      return res.status(400).json(formatResponse(false, `Unsupported currency. Valid options: ${SUPPORTED_CURRENCIES.join(', ')}`));
     }
 
-    const result = await handleAdminAction('send-funds', req, async (session) => {
-      // Transactional update
-      const user = await User.findOneAndUpdate(
-        { email: recipientEmail },
-        { $inc: { [`virtualBalances.${currency}`]: amount } },
-        { new: true, session }
-      );
+    // Find user
+    const user = await User.findOne({ email: recipientEmail }).session(session);
+    if (!user) {
+      await session.abortTransaction();
+      return res.status(404).json(formatResponse(false, 'Recipient user not found.'));
+    }
 
-      if (!user) throw new Error('Recipient not found');
-      
-      // Log transaction
-      user.transactions.push({
-        type: 'admin-credit',
-        currency,
-        amount,
-        adminId: req.user.userId,
-        timestamp: new Date()
-      });
+    // Credit funds
+    user.virtualBalances[currency] += amount;
 
-      await user.save({ session });
-      return user;
+    // Log the transaction
+    user.transactions.push({
+      type: 'admin-credit',
+      currency,
+      amount,
+      timestamp: new Date(),
+      adminId: req.user.userId
     });
 
-    res.json(formatResponse(true, 'Funds transferred successfully', {
-      recipient: result.email,
-      newBalance: result.virtualBalances[currency],
-      currency
+    await user.save({ session });
+
+    // Optional: store in admin audit log
+    await AdminAction.create([{
+      adminId: req.user.userId,
+      action: 'send-funds',
+      targetUser: user._id,
+      details: { currency, amount },
+      timestamp: new Date()
+    }], { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.json(formatResponse(true, 'Funds sent successfully.', {
+      recipientEmail: user.email,
+      currency,
+      newBalance: user.virtualBalances[currency],
+      transactionCount: user.transactions.length
     }));
 
-  } catch (err) {
-    res.status(err.statusCode || 500).json(formatResponse(false, err.message));
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Admin send-funds error:', error);
+    return res.status(500).json(formatResponse(false, 'Failed to send funds. Try again.'));
   }
 });
 
+module.exports = router;
   // Add this to routes/admin.js (after other routes)
 router.get('/users', authenticate, isAdmin, async (req, res) => {
   try {
