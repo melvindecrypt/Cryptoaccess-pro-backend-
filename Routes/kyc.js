@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../config/fileStorage');
-const requireAuth = require('../middlewares/requireAuth');
+const Authenticate = require('../middlewares/authMiddleware);
 const auditLog = require('../middlewares/auditLog');
 const kycController = require('../controllers/kycController');
 
 router.post(
   '/submit',
-  requireAuth,
+  Authenticate,
   upload.fields([
     { name: 'idImage', maxCount: 1 },
     { name: 'selfieImage', maxCount: 1 }
