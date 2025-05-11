@@ -1,7 +1,7 @@
 // routes/investments.js
 const express = require('express');
 const router = express.Router();
-const requireAuth = require('../middlewares/requireAuth');
+const Authenticate = require('../middlewares/authMiddleware);
 const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
 
 // Controllers (assume these are implemented in controllers/investmentController.js)
@@ -9,13 +9,13 @@ const { viewPlans, invest, trackInvestment } = require('../controllers/investmen
 
 // Routes
 // View available investment plans
-router.get('/plans', requireAuth, viewPlans);
+router.get('/plans', Authenticate, viewPlans);
 
 // Start a new investment (does not require KYC approval)
-router.post('/invest', requireAuth, invest);
+router.post('/invest', Authenticate, invest);
 
 // Track user's current investments
-router.get('/my-investments', requireAuth, trackInvestment);
+router.get('/my-investments', authenticate, trackInvestment);
 
 module.exports = router;
 
@@ -23,9 +23,9 @@ module.exports = router;
 const express = require('express');
 const router = express.Router();
 const investmentController = require('../controllers/investmentController');
-const auth = require('../middleware/authMiddleware');
+const authenticate = require('../middleware/authMiddleware');
 
 router.get('/:id', auth, investmentController.getInvestmentDetails);
-router.post('/:id/cancel', auth, investmentController.cancelInvestment);
+router.post('/:id/cancel', authenticate, investmentController.cancelInvestment);
 
 module.exports = router;
