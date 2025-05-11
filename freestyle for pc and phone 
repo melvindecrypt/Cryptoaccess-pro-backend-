@@ -1,4 +1,8 @@
-I need a complete implementation of full language selection support for my Binance-style web application. Please follow these detailed steps:
+look at the ending of the prompt that part that it states that "Admin dashboard (secured route, not part of this frontend scope" remove the not part of this frontend scope part.
+
+======================
+
+ I need a complete implementation of full language selection support for my Binance-style web application. Please follow these detailed steps:
 > 
 1. First-Time Language Selection Modal:
  * On the very first visit to the application (when no language preference is stored), display a modal to the user prompting them to select their preferred language.
