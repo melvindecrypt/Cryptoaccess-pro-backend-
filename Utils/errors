@@ -1,0 +1,43 @@
+// BadRequestError.js
+class BadRequestError extends Error {
+    constructor(message = 'Invalid request parameters') {
+        super(message);
+        this.statusCode = 400;
+        this.name = 'BadRequestError';
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+module.exports = BadRequestError;
+
+// NotFoundError.js
+class NotFoundError extends Error {
+    constructor(message = 'Resource not found') {
+        super(message);
+        this.statusCode = 404;
+        this.name = 'NotFoundError';
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+module.exports = NotFoundError;
+
+// InternalServerError.js
+class InternalServerError extends Error {
+    constructor(message = 'Internal server error') {
+        super(message);
+        this.statusCode = 500;
+        this.name = 'InternalServerError';
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+module.exports = InternalServerError;
+
+// InsufficientBalanceError.js
+class InsufficientBalanceError extends Error {
+    constructor(message = 'Insufficient virtual balance') {
+        super(message);
+        this.statusCode = 400;
+        this.name = 'InsufficientBalanceError';
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+module.exports = InsufficientBalanceError;
