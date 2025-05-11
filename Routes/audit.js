@@ -29,3 +29,7 @@ router.get('/', authenticate, isAdmin, async (req, res) => {
     });
   }
 });
+
+if (userId && !userId.match(/^[0-9a-fA-F]{24}$/)) {
+  return res.status(400).json({ status: false, message: 'Invalid userId format' });
+}
