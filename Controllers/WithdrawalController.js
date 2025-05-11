@@ -1,5 +1,5 @@
 // File: controllers/withdrawalController.js
-const Withdrawal = require('../models/Withdrawal');
+const Withdrawal = require('../models/Withdrawals');
 const User = require('../models/User');
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
