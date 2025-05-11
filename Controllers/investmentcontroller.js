@@ -109,3 +109,24 @@ exports.getInvestmentDetails = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+exports.cancelInvestment = async (req, res) => {
+  try {
+    const investment = await Investment.findOne({ _id: req.params.id, user: req.user.id });
+
+    if (!investment) {
+      return res.status(404).json({ success: false, message: 'Investment not found' });
+    }
+
+    if (investment.status !== 'active') {
+      return res.status(400).json({ success: false, message: 'Only active investments can be cancelled' });
+    }
+
+    investment.status = 'cancelled';
+    await investment.save();
+
+    res.json({ success: true, message: 'Investment cancelled', investment });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
