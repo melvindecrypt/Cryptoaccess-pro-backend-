@@ -772,3 +772,12 @@ router.delete('/users/:id', authenticate, isAdmin, async (req, res) => {
     session.endSession();
   }
 });
+
+const express = require('express');
+const { adminLogin } = require('../controllers/authController');
+const router = express.Router();
+
+// Admin login route
+router.post('/login', adminLogin);
+
+module.exports = router;
