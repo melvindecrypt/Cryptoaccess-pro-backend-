@@ -1,0 +1,55 @@
+const { formatResponse } = require('../../utils/helpers');
+const { BadRequestError } = require('../../utils/errors');
+
+exports.validateApproveUser = (req, res, next) => {
+    const { email } = req.body;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
+        return res.status(400).json(formatResponse(false, 'Valid email address required'));
+    }
+    next();
+};
+
+exports.validateSuspendUser = (req, res, next) => {
+    const { email, isSuspended } = req.body;
+    
+    if (!email || typeof email !== 'string' || 
+        typeof isSuspended !== 'boolean') {
+        throw new BadRequestError('Valid email and suspension status required');
+    }
+    next();
+};
+
+exports.validateUpdateBalance = (req, res, next) => {
+    const { currency, amount } = req.body;
+    const supportedCurrencies = ['USD', 'EUR', 'BTC', 'ETH'];
+    
+    if (!supportedCurrencies.includes(currency) || 
+        typeof amount !== 'number' || amount <= 0) {
+        throw new BadRequestError('Valid currency and positive amount required');
+    }
+    next();
+};
+
+exports.validateProcessWithdrawal = (req, res, next) => {
+    const { action } = req.body;
+    const validActions = ['approve', 'reject', 'complete'];
+    
+    if (!validActions.includes(action)) {
+        throw new BadRequestError('Invalid withdrawal action');
+    }
+    next();
+};
+
+exports.validateAdminCreditDebit = (req, res, next) => {
+    const { currency, amount, reason } = req.body;
+    const supportedCurrencies = ['USD', 'EUR', 'BTC', 'ETH'];
+    
+    if (!supportedCurrencies.includes(currency) || 
+        typeof amount !== 'number' || amount <= 0 ||
+        typeof reason !== 'string' || reason.trim().length < 5) {
+        throw new BadRequestError('Valid currency, amount, and reason required');
+    }
+    next();
+};
