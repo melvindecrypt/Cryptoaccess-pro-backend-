@@ -18,3 +18,14 @@ router.post('/invest', requireAuth, invest);
 router.get('/my-investments', requireAuth, trackInvestment);
 
 module.exports = router;
+
+
+const express = require('express');
+const router = express.Router();
+const investmentController = require('../controllers/investmentController');
+const auth = require('../middleware/authMiddleware');
+
+router.get('/:id', auth, investmentController.getInvestmentDetails);
+router.post('/:id/cancel', auth, investmentController.cancelInvestment);
+
+module.exports = router;
