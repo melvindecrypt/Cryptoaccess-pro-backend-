@@ -195,3 +195,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// admin settings 
+app.use('/api/admin/settings', require('./routes/adminSettings'));
