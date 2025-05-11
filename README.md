@@ -101,6 +101,8 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── emailservice.js
 │   ├── helpers.js
 │   ├── logger.js
+├──validators
+│   ├──subscriptionValidators.js
 ├── server.js
 ├── package.json
 └── package-lock.json
