@@ -51,6 +51,7 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── walletController.js
 │   └── withdrawalController.js
 ├── middleware/
+│   ├──validators/│   ├── adminValidators.js
 │   ├── adminAuth.js
 │   ├── auditMiddleware,js
 │   ├── authMiddleware.js
@@ -84,6 +85,7 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── auditService.js
 │   ├── notificationService.js
 │   └── payoutservice.js
+│   ├── simulationService.js 
 ├── templates/
 │   ├── email/
 │   ├── investmentConfirmed.hbs
@@ -95,6 +97,7 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 ├── uploads/
 │   ├── kyc/
 ├── utils/
+│   ├── errors
 │   ├── emailservice.js
 │   ├── helpers.js
 │   ├── logger.js
