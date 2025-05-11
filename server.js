@@ -8,14 +8,41 @@ const rateLimit = require('express-rate-limit');
 const { body } = require('express-validator');
 const logger = require('./utils/logger');
 const { formatResponse } = require('./utils/helpers');
+const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken'); // Assuming you use JWT for Socket.IO auth
+const auditService = require('./services/auditService'); // Assuming you have an audit service
+const multer = require('multer'); // Assuming you use multer for file uploads
 
 // Load environment variables
 dotenv.config();
 
 // Initialize Express app
 const app = express();
+const server = require('http').createServer(app); // For Socket.IO
 
-// ================== Security Middleware ==================
+// ================== Socket.IO Setup ==================
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL,
+    methods: ["GET", "POST"]
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('Client connected');
+
+  socket.on('authenticate', (token) => {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.join(`user_${decoded.id}`);
+    } catch (error) {
+      socket.disconnect();
+    }
+  });
+});
+
+// ================== Middleware ==================
+// Security Middleware
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -27,21 +54,19 @@ app.use(helmet({
     }
   }
 }));
-
 app.use(cors({
   origin: process.env.CLIENT_URL,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
-
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   next();
 });
 
-// ================== Rate Limiting ==================
+// Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -49,103 +74,15 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// ================== Body Parsing ==================
+// Body Parsing
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
-// ================== Database Connection ==================
-require('./config/db')();
-
-// ================== Request Logging ==================
+// Request Logging
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.originalUrl}`);
-  next();
-});
-
-// ================== Route Imports ==================
-const adminRoutes = require('./routes/admin');
-const authRoutes = require('./routes/auth');
-const paymentRoutes = require('./routes/payments');
-const walletRoutes = require('./routes/wallets');
-const transferRoutes = require('./routes/walletTransfer');
-const investmentRoutes = require('./routes/investments');
-const subscriptionRoutes = require('./routes/subscription');
-
-// ================== Route Definitions ==================
-app.use('/api/admin', adminRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/wallets', walletRoutes);
-app.use('/api/transfers', transferRoutes);
-app.use('/api/investments', investmentRoutes);
-app.use('/api/subscriptions', subscriptionRoutes);
-
-// ================== HTTPS Redirection ==================
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    if (req.headers['x-forwarded-proto'] !== 'https') {
-      return res.redirect(`https://${req.headers.host}${req.url}`);
-    }
-    return next();
-  });
-}
-
-// ================== Error Handling ==================
-app.use((req, res) => {
-  res.status(404).json(formatResponse(false, 'Endpoint not found'));
-});
-
-app.use((err, req, res, next) => {
-  logger.error(`Server Error: ${err.stack}`);
-  res.status(err.statusCode || 500).json(formatResponse(false, 
-    process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-  ));
-});
-
-// ================== Server Initialization ==================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
-
-// ===== Graceful Shutdown on Termination =====
-const gracefulShutdown = async () => {
-  await mongoose.connection.close();
-  logger.info('MongoDB disconnected on app termination');
-  process.exit(0);
-};
-
-process.on('SIGINT', gracefulShutdown); // For manual termination (Ctrl+C)
-process.on('SIGTERM', gracefulShutdown); // For hosting platforms like Heroku/Vercel
-
-module.exports = app;
-
-// Add to server.js
-const { Server } = require('socket.io');
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL,
-    methods: ["GET", "POST"]
-  }
-});
-
-io.on('connection', (socket) => {
-  console.log('Client connected');
-  
-  // Join user-specific room
-  socket.on('authenticate', (token) => {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.join(`user_${decoded.id}`);
-    } catch (error) {
-      socket.disconnect();
-    }
-  });
-});
-
-app.use((req, res, next) => {
-  auditService.log('api_request', {
+  auditService.log('api_request', { // Assuming auditService is defined
     ip: req.ip,
     userAgent: req.get('User-Agent'),
     metadata: {
@@ -161,6 +98,40 @@ app.use((req, res, next) => {
 // Serve static files
 app.use('/kyc', express.static('uploads/kyc'));
 
+// ================== Database Connection ==================
+require('./config/db')();
+
+// ================== Route Imports ==================
+const adminRoutes = require('./routes/admin');
+const authRoutes = require('./routes/auth');
+const paymentRoutes = require('./routes/payments');
+const walletRoutes = require('./routes/wallets'); // Corrected typo: wallets
+const transferRoutes = require('./routes/walletTransfer');
+const investmentRoutes = require('./routes/investments');
+const subscriptionRoutes = require('./routes/subscription');
+const adminSettingsRoutes = require('./routes/adminSettings'); // Assuming this path is correct
+
+// ================== Route Definitions ==================
+app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/wallets', walletRoutes);
+app.use('/api/transfers', transferRoutes);
+app.use('/api/investments', investmentRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/admin/settings', adminSettingsRoutes); // Mount admin settings routes
+
+// ================== HTTPS Redirection ==================
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    return next();
+  });
+}
+
+// ================== Error Handling ==================
 // Error handling for file uploads
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -169,32 +140,31 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const adminRoutes = require('./routes/admin');  // Add this line
-
-const app = express();
-
-// Middleware setup
-app.use(bodyParser.json());
-
-// Use admin routes
-app.use('/admin', adminRoutes);
-
-// Database connection setup (adjust based on your environment)
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('Database connected');
-}).catch(err => console.log('Database connection error:', err));
-
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.use((req, res) => {
+  res.status(404).json(formatResponse(false, 'Endpoint not found'));
 });
 
-// admin settings 
-app.use('/api/admin/settings', require('./routes/adminSettings'));
+app.use((err, req, res, next) => {
+  logger.error(`Server Error: ${err.stack}`);
+  res.status(err.statusCode || 500).json(formatResponse(false,
+    process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  ));
+});
+
+// ================== Server Initialization ==================
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => { // Use the 'server' object for Socket.IO
+  logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+});
+
+// ===== Graceful Shutdown on Termination =====
+const gracefulShutdown = async () => {
+  await mongoose.connection.close();
+  logger.info('MongoDB disconnected on app termination');
+  process.exit(0);
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
+
+module.exports = app;
