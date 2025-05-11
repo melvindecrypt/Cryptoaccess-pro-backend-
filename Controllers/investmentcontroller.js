@@ -93,3 +93,19 @@ exports.trackInvestment = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Error tracking investment', { error: error.message }));
   }
 };
+
+const Investment = require('../models/Investment');
+
+exports.getInvestmentDetails = async (req, res) => {
+  try {
+    const investment = await Investment.findOne({ _id: req.params.id, user: req.user.id });
+
+    if (!investment) {
+      return res.status(404).json({ success: false, message: 'Investment not found' });
+    }
+
+    res.json({ success: true, investment });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
