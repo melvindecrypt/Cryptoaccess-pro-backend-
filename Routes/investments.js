@@ -1,7 +1,7 @@
 // routes/investments.js
 const express = require('express');
 const router = express.Router();
-const Authenticate = require('../middlewares/authMiddleware);
+const {Authenticate} = require('../middlewares/authMiddleware);
 const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
 
 // Controllers (assume these are implemented in controllers/investmentController.js)
@@ -23,9 +23,9 @@ module.exports = router;
 const express = require('express');
 const router = express.Router();
 const investmentController = require('../controllers/investmentController');
-const authenticate = require('../middleware/authMiddleware');
+const {Authenticate} = require('../middleware/authMiddleware');
 
 router.get('/:id', auth, investmentController.getInvestmentDetails);
-router.post('/:id/cancel', authenticate, investmentController.cancelInvestment);
+router.post('/:id/cancel', Authenticate, investmentController.cancelInvestment);
 
 module.exports = router;
