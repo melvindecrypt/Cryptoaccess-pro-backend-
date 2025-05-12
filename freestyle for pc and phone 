@@ -1326,3 +1326,5 @@ Key Administrative Functions and Corresponding Endpoints:
    * Update Platform Settings: PUT /api/admin/settings/settings
    * Trigger ROI Payouts: POST /admin/process-payouts
 
+===≈===================
+now remember you can add a prompt about the box that has now been added for access fees and pro+ subscriptions, where users can show proof of payment.
