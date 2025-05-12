@@ -198,3 +198,79 @@ exports.adminLogin = async (req, res) => {
     });
   }
 };
+
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation Error',
+        message: 'Email and password are required',
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication Failed',
+        message: 'Invalid credentials',
+      });
+    }
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication Failed',
+        message: 'Invalid credentials',
+      });
+    }
+
+    // Check if account is suspended (you might have a `isSuspended` field in your User model)
+    if (user.isSuspended) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden',
+        message: 'Account suspended',
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        walletId: user.walletId,
+        kycStatus: user.kycStatus,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' } // Adjust expiration as needed
+    );
+
+    // Respond with success and token
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        walletId: user.walletId,
+        kycStatus: user.kycStatus,
+      },
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server Error',
+      message: error.message,
+    });
+  }
+};
