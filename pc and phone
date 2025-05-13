@@ -7,31 +7,65 @@ Prompt for Bolt.new:
 > Endpoint URL: /api/dashboard
 > Authentication: JWT token in the Authorization header.
 > Request Data: None.
-> Response Data (Success - JSON): (As previously defined)
-> {
->   "user": {
->     "email": "string",
->     "walletId": "string",
->     "balance": {
->       "USD": "float",
->       "BTC": "float",
->       // ... other currencies
->     },
->     "kycStatus": "string",
->     "accessStatus": "string"
->   },
->   "investmentStatus": {
->     "activePlans": [],
->     "availablePlans": []
->   },
->   "proPlusStatus": "string"
-> }
-> 
+> Response Data (Success - JSON - HTTP Status 200):
+{
+  "user": {
+    "email": "string (user's email address)",
+    "walletId": "string (user's unique wallet identifier - UUIDv4)",
+    "balance": {
+      "USD": "float (user's USD balance)",
+      "BTC": "float (user's Bitcoin balance)",
+      "ETH": "float (user's Ethereum balance)"
+      // Add other currencies as needed
+    },
+    "kycStatus": "string ('pending', 'approved', 'rejected', 'NOT_SUBMITTED')",
+    "accessStatus": "string ('pending', 'granted')"
+  },
+  "investmentStatus": {
+    "activePlans": [
+      {
+        "planId": "string (ID of the investment plan)",
+        "name": "string (name of the investment plan)",
+        "amountInvested": "float (amount invested in this plan)",
+        "roi": "integer (Return on Investment percentage)",
+        "duration": "string (duration of the investment plan)",
+        "status": "string ('active', 'completed')"
+      }
+      // More active investment plans
+    ],
+    "availablePlans": [
+      {
+        "id": "string (ID of the investment plan)",
+        "name": "string (name of the investment plan)",
+        "minAmount": "float (minimum amount to invest in this plan)",
+        "roi": "integer (Return on Investment percentage)",
+        "duration": "string (duration of the investment plan)"
+      }
+      // More available investment plans
+    ]
+  },
+  "proPlusStatus": "string ('active', 'inactive')"
+}
 > Error Handling:
->  * 401 Unauthorized: Display "Authentication failed. Please log in again."
->  * 403 Forbidden: Display "Your access is restricted. Please ensure you have paid the access fee."
->  * 500 Internal Server Error: Display "An unexpected error occurred. Please try again later."
-> Data Types: (As previously defined).
+ * 401 Unauthorized: Invalid or missing JWT token in the Authorization header.
+ * 403 Forbidden: Access denied, typically because the user's accessStatus is not "granted" (e.g., the access fee hasn't been paid).
+ * 404 Not Found: User not found based on the provided token (this is less likely if the token is valid).
+ * 500 Internal Server Error: An unexpected error occurred on the server while processing the request.
+The frontend should:
+ * Check the HTTP status code of the response.
+ * If successful (200), parse the JSON response to display the user's dashboard information.
+ * If an error occurs (401, 403, 500), display an appropriate error message to the user and potentially guide them on how to resolve the issue (e.g., log in again, pay the access fee, contact support).
+Data Types:
+ * email: string
+ * walletId: string (UUIDv4)
+ * balance: object with currency codes (e.g., "USD", "BTC", "ETH") as keys and their corresponding float values.
+ * kycStatus: string ("pending", "approved", "rejected", "NOT_SUBMITTED")
+ * accessStatus: string ("pending", "granted")
+ * investmentStatus: object containing:
+   * activePlans: array of objects, each representing an active investment plan.
+   * availablePlans: array of objects, each representing an available investment plan.
+ * proPlusStatus: string ("active" or "inactive")
+
 > Sequential Calls: On successful login, this endpoint is called to fetch initial dashboard data.
 > UI Components:
 >  * Virtual Wallet Cards Overview:
