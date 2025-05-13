@@ -19,3 +19,15 @@ router.post('/withdraw', Authenticate, requireKYC, walletController.createWithdr
 router.get('/withdrawals', Authenticate, walletController.getWithdrawalHistory);
 
 module.exports = router;
+
+// In routes/wallets.js
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/authMiddleware');
+const { getDepositAddress, /* other wallet functions */ } = require('../controllers/walletController');
+
+router.get('/deposit-address', authenticate, getDepositAddress);
+// Add other wallet routes here
+
+module.exports = router;
+
