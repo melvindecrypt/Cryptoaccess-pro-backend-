@@ -23,3 +23,13 @@ router.get('/pending-payments',
 );
 
 module.exports = router;
+
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/authMiddleware');
+const { getProPlusPlan, upgradeProPlus } = require('../controllers/subscriptionController');
+
+router.get('/pro-plus', authenticate, getProPlusPlan);
+router.post('/upgrade-pro-plus', authenticate, upgradeProPlus);
+
+module.exports = router;
