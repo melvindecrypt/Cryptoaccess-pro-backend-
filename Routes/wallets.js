@@ -30,5 +30,8 @@ router.get('/deposit-address', authenticate, getDepositAddress);
 // Add other wallet routes here
 
 module.exports = router;
+// In routes/wallets.js
+router.get('/balances', Authenticate, walletController.getUserBalances);
+
 
 
