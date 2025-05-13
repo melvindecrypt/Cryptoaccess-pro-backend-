@@ -1335,6 +1335,27 @@ update the dashboard side now with this
  1. Virtual Wallet Cards Overview:
 >  * Fetch data from the /api/dashboard endpoint (GET request with JWT).
 >  * Display wallet balances in a responsive grid layout on desktop (4 cards per row) and as horizontally scrollable cards on mobile (snap-to-scroll).
+>  * Action Buttons: Near the wallet balance display, include buttons for:
+>    * Swap: This should link to the /exchange page.
+>    * Send: This should link to a /send page (you'll need to create this page).
+>    * Receive: This should link to a page that displays the user's deposit addresses.
+>  * Investment Status: (As described in the previous prompt).
+>  * Other User Information: (As described in the previous prompt).
+> "Send" Page Requirements (New):
+>  * Create a new page/component for sending cryptocurrency.
+>  * This page should allow the user to:
+>    * Select the cryptocurrency to send.
+>    * Enter the recipient's address.
+>    * Enter the amount to send.
+>    * Potentially set a transaction fee (if applicable).
+>  * This page will need to interact with a backend API endpoint (e.g., /api/wallets/send) to initiate the transfer.  (You will need to define this backend endpoint and its logic.)
+> "Receive" Page Requirements:
+>  * This page should display the user's deposit addresses for different cryptocurrencies.
+>  * It should use the data from the existing /api/wallets/deposit-address endpoint to display the addresses.
+> Styling and User Experience:
+>  * Maintain the Binance-style look and feel.
+>  * Ensure a clean and intuitive user interface for all sections.
+> Remember to use the balances data from the /api/dashboard response for the wallet overview.
 >  * For each of the following coins, display a wallet card: BTC, ETH, SOL, BNB, USDT, USDC, DAI, XRP, DOGE, TRX, LTC, MNT, ADA, AVAX, DOT, MATIC, SHIB, TON, NEAR, OP, ARB, LINK, APE, RNDR, ICP, XLM, VET, EOS, FIL, GRT.
 >  * Each card should contain:
 >    * Coin Icon + Symbol (e.g., BTC icon + "BTC").
