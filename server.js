@@ -181,3 +181,6 @@ app.use('/api/wallets', walletRoutes);
 const subscriptionRoutes = require('./routes/subscription');
 app.use('/api/plans', subscriptionRoutes);
 
+// In your app.js or server.js
+const exchangeRoutes = require('./routes/exchange');
+app.use('/api/exchange', exchangeRoutes);
