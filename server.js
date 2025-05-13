@@ -168,3 +168,8 @@ process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 
 module.exports = app;
+
+// In app.js or server.js
+const chartRoutes = require('./routes/charts');
+app.use('/api/charts', chartRoutes);
+
