@@ -1332,41 +1332,28 @@ now remember you can add a prompt about the box that has now been added for acce
 =========÷÷===÷==÷
 update the dashboard side now with this 
 
-Generate the React component(s) for the user dashboard page. This page will fetch data from the backend API endpoint /api/dashboard using a GET request with a JWT token in the Authorization header. Upon successful retrieval (HTTP status 200), the component should display the following information in a clear and organized manner:
->  * User Information:
->    * Email address.
->    * Wallet ID.
->    * Balances for different cryptocurrencies (e.g., USD, BTC, ETH). Display each currency and its balance.
->    * KYC Status (display the status as received: "pending", "approved", "rejected", "NOT_SUBMITTED").
->    * Access Status (display the status as received: "pending", "granted").
->  * Investment Status:
->    * Active Plans: If there are any active investment plans in the activePlans array, display them in a list or table. For each active plan, show:
->      * Plan Name.
->      * Amount Invested.
->      * ROI (as a percentage).
->      * Duration.
->      * Status ("active" or "completed").
->      * If there are no active plans, display a message like "No active investments found."
->    * Available Plans: If there are any available investment plans in the availablePlans array, display them in a list or table. For each available plan, show:
->      * Plan Name.
->      * Minimum Investment Amount.
->      * ROI (as a percentage).
->      * Duration.
->      * Consider adding a button or link to navigate to an "Investments" page for each available plan.
->      * If there are no available plans, display a message like "No investment plans currently available."
->  * Pro+ Status: Display the user's Pro+ status ("active" or "inactive").
+ 1. Virtual Wallet Cards Overview:
+>  * Fetch data from the /api/dashboard endpoint (GET request with JWT).
+>  * Display wallet balances in a responsive grid layout on desktop (4 cards per row) and as horizontally scrollable cards on mobile (snap-to-scroll).
+>  * For each of the following coins, display a wallet card: BTC, ETH, SOL, BNB, USDT, USDC, DAI, XRP, DOGE, TRX, LTC, MNT, ADA, AVAX, DOT, MATIC, SHIB, TON, NEAR, OP, ARB, LINK, APE, RNDR, ICP, XLM, VET, EOS, FIL, GRT.
+>  * Each card should contain:
+>    * Coin Icon + Symbol (e.g., BTC icon + "BTC").
+>    * Coin Name (e.g., Bitcoin).
+>    * Fake Balance Display (initially "0.000" for all coins). The actual balance will come from the balances object in the /api/dashboard response. Format the balance appropriately.
+>    * Label: "Wallet Balance".
+>    * Arrow Icon (>).
+>  * Clickable Behavior:
+>    * On desktop: Clicking a wallet card should navigate to /charts?coin=COIN_SYMBOL (replace COIN_SYMBOL with the actual symbol).
+>    * On mobile: Tapping a wallet card should trigger a smooth animated left-slide to /charts?coin=COIN_SYMBOL.
+>  * Styling: Implement hover glow and slight card lift on desktop, tap ripple and slide transition on mobile, and a shadow + outline that matches each coin's theme color.
+> 2. Investment Status:
+>  * Fetch active and available investment plans from the investmentStatus object in the /api/dashboard response.
+>  * Display active plans in a clear list or table showing Plan Name, Amount Invested, ROI, Duration, and Status. If no active plans, display "No active investments found."
+>  * Display available plans in a separate section, showing Plan Name, Minimum Investment Amount, ROI, and Duration. Include a way to navigate to an "Investments" page for each plan. If no available plans, display "No investment plans currently available."
+>  * This section should only be visible if the proPlusStatus in the /api/dashboard response is "active".
+> 3. Other User Information:
+>  * Display the user's KYC Status and Access Status from the /api/dashboard response.
+>  * Display the user's Pro+ Status ("active" or "inactive").
 > Error Handling:
->  * If the API returns a 401 status, display an error message indicating unauthorized access (e.g., "Authentication failed. Please log in again.").
->  * If the API returns a 403 status, display a message indicating forbidden access (e.g., "Your access is restricted. Please ensure you have paid the access fee.").
->  * If the API returns a 500 status, display a generic server error message (e.g., "An unexpected error occurred. Please try again later.").
->  * Ensure that the component handles cases where the API response might be missing certain data or arrays are empty without causing errors.
-> Styling and User Experience:
->  * Organize the information into logical sections with clear headings (e.g., "Account Overview", "Active Investments", "Available Investments", "Pro+ Status").
->  * Use appropriate formatting for numbers and currencies.
->  * Make the layout clean and easy to read.
->  * Consider using separate components for different sections of the dashboard for better organization.
-> Assumptions:
->  * You have a mechanism to store and retrieve the JWT token (e.g., in local storage, cookies, or a state management system).
->  * You have a way to make authenticated API calls (e.g., using fetch or a library like Axios with the Authorization header set).
->  * You have basic styling in place for the application.
-> Please generate the React component code for this dashboard page.
+>  * Handle 401 (Unauthorized), 403 (Forbidden), and 500 (Server Error) responses from the /api/dashboard API as described in the previous prompt.
+> Remember to use the balances data from the /api/dashboard response to display the actual wallet balances (and initialize them to "0.000" on the frontend before the API call or if the API hasn't returned data yet).
