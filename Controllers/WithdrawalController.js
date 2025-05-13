@@ -64,3 +64,27 @@ await notificationService.create(
     status: action 
   }
 );
+
+// In controllers/walletController.js
+
+exports.getUserBalances = async (req, res) => {
+  try {
+    const wallet = await Wallet.findOne({ userId: req.user._id })
+      .select('balances')
+      .lean();
+
+    if (!wallet) {
+      return res.status(404).json(formatResponse(false, 'Wallet not found'));
+    }
+
+    // Filter out currencies with zero balance
+    const nonZeroBalances = Object.fromEntries(
+      Object.entries(wallet.balances).filter(([_, balance]) => new Decimal(balance).greaterThan(0))
+    );
+
+    res.json(formatResponse(true, 'User balances retrieved', nonZeroBalances));
+  } catch (error) {
+    logger.error(`Error fetching user balances: ${error.message}`);
+    res.status(500).json(formatResponse(false, 'Server error while fetching user balances'));
+  }
+};
