@@ -1,0 +1,12 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate } = require('../middleware/authMiddleware');
+const exchangeController = require('../controllers/exchangeController');
+
+// Get available trading pairs
+router.get('/pairs', authenticate, exchangeController.getExchangePairs);
+
+// Execute a trade
+router.post('/trade', authenticate, exchangeController.trade);
+
+module.exports = router;
