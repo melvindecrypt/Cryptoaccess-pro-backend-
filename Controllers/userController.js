@@ -135,3 +135,85 @@ exports.getDashboardData = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Server error fetching dashboard data', { error: error.message }));
   }
 };
+
+// In userController.js
+const User = require('../models/User');
+const Wallet = require('../models/Wallet');
+const Investment = require('../models/Investment'); // Assuming you have an Investment model
+const InvestmentPlan = require('../models/InvestmentPlan'); // Assuming you have an InvestmentPlan model
+
+// Unified response format (assuming you have this defined)
+const formatResponse = (success, message, data = null) => ({
+  status: success ? 'success' : 'error',
+  code: success ? 200 : (data?.code || 400), // Use data.code if provided, otherwise default to 400
+  message,
+  data,
+});
+
+exports.getDashboardData = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Fetch user details (including email, walletId, accessStatus, KYC, Pro+)
+    const user = await User.findById(userId).select('email walletId kycStatus accessStatus proPlusStatus');
+
+    if (!user) {
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    // Check access status
+    if (user.accessStatus !== 'granted') {
+      return res.status(403).json(formatResponse(false, 'Access forbidden. Access fee may not have been paid.'));
+    }
+
+    // Fetch wallet balances
+    const wallet = await Wallet.findOne({ userId }).select('balances');
+
+    // Fetch active investment plans for the user
+    const activePlans = await Investment.find({ userId: userId, status: 'active' })
+      .populate('planId', 'name roi duration') // Populate plan details
+      .select('planId amountInvested status');
+
+    const formattedActivePlans = activePlans.map(investment => ({
+      planId: investment.planId.id,
+      name: investment.planId.name,
+      amountInvested: investment.amountInvested,
+      roi: investment.planId.roi,
+      duration: investment.planId.duration,
+      status: investment.status,
+    }));
+
+    // Fetch available investment plans (assuming you want all available plans)
+    const availablePlans = await InvestmentPlan.find({ status: 'available' }) // Adjust query as needed
+      .select('name minAmount roi duration');
+
+    const formattedAvailablePlans = availablePlans.map(plan => ({
+      id: plan._id,
+      name: plan.name,
+      minAmount: plan.minAmount,
+      roi: plan.roi,
+      duration: plan.duration,
+    }));
+
+    const dashboardData = {
+      user: {
+        email: user.email,
+        walletId: user.walletId,
+        balance: wallet?.balances || {},
+        kycStatus: user.kycStatus,
+        accessStatus: user.accessStatus,
+      },
+      investmentStatus: {
+        activePlans: formattedActivePlans,
+        availablePlans: formattedAvailablePlans,
+      },
+      proPlusStatus: user.proPlusStatus ? 'active' : 'inactive',
+    };
+
+    res.json(formatResponse(true, 'Dashboard data retrieved successfully', dashboardData));
+
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json(formatResponse(false, 'Server error fetching dashboard data', { error: error.message }));
+  }
+};
