@@ -1,0 +1,3 @@
+module.exports = {
+  ACCESS_FEE_USD: 99.90,
+};
