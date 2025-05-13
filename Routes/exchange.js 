@@ -16,8 +16,3 @@ router.get('/market-data', authenticate, exchangeController.getMarketData);
 router.post('/swap', authenticate, exchangeController.swap);
 
 module.exports = router;
-
-// Execute a trade
-router.post('/trade', authenticate, exchangeController.trade);
-
-module.exports = router;
