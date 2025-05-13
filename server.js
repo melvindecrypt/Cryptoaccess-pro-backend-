@@ -173,3 +173,7 @@ module.exports = app;
 const chartRoutes = require('./routes/charts');
 app.use('/api/charts', chartRoutes);
 
+// In app.js or server.js
+const walletRoutes = require('./routes/wallets');
+app.use('/api/wallets', walletRoutes);
+
