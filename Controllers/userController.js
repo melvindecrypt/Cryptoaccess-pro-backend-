@@ -100,3 +100,38 @@ exports.uploadKycDoc = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Server error', { error: error.message }));
   }
 };
+
+// In userController.js
+
+exports.getDashboardData = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Fetch user details (for KYC and Pro+ status)
+    const user = await User.findById(userId).select('kycStatus proPlusStatus');
+
+    // Fetch wallet balances
+    const wallet = await Wallet.findOne({ userId }).select('balances');
+
+    // Fetch recent transactions (you might need a Transaction model and controller)
+    // Assuming you have a Transaction model
+    const recentTransactions = await Transaction.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('type amount currency status createdAt'); // Adjust fields as needed
+
+    const dashboardData = {
+      kycStatus: user?.kycStatus || 'NOT_SUBMITTED', // Default status
+      proPlusStatus: user?.proPlusStatus || false, // Default status
+      balances: wallet?.balances || {},
+      recentTransactions: recentTransactions || [],
+      // Add other relevant data here in the future
+    };
+
+    res.json(formatResponse(true, 'Dashboard data retrieved successfully', dashboardData));
+
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json(formatResponse(false, 'Server error fetching dashboard data', { error: error.message }));
+  }
+};
