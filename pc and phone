@@ -1,0 +1,122 @@
+Okay, here's an enhanced prompt for Bolt.new, incorporating the overall dashboard requirements (including Swap, Send, and Receive functionalities) and adhering to the specified answer format for each relevant API interaction:
+Prompt for Bolt.new:
+> Generate the React component(s) for the user dashboard page and the associated Send and Receive pages. The dashboard should aim for a Binance-style UI with the following structure and features, utilizing the specified backend API endpoints and handling data as described in the answer format below.
+> I. Main Dashboard Page (/dashboard)
+> Purpose: Display the user's virtual wallet balances, action buttons for Swap, Send, and Receive, investment status, and other user information.
+> HTTP Method: GET
+> Endpoint URL: /api/dashboard
+> Authentication: JWT token in the Authorization header.
+> Request Data: None.
+> Response Data (Success - JSON): (As previously defined)
+> {
+>   "user": {
+>     "email": "string",
+>     "walletId": "string",
+>     "balance": {
+>       "USD": "float",
+>       "BTC": "float",
+>       // ... other currencies
+>     },
+>     "kycStatus": "string",
+>     "accessStatus": "string"
+>   },
+>   "investmentStatus": {
+>     "activePlans": [],
+>     "availablePlans": []
+>   },
+>   "proPlusStatus": "string"
+> }
+> 
+> Error Handling:
+>  * 401 Unauthorized: Display "Authentication failed. Please log in again."
+>  * 403 Forbidden: Display "Your access is restricted. Please ensure you have paid the access fee."
+>  * 500 Internal Server Error: Display "An unexpected error occurred. Please try again later."
+> Data Types: (As previously defined).
+> Sequential Calls: On successful login, this endpoint is called to fetch initial dashboard data.
+> UI Components:
+>  * Virtual Wallet Cards Overview:
+>    * Fetch data from /api/dashboard.
+>    * Display balances for: BTC, ETH, SOL, BNB, USDT, USDC, DAI, XRP, DOGE, TRX, LTC, MNT, ADA, AVAX, DOT, MATIC, SHIB, TON, NEAR, OP, ARB, LINK, APE, RNDR, ICP, XLM, VET, EOS, FIL, GRT. Initialize with "0.000" until data loads.
+>    * Implement responsive grid (desktop) and horizontal scroll (mobile) layout.
+>    * Each card shows Coin Icon + Symbol, Coin Name, Fake Balance Display, "Wallet Balance" label, and an arrow icon.
+>    * Click/Tap Behavior: Navigate to /charts?coin=SYMBOL.
+>    * Styling: Apply hover glow/lift (desktop), tap ripple/slide (mobile), and coin-themed shadow/outline.
+>    * Include "Swap," "Send," and "Receive" buttons/links near the wallet balance display. "Swap" navigates to /exchange. "Send" navigates to /send. "Receive" navigates to /receive.
+>  * Investment Status:
+>    * Fetch investmentStatus from /api/dashboard.
+>    * Display activePlans in a list/table (Plan Name, Amount Invested, ROI, Duration, Status) or "No active investments found."
+>    * Display availablePlans in a separate section (Plan Name, Min Amount, ROI, Duration) with a way to navigate to an "Investments" page. Show "No investment plans currently available."
+>    * This section is visible only if proPlusStatus is "active".
+>  * Other User Information:
+>    * Display kycStatus, accessStatus, and proPlusStatus from /api/dashboard.
+> II. Send Page (/send)
+> Purpose: Allow users to transfer virtual funds to other internal wallets.
+> HTTP Method: POST
+> Endpoint URL: /api/wallets/transfer
+> Authentication: JWT token in the Authorization header.
+> Request Data (JSON):
+> {
+>   "toWalletId": "string (recipient's internal wallet ID)",
+>   "amount": "number (amount to send)",
+>   "currency": "string (cryptocurrency symbol, e.g., BTC)"
+> }
+> 
+> Response Data (Success - JSON):
+> {
+>   "success": "boolean",
+>   "message": "string",
+>   "transactionId": "string",
+>   "newBalance": "string",
+>   "currency": "string"
+> }
+> 
+> Error Handling: Handle various error messages from the backend (e.g., "To wallet ID, amount, and currency are required", "Insufficient funds", "Recipient wallet not found"). Display appropriate user-friendly messages.
+> Data Types:
+>  * toWalletId: string
+>  * amount: number
+>  * currency: string
+>  * transactionId: string
+>  * newBalance: string
+> Sequential Calls:
+>  * (Optional) On loading the /send page, you might call /api/wallets/balances (GET) to display the user's non-zero balance currencies for selection.
+>  * On submitting the send form, call /api/wallets/transfer (POST).
+> UI Components:
+>  * Fetch user balances (if using /api/wallets/balances, format response as: {"BTC": "balance", "ETH": "balance", ...}). Otherwise, parse from the /api/dashboard response.
+>  * Display a dropdown or list of currencies with a balance greater than 0.
+>  * Input field for the recipient's internal wallet ID.
+>  * Input field for the amount to send.
+>  * Button to initiate the transfer.
+>  * Display success/error messages to the user.
+> III. Receive Page (/receive)
+> Purpose: Display the user's simulated deposit addresses for different cryptocurrencies.
+> HTTP Method: GET
+> Endpoint URL: /api/wallets/deposit-address?currency={currency}
+> Authentication: JWT token in the Authorization header.
+> Request Data (Query Parameter):
+>  * currency: string (cryptocurrency symbol, e.g., BTC)
+> Response Data (Success - JSON):
+> {
+>   "success": "boolean",
+>   "message": "string",
+>   "currency": "string",
+>   "address": "string (simulated deposit address)",
+>   "memo": "string (optional memo)",
+>   "qrCode": "string (optional QR code URL)"
+> }
+> 
+> Error Handling: Handle errors if the currency is invalid or if there's a server error. Display appropriate messages.
+> Data Types:
+>  * currency: string
+>  * address: string
+>  * memo: string
+>  * qrCode: string
+> Sequential Calls:
+>  * On loading the /receive page, display a list of supported cryptocurrencies (e.g., BTC, ETH, USDT...).
+>  * When the user selects a currency, call /api/wallets/deposit-address (GET) with the selected currency as a query parameter.
+> UI Components:
+>  * Display a list of supported cryptocurrencies.
+>  * Allow the user to select a currency.
+>  * Display the corresponding simulated deposit address.
+>  * Button to copy the address to the clipboard.
+>  * Display the currency name and the QR code (if provided).
+> Ensure all components have a clean and intuitive user interface consistent with the overall Binance-style application design.
