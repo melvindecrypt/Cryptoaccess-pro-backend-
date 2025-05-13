@@ -1377,4 +1377,20 @@ update the dashboard side now with this
 >  * Display the user's Pro+ Status ("active" or "inactive").
 > Error Handling:
 >  * Handle 401 (Unauthorized), 403 (Forbidden), and 500 (Server Error) responses from the /api/dashboard API as described in the previous prompt.
-> Remember to use the balances data from the /api/dashboard response to display the actual wallet balances (and initialize them to "0.000" on the frontend before the API call or if the API hasn't returned data yet).
+> Remember to use the balances data from the /api/dashboard response to display the actual wallet balances (and initialize them to "0.000" on the frontend before the API call or if the API hasn't returned data yet)
+Generate the React component(s) for the "Send" and "Receive" pages, accessible from buttons on the main dashboard.
+> "Send" Page (/send):
+>  * Fetch the user's balances for all cryptocurrencies (use the /api/wallets/balances endpoint if available, or parse from /api/dashboard).
+>  * Display a list of cryptocurrencies where the balance is greater than 0.
+>  * Allow the user to select a cryptocurrency to send.
+>  * Provide an input field to enter the recipient's internal wallet ID.
+>  * Provide an input field to enter the amount to send.
+>  * A button to initiate the transfer by making a POST request to /api/wallets/transfer with currency, toWalletId, and amount.
+>  * Display success or error messages.
+> "Receive" Page (/receive):
+>  * Display a list of supported cryptocurrencies (e.g., BTC, ETH, USDT, BNB, SOL).
+>  * When the user selects a cryptocurrency, make a GET request to /api/wallets/deposit-address?currency=SELECTED_CURRENCY to fetch their simulated deposit address.
+>  * Display the retrieved deposit address for the selected currency.
+>  * Include a button to copy the address to the clipboard.
+>  * Display the currency name and the QR code if provided in the API response.
+> Ensure both pages have a clean and intuitive user interface consistent with the overall application style..
