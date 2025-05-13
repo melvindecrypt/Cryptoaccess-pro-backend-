@@ -163,39 +163,6 @@ exports.getDepositAddress = async (req, res) => {
 
 // In controllers/walletController.js
 
-exports.getDepositAddress = async (req, res) => {
-  try {
-    const { currency } = req.query;
-    const userId = req.user._id;
-
-    if (!currency) {
-      return res.status(400).json(formatResponse(false, 'Currency parameter is required'));
-    }
-
-    // Logic to generate or retrieve deposit address for the user and currency
-    // This might involve database lookups, interaction with a wallet service, etc.
-    const depositAddress = await generateOrGetAddress(userId, currency); // Placeholder function
-
-    if (!depositAddress) {
-      return res.status(500).json(formatResponse(false, `Failed to generate deposit address for ${currency}`));
-    }
-
-    res.json(formatResponse(true, `Deposit address for ${currency} retrieved successfully`, { address: depositAddress }));
-
-  } catch (error) {
-    console.error(`Error fetching deposit address for ${req.query.currency}:`, error);
-    res.status(500).json(formatResponse(false, `Server error fetching deposit address for ${req.query.currency}`, { error: error.message }));
-  }
-};
-
-// Placeholder for the actual address generation/retrieval logic
-async function generateOrGetAddress(userId, currency) {
-  // Implement your logic here (e.g., check database, call wallet API)
-  return `YOUR_DEPOSIT_ADDRESS_${userId}_${currency}`; // Example placeholder
-}
-
-// In controllers/walletController.js
-
 exports.sendFunds = async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
