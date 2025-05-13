@@ -38,19 +38,15 @@ router.post('/payment-method', async (req, res) => {
 
 module.exports = router;
 
-// routes/payments.js (append the following)
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const {
-  uploadPaymentProof,
-  getAllPaymentProofs,
-  updateProofStatus
-} = require('../controllers/paymentProofController');
 const auth = require('../middleware/authMiddleware');
 const adminAuth = require('../middleware/adminAuth');
+const paymentProofController = require('../controllers/paymentProofController');
+const multer = require('multer');
+const path = require('path');
 
+// Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/paymentProofs'),
   filename: (req, file, cb) => {
@@ -58,12 +54,16 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
-
 const upload = multer({ storage });
 
-// Routes
-router.post('/upload-proof', auth, upload.single('proof'), uploadPaymentProof);
-router.get('/admin/proofs', adminAuth, getAllPaymentProofs);
-router.put('/admin/proofs/:id', adminAuth, updateProofStatus);
+// Route to initiate the access fee process and get wallet addresses
+router.get('/access-fee', auth, paymentProofController.initiateAccessFee);
+
+// Route for users to upload payment proof
+router.post('/access-fee/upload-proof', auth, upload.single('proof'), paymentProofController.uploadPaymentProof);
+
+// Admin routes to view and update payment proofs
+router.get('/admin/payment-proofs', adminAuth, paymentProofController.getAllPaymentProofs);
+router.put('/admin/payment-proofs/:id', adminAuth, paymentProofController.updateProofStatus);
 
 module.exports = router;
