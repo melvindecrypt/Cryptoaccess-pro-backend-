@@ -6,6 +6,17 @@ const exchangeController = require('../controllers/exchangeController');
 // Get available trading pairs
 router.get('/pairs', authenticate, exchangeController.getExchangePairs);
 
+// Place a new order (buy or sell)
+router.post('/order', authenticate, exchangeController.placeOrder);
+
+// Get market data (order book) for a specific pair
+router.get('/market-data', authenticate, exchangeController.getMarketData);
+
+// Add the new swap/convert endpoint
+router.post('/swap', authenticate, exchangeController.swap);
+
+module.exports = router;
+
 // Execute a trade
 router.post('/trade', authenticate, exchangeController.trade);
 
