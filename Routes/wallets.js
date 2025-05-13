@@ -31,3 +31,4 @@ router.get('/deposit-address', authenticate, getDepositAddress);
 
 module.exports = router;
 
+
