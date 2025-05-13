@@ -160,3 +160,29 @@ exports.getProPlusPlan = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Server error fetching Pro+ plan details', { error: error.message }));
   }
 };
+
+// In controllers/subscriptionController.js
+
+exports.upgradeProPlus = async (req, res) => {
+  try {
+    // Logic to process the Pro+ upgrade payment
+    const paymentSuccessful = await processProPlusPayment(req.user._id, req.body); // Placeholder
+
+    if (paymentSuccessful) {
+      await User.findByIdAndUpdate(req.user._id, { proPlusStatus: true });
+      res.json(formatResponse(true, 'Successfully upgraded to Pro+'));
+    } else {
+      res.status(402).json(formatResponse(false, 'Pro+ upgrade payment failed'));
+    }
+
+  } catch (error) {
+    console.error('Error upgrading to Pro+:', error);
+    res.status(500).json(formatResponse(false, 'Server error during Pro+ upgrade', { error: error.message }));
+  }
+};
+
+// Placeholder for the actual payment processing logic
+async function processProPlusPayment(userId, paymentDetails) {
+  // Implement your payment gateway integration here
+  return true; // Example: Replace with actual payment processing outcome
+}
