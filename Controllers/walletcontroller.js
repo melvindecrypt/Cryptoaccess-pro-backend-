@@ -193,3 +193,61 @@ async function generateOrGetAddress(userId, currency) {
   // Implement your logic here (e.g., check database, call wallet API)
   return `YOUR_DEPOSIT_ADDRESS_${userId}_${currency}`; // Example placeholder
 }
+
+// In controllers/walletController.js
+
+exports.sendFunds = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
+
+  try {
+    const { currency, amount, recipientAddress } = req.body;
+    const userId = req.user._id;
+    const numericAmount = new Decimal(amount);
+
+    // Validate input
+    validateCurrency(currency);
+    if (!recipientAddress) {
+      throw new Error('Recipient address is required');
+    }
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      throw new Error('Amount must be positive');
+    }
+
+    const wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+
+    const currentBalance = new Decimal(wallet.balances[currency] || 0);
+    if (currentBalance.lessThan(numericAmount)) {
+      throw new Error(`Insufficient ${currency} balance`);
+    }
+
+    // Simulate sending funds (in a real application, you would interact with a blockchain or custodial service)
+    wallet.balances[currency] = currentBalance.minus(numericAmount).toNumber();
+    wallet.transactions.push({
+      type: 'send',
+      currency,
+      amount: numericAmount.toNumber(),
+      recipientAddress,
+      status: 'PENDING', // Or 'COMPLETED' for a simulated instant send
+      timestamp: new Date(),
+      // You might want to include a transaction ID or fee here in a real scenario
+    });
+
+    await wallet.save({ session });
+    await session.commitTransaction();
+
+    res.json(formatResponse(true, 'Send request initiated', {
+      // In a real app, you might return a transaction ID or processing status
+    }));
+
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Send funds error: ${error.message}`);
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+};
