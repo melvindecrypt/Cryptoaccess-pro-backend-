@@ -141,3 +141,22 @@ exports.getPendingPayments = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Failed to retrieve pending payments'));
   }
 };
+
+// In controllers/subscriptionController.js
+
+exports.getProPlusPlan = async (req, res) => {
+  try {
+    const proPlusPlanDetails = {
+      name: 'Pro+',
+      price: 19.99, // Example
+      currency: 'USD',
+      features: ['Advanced charting tools', 'Higher trading limits', 'Dedicated support'], // Example
+    };
+
+    res.json(formatResponse(true, 'Pro+ plan details retrieved successfully', proPlusPlanDetails));
+
+  } catch (error) {
+    console.error('Error fetching Pro+ plan details:', error);
+    res.status(500).json(formatResponse(false, 'Server error fetching Pro+ plan details', { error: error.message }));
+  }
+};
