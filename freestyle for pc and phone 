@@ -1328,3 +1328,45 @@ Key Administrative Functions and Corresponding Endpoints:
 
 ===≈===================
 now remember you can add a prompt about the box that has now been added for access fees and pro+ subscriptions, where users can show proof of payment.
+
+=========÷÷===÷==÷
+update the dashboard side now with this 
+
+Generate the React component(s) for the user dashboard page. This page will fetch data from the backend API endpoint /api/dashboard using a GET request with a JWT token in the Authorization header. Upon successful retrieval (HTTP status 200), the component should display the following information in a clear and organized manner:
+>  * User Information:
+>    * Email address.
+>    * Wallet ID.
+>    * Balances for different cryptocurrencies (e.g., USD, BTC, ETH). Display each currency and its balance.
+>    * KYC Status (display the status as received: "pending", "approved", "rejected", "NOT_SUBMITTED").
+>    * Access Status (display the status as received: "pending", "granted").
+>  * Investment Status:
+>    * Active Plans: If there are any active investment plans in the activePlans array, display them in a list or table. For each active plan, show:
+>      * Plan Name.
+>      * Amount Invested.
+>      * ROI (as a percentage).
+>      * Duration.
+>      * Status ("active" or "completed").
+>      * If there are no active plans, display a message like "No active investments found."
+>    * Available Plans: If there are any available investment plans in the availablePlans array, display them in a list or table. For each available plan, show:
+>      * Plan Name.
+>      * Minimum Investment Amount.
+>      * ROI (as a percentage).
+>      * Duration.
+>      * Consider adding a button or link to navigate to an "Investments" page for each available plan.
+>      * If there are no available plans, display a message like "No investment plans currently available."
+>  * Pro+ Status: Display the user's Pro+ status ("active" or "inactive").
+> Error Handling:
+>  * If the API returns a 401 status, display an error message indicating unauthorized access (e.g., "Authentication failed. Please log in again.").
+>  * If the API returns a 403 status, display a message indicating forbidden access (e.g., "Your access is restricted. Please ensure you have paid the access fee.").
+>  * If the API returns a 500 status, display a generic server error message (e.g., "An unexpected error occurred. Please try again later.").
+>  * Ensure that the component handles cases where the API response might be missing certain data or arrays are empty without causing errors.
+> Styling and User Experience:
+>  * Organize the information into logical sections with clear headings (e.g., "Account Overview", "Active Investments", "Available Investments", "Pro+ Status").
+>  * Use appropriate formatting for numbers and currencies.
+>  * Make the layout clean and easy to read.
+>  * Consider using separate components for different sections of the dashboard for better organization.
+> Assumptions:
+>  * You have a mechanism to store and retrieve the JWT token (e.g., in local storage, cookies, or a state management system).
+>  * You have a way to make authenticated API calls (e.g., using fetch or a library like Axios with the Authorization header set).
+>  * You have basic styling in place for the application.
+> Please generate the React component code for this dashboard page.
