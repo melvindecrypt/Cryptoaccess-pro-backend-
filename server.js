@@ -169,11 +169,15 @@ process.on('SIGTERM', gracefulShutdown);
 
 module.exports = app;
 
-// In app.js or server.js
+// In server.js
 const chartRoutes = require('./routes/charts');
 app.use('/api/charts', chartRoutes);
 
-// In app.js or server.js
+// In server.js
 const walletRoutes = require('./routes/wallets');
 app.use('/api/wallets', walletRoutes);
+
+// In server.js
+const subscriptionRoutes = require('./routes/subscription');
+app.use('/api/plans', subscriptionRoutes);
 
