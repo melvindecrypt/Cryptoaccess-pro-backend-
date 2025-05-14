@@ -1,0 +1,128 @@
+const mongoose = require('mongoose');
+const Currency = require('../models/Currency'); // Adjust the path to your Currency model
+const databaseUrl = 'mongodb+srv://admin:Uu11DEZlMe32tMCR@binancepro-db.xxhtgym.mongodb.net/cryptoaccesspro-db?retryWrites=true&w=majority&appName=Binancepro-DB
+'; // Replace with your actual MongoDB connection string
+
+const currenciesToSeed = [
+  { symbol: 'BTC', name: 'Bitcoin', isActive: true },
+  { symbol: 'ETH', name: 'Ethereum', isActive: true },
+  { symbol: 'USDT', name: 'Tether', isActive: true },
+  { symbol: 'BNB', name: 'Binance Coin', isActive: true },
+  { symbol: 'SOL', name: 'Solana', isActive: true },
+  { symbol: 'USDC', name: 'USD Coin', isActive: true },
+  { symbol: 'XRP', name: 'XRP', isActive: true },
+  { symbol: 'TON', name: 'Toncoin', isActive: true },
+  { symbol: 'ADA', name: 'Cardano', isActive: true },
+  { symbol: 'DOGE', name: 'Dogecoin', isActive: true },
+  { symbol: 'AVAX', name: 'Avalanche', isActive: true },
+  { symbol: 'SHIB', name: 'Shiba Inu', isActive: true },
+  { symbol: 'DOT', name: 'Polkadot', isActive: true },
+  { symbol: 'TRX', name: 'TRON', isActive: true },
+  { symbol: 'LINK', name: 'Chainlink', isActive: true },
+  { symbol: 'MATIC', name: 'Polygon', isActive: true },
+  { symbol: 'LTC', name: 'Litecoin', isActive: true },
+  { symbol: 'BCH', name: 'Bitcoin Cash', isActive: true },
+  { symbol: 'NEAR', name: 'NEAR Protocol', isActive: true },
+  { symbol: 'UNI', name: 'Uniswap', isActive: true },
+  { symbol: 'ICP', name: 'Internet Computer', isActive: true },
+  { symbol: 'APT', name: 'Aptos', isActive: true },
+  { symbol: 'XLM', name: 'Stellar', isActive: true },
+  { symbol: 'LDO', name: 'Lido DAO', isActive: true },
+  { symbol: 'ARB', name: 'Arbitrum', isActive: true },
+  { symbol: 'OP', name: 'Optimism', isActive: true },
+  { symbol: 'XMR', name: 'Monero', isActive: true },
+  { symbol: 'RNDR', name: 'Render', isActive: true },
+  { symbol: 'HBAR', name: 'Hedera', isActive: true },
+  { symbol: 'VET', name: 'VeChain', isActive: true },
+  { symbol: 'IMX', name: 'Immutable', isActive: true },
+  { symbol: 'MKR', name: 'Maker', isActive: true },
+  { symbol: 'INJ', name: 'Injective', isActive: true },
+  { symbol: 'GRT', name: 'The Graph', isActive: true },
+  { symbol: 'AAVE', name: 'Aave', isActive: true },
+  { symbol: 'SUI', name: 'Sui', isActive: true },
+  { symbol: 'ALGO', name: 'Algorand', isActive: true },
+  { symbol: 'KAS', name: 'Kaspa', isActive: true },
+  { symbol: 'STX', name: 'Stacks', isActive: true },
+  { symbol: 'QNT', name: 'Quant', isActive: true },
+  { symbol: 'FTM', name: 'Fantom', isActive: true },
+  { symbol: 'THETA', name: 'Theta Network', isActive: true },
+  { symbol: 'FLOW', name: 'Flow', isActive: true },
+  { symbol: 'XTZ', name: 'Tezos', isActive: true },
+  { symbol: 'BSV', name: 'Bitcoin SV', isActive: true },
+  { symbol: 'TIA', name: 'Celestia', isActive: true },
+  { symbol: 'CRV', name: 'Curve DAO', isActive: true },
+  { symbol: 'AXS', name: 'Axie Infinity', isActive: true },
+  { symbol: 'APE', name: 'ApeCoin', isActive: true },
+  { symbol: 'EOS', name: 'EOS', isActive: true },
+  { symbol: 'MANA', name: 'Decentraland', isActive: true },
+  { symbol: 'RPL', name: 'Rocket Pool', isActive: true },
+  { symbol: 'CAKE', name: 'PancakeSwap', isActive: true },
+  { symbol: 'GALA', name: 'Gala', isActive: true },
+  { symbol: 'DYDX', name: 'dYdX', isActive: true },
+  { symbol: 'MINA', name: 'Mina Protocol', isActive: true },
+  { symbol: 'HNT', name: 'Helium', isActive: true },
+  { symbol: 'KAVA', name: 'Kava', isActive: true },
+  { symbol: 'WLD', name: 'Worldcoin', isActive: true },
+  { symbol: 'IOTA', name: 'IOTA', isActive: true },
+  { symbol: 'ROSE', name: 'Oasis Network', isActive: true },
+  { symbol: 'ZEC', name: 'Zcash', isActive: true },
+  { symbol: 'OCEAN', name: 'Ocean Protocol', isActive: true },
+  { symbol: 'BLUR', name: 'Blur', isActive: true },
+  { symbol: 'NEO', name: 'NEO', isActive: true },
+  { symbol: 'ENJ', name: 'Enjin Coin', isActive: true },
+  { symbol: 'XRD', name: 'Radix', isActive: true },
+  { symbol: 'CKB', name: 'Nervos Network', isActive: true },
+  { symbol: 'GMX', name: 'GMX', isActive: true },
+  { symbol: '1INCH', name: '1inch', isActive: true },
+  { symbol: 'BAND', name: 'Band Protocol', isActive: true },
+  { symbol: 'WOO', name: 'WOO Network', isActive: true },
+  { symbol: 'ARKM', name: 'Arkham', isActive: true },
+  { symbol: 'ONT', name: 'Ontology', isActive: true },
+  { symbol: 'CVP', name: 'PowerPool', isActive: true },
+  { symbol: 'METIS', name: 'MetisDAO', isActive: true },
+  { symbol: 'SPELL', name: 'Spell Token', isActive: true },
+  { symbol: 'RSR', name: 'Reserve Rights', isActive: true },
+  { symbol: 'TWT', name: 'Trust Wallet Token', isActive: true },
+  { symbol: 'XDC', name: 'XDC Network', isActive: true },
+  { symbol: 'ERG', name: 'Ergo', isActive: true },
+  { symbol: 'TRAC', name: 'OriginTrail', isActive: true },
+  { symbol: 'SUPER', name: 'SuperVerse', isActive: true },
+  { symbol: 'GLMR', name: 'Moonbeam', isActive: true },
+  { symbol: 'CELO', name: 'Celo', isActive: true },
+  { symbol: 'FIDA', name: 'Bonfida', isActive: true },
+  { symbol: 'COTI', name: 'COTI', isActive: true },
+  { symbol: 'XVS', name: 'Venus', isActive: true },
+  { symbol: 'EFI', name: 'Efinity Token', isActive: true },
+  { symbol: 'BTT', name: 'BitTorrent', isActive: true },
+  { symbol: 'ALPHA', name: 'Alpha Venture DAO', isActive: true },
+  { symbol: 'BADGER', name: 'Badger DAO', isActive: true },
+  { symbol: 'STRAX', name: 'Stratis', isActive: true },
+  { symbol: 'XPRT', name: 'Persistence', isActive: true },
+  { symbol: 'ALCX', name: 'Alchemix', isActive: true },
+  { symbol: 'SNX', name: 'Synthetix', isActive: true },
+  { symbol: 'NYM', name: 'Nym', isActive: true },
+  { symbol: 'VIC', name: 'Viction', isActive: true },
+  { symbol: 'ASTR', name: 'Astar Network', isActive: true },
+  { symbol: 'PUNDIX', name: 'Pundi X', isActive: true },
+];
+
+async function seedDatabase() {
+  try {
+    await mongoose.connect(databaseUrl);
+    console.log('Connected to MongoDB');
+
+    // Clear existing currencies (optional, use with caution in production)
+    await Currency.deleteMany({});
+    console.log('Existing currencies cleared');
+
+    const createdCurrencies = await Currency.insertMany(currenciesToSeed);
+    console.log(`${createdCurrencies.length} currencies seeded successfully`);
+
+    mongoose.disconnect();
+  } catch (error) {
+    console.error('Error seeding database:', error);
+    process.exit(1);
+  }
+}
+
+seedDatabase();
