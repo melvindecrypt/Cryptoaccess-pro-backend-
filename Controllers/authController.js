@@ -106,7 +106,7 @@ exports.register = async (req, res) => {
     // Respond with success
     res.status(201).json({
       success: true,
-      message: 'Registration successful. Check your email for wallet details.',
+      message: 'Registration successful. Check your email to verify.',
       token: jwt.sign(
         { id: user._id, email: user.email },
         process.env.JWT_SECRET,
