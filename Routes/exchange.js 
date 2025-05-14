@@ -18,5 +18,11 @@ router.post('/swap', authenticate, exchangeController.swap);
 router.get('/pairs', authMiddleware, exchangeController.getAvailableTradingPairs);
 router.post('/swap', authMiddleware, exchangeController.swapCurrency);
 
+// routes/exchangeRoutes.js
+router.get('/pairs', authMiddleware, exchangeController.getAvailableTradingPairs);
+router.post('/swap', authMiddleware, exchangeController.swapCurrency);
+router.post('/buy', authMiddleware, exchangeController.buyCurrency);
+router.post('/sell', authMiddleware, exchangeController.sellCurrency);
+
 module.exports = router;
 
