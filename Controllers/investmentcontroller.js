@@ -1,112 +1,129 @@
 const User = require('../models/User');
+const Investment = require('../models/Investment'); // Assuming you have this model
+const InvestmentPlan = require('../models/InvestmentPlan'); // Assuming you have this model
+const Wallet = require('../models/Wallet');
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
-const Decimal = require('decimal.js');  // Import decimal.js
+const Decimal = require('decimal.js');
+const { v4: uuidv4 } = require('uuid'); // For generating unique investment IDs
 
 // View available investment plans
 exports.viewPlans = async (req, res) => {
   try {
-    // Example of available investment plans
-    const plans = [
-      { id: 1, name: 'Plan A', minAmount: new Decimal(500), maxAmount: new Decimal(10000), roi: new Decimal(20), duration: '6 months' },
-      { id: 2, name: 'Plan B', minAmount: new Decimal(1000), maxAmount: new Decimal(50000), roi: new Decimal(25), duration: '12 months' }
-    ];
+    const plans = await InvestmentPlan.find({ status: 'available' }) // Fetch from InvestmentPlan model
+      .select('name minAmount roi duration');
 
-    res.json(formatResponse(true, 'Investment plans fetched successfully', plans));
+    const formattedPlans = plans.map(plan => ({
+      id: plan._id, // Use MongoDB ObjectId as ID
+      name: plan.name,
+      minAmount: plan.minAmount.toNumber(), // Convert Decimal to number (float)
+      roi: plan.roi.toNumber(),           // Convert Decimal to number (integer is expected by API, adjust if needed)
+      duration: plan.duration,
+    }));
+
+    res.json(formatResponse(true, 'Investment plans fetched successfully', { plans: formattedPlans }));
   } catch (error) {
     logger.error('Error fetching plans: ' + error.message);
     res.status(500).json(formatResponse(false, 'Error fetching investment plans', { error: error.message }));
   }
 };
 
-// Make an Investment (Requires KYC)
+// Make an Investment (Requires KYC - you might want to add this middleware)
 exports.invest = async (req, res) => {
   const { planId, amount } = req.body;
   const userId = req.user._id;
 
   try {
-    // Validate input
     if (!planId || typeof amount !== 'number' || amount <= 0) {
       return res.status(400).json(formatResponse(false, 'Valid plan ID and amount required'));
     }
 
-    // Convert amount to Decimal
     const decimalAmount = new Decimal(amount);
 
-    // Fetch user 
     const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json(formatResponse(false, 'User not found'));
     }
 
-    // Fetch investment plans (mocked for now)
-    const plans = [
-      { id: 1, name: 'Plan A', minAmount: new Decimal(500), maxAmount: new Decimal(10000), roi: new Decimal(20), duration: '6 months' },
-      { id: 2, name: 'Plan B', minAmount: new Decimal(1000), maxAmount: new Decimal(50000), roi: new Decimal(25), duration: '12 months' }
-    ];
-
-    const plan = plans.find(p => p.id === planId);
+    const plan = await InvestmentPlan.findById(planId);
     if (!plan) {
       return res.status(404).json(formatResponse(false, 'Investment plan not found'));
     }
 
-    // Check if the amount is within the allowed range using Decimal.js
-    if (decimalAmount.lessThan(plan.minAmount) || decimalAmount.greaterThan(plan.maxAmount)) {
-      return res.status(400).json(formatResponse(false, `Amount must be between ${plan.minAmount} and ${plan.maxAmount}`));
+    if (decimalAmount.lessThan(plan.minAmount)) {
+      return res.status(400).json(formatResponse(false, `Amount must be at least ${plan.minAmount.toNumber()}`));
     }
 
-    // Calculate the expected ROI using Decimal.js
-    const roiAmount = decimalAmount.times(plan.roi).dividedBy(100); // ROI calculation with precision
+    // You might want to check user's balance here before proceeding
 
-    // Simulate the investment process
-    const investment = {
-      planId,
-      amount: decimalAmount.toString(),  // Store as string to preserve precision
-      roi: roiAmount.toString(),         // Store as string to preserve precision
+    const newInvestment = new Investment({
+      user: userId,
+      plan: plan._id, // Store the ObjectId of the plan
+      planName: plan.name, // Store plan name for easy access
+      amount: decimalAmount.toNumber(),
+      roi: plan.roi.toNumber(),
       duration: plan.duration,
       startDate: new Date(),
-      status: 'ACTIVE'
-    };
+      endDate: calculateEndDate(new Date(), plan.duration), // Implement this function
+      status: 'active',
+      investmentId: uuidv4(), // Generate a unique investment ID
+    });
 
-    // Update user with investment details (you could also store it in a separate investments model)
-    user.investments.push(investment);
-    await user.save();
+    await newInvestment.save();
 
-    res.json(formatResponse(true, 'Investment started successfully', investment));
+    res.status(201).json(formatResponse(true, 'Investment started successfully', { // Use 201 for resource creation
+      investmentId: newInvestment.investmentId,
+      plan: newInvestment.planName,
+      amount: newInvestment.amount,
+      roi: newInvestment.roi,
+      duration: newInvestment.duration,
+      status: newInvestment.status,
+      startDate: newInvestment.startDate,
+      endDate: newInvestment.endDate,
+    }));
+
   } catch (error) {
     logger.error('Investment error: ' + error.message);
     res.status(500).json(formatResponse(false, 'Error processing investment', { error: error.message }));
   }
 };
 
-// Track user's investments
-exports.trackInvestment = async (req, res) => {
-  const userId = req.user._id;
-
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json(formatResponse(false, 'User not found'));
-    }
-
-    res.json(formatResponse(true, 'User investments fetched successfully', user.investments || []));
-  } catch (error) {
-    logger.error('Tracking investment error: ' + error.message);
-    res.status(500).json(formatResponse(false, 'Error tracking investment', { error: error.message }));
-  }
-};
-
-const Investment = require('../models/Investment');
+// Helper function to calculate end date based on duration (you'll need to implement this)
+function calculateEndDate(startDate, duration) {
+  // Example implementation (you might need more sophisticated logic)
+  const [value, unit] = duration.split(' ');
+  const months = parseInt(value, 10);
+  const endDate = new Date(startDate);
+  endDate.setMonth(startDate.getMonth() + months);
+  return endDate;
+}
 
 exports.getInvestmentDetails = async (req, res) => {
   try {
-    const investment = await Investment.findOne({ _id: req.params.id, user: req.user.id });
+    const investment = await Investment.findOne({ _id: req.params.id, user: req.user.id })
+      .populate('plan', 'name'); // Populate plan details if needed
 
     if (!investment) {
       return res.status(404).json({ success: false, message: 'Investment not found' });
     }
 
-    res.json({ success: true, investment });
+    const investmentDetails = {
+      _id: investment._id,
+      user: investment.user,
+      amount: investment.amount,
+      plan: investment.planName || (investment.plan && investment.plan.name) || 'N/A', // Get plan name
+      status: investment.status,
+      startDate: investment.startDate,
+      endDate: investment.endDate,
+      roiHistory: investment.roiHistory || [],
+      createdAt: investment.createdAt,
+      updatedAt: investment.updatedAt,
+    };
+
+    res.json({ success: true, investment: investmentDetails });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    logger.error('Error fetching investment details: ' + err.message);
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 };
 
@@ -125,8 +142,109 @@ exports.cancelInvestment = async (req, res) => {
     investment.status = 'cancelled';
     await investment.save();
 
-    res.json({ success: true, message: 'Investment cancelled', investment });
+    res.json({
+      success: true,
+      message: 'Investment cancelled',
+      investment: {
+        _id: investment._id,
+        status: investment.status,
+      },
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    logger.error('Error cancelling investment: ' + err.message);
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  }
+};
+
+// Make an Investment (Requires KYC - you might want to add this middleware)
+exports.invest = async (req, res) => {
+  const { planId, amount } = req.body;
+  const userId = req.user._id;
+  const investmentCurrency = 'USD'; // Or determine based on plan/user preference
+
+  try {
+    if (!planId || typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json(formatResponse(false, 'Valid plan ID and amount required'));
+    }
+
+    const decimalAmount = new Decimal(amount);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    const plan = await InvestmentPlan.findById(planId);
+    if (!plan) {
+      return res.status(404).json(formatResponse(false, 'Investment plan not found'));
+    }
+
+    if (decimalAmount.lessThan(plan.minAmount)) {
+      return res.status(400).json(formatResponse(false, `Amount must be at least ${plan.minAmount.toNumber()}`));
+    }
+
+    // Fetch user's wallet balance
+    const wallet = await Wallet.findOne({ userId: userId });
+    if (!wallet) {
+      return res.status(404).json(formatResponse(false, 'User wallet not found'));
+    }
+
+    const currentBalance = new Decimal(wallet.balances[investmentCurrency] || 0);
+
+    // Check for sufficient balance
+    if (currentBalance.lessThan(decimalAmount)) {
+      return res.status(402).json(formatResponse(false, `Insufficient ${investmentCurrency} balance`));
+    }
+
+    // Proceed with investment (and deduct balance - be careful with transactions)
+    const newInvestment = new Investment({
+      user: userId,
+      plan: plan._id,
+      planName: plan.name,
+      amount: decimalAmount.toNumber(),
+      roi: plan.roi.toNumber(),
+      duration: plan.duration,
+      startDate: new Date(),
+      endDate: calculateEndDate(new Date(), plan.duration),
+      status: 'active',
+      investmentId: uuidv4(),
+    });
+
+    // Start a database transaction to ensure atomicity (deduct balance and create investment)
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Deduct balance from the user's wallet
+      wallet.balances[investmentCurrency] = currentBalance.minus(decimalAmount).toNumber();
+      await wallet.save({ session });
+
+      // Save the new investment
+      await newInvestment.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.status(201).json(formatResponse(true, 'Investment started successfully', {
+        investmentId: newInvestment.investmentId,
+        plan: newInvestment.planName,
+        amount: newInvestment.amount,
+        roi: newInvestment.roi,
+        duration: newInvestment.duration,
+        status: newInvestment.status,
+        startDate: newInvestment.startDate,
+        endDate: newInvestment.endDate,
+      }));
+
+    } catch (transactionError) {
+      await session.abortTransaction();
+      session.endSession();
+      logger.error('Investment transaction error: ' + transactionError.message);
+      return res.status(500).json(formatResponse(false, 'Error processing investment transaction', { error: transactionError.message }));
+    }
+
+  } catch (error) {
+    logger.error('Investment error: ' + error.message);
+    res.status(500).json(formatResponse(false, 'Error processing investment', { error: error.message }));
   }
 };
