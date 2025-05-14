@@ -7,6 +7,59 @@ const Currency = require('../models/Currency');
 const Transaction = require('../models/Transaction'); // Make sure this path is correct
 const Decimal = require('decimal.js');
 
+// Paste the validateCurrency function here:
+const validateCurrency = async (currency) => {
+  const currencyData = await Currency.findOne({ symbol: currency.toUpperCase(), isActive: true });
+  if (!currencyData) {
+    throw new Error(`Unsupported currency: ${currency}`);
+  }
+  return currencyData;
+};
+
+let AVAILABLE_TRADING_PAIRS = [];
+
+async function initializeTradingPairs() {
+  try {
+    const activeCurrencies = await Currency.find({ isActive: true }).select('symbol').lean();
+    const baseCurrency = 'USD';
+
+    const basePairs = activeCurrencies
+      .filter(currency => currency.symbol !== baseCurrency)
+      .map(currency => ({
+        symbol: `${currency.symbol}/${baseCurrency}`,
+        base: currency.symbol,
+        quote: baseCurrency
+      }));
+
+    AVAILABLE_TRADING_PAIRS = [
+      ...basePairs,
+      // Your specific cross-pairs
+      { symbol: 'AVAX/BTC', base: 'AVAX', quote: 'BTC' },
+      // ... other cross-pairs
+    ];
+
+    console.log('Available Trading Pairs initialized:', AVAILABLE_TRADING_PAIRS);
+  } catch (error) {
+    console.error('Error initializing trading pairs:', error);
+  }
+}
+
+initializeTradingPairs();
+
+exports.getAvailableTradingPairs = async (req, res) => {
+  res.json(formatResponse(true, 'Available trading pairs retrieved', AVAILABLE_TRADING_PAIRS));
+};
+
+exports.swapCurrency = async (req, res) => {
+  // ... your swapCurrency function ...
+};
+
+async function getSimulatedExchangeRate(base, quote) {
+  // ... your getSimulatedExchangeRate function ...
+}
+
+// ... any other functions in your ExchangeController
+
 let AVAILABLE_TRADING_PAIRS = [];
 
 async function initializeTradingPairs() {
