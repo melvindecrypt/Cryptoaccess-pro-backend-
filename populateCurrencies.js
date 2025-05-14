@@ -1,10 +1,17 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const Currency = require('./models/Currency'); // Adjust path if needed
 
 async function populateDatabase() {
   try {
-    // Replace 'YOUR_MONGODB_CONNECTION_STRING' with your actual connection string
-    await mongoose.connect('YOUR_MONGODB_CONNECTION_STRING');
+    const mongoUri = process.env.MONGODB_URI;
+
+    if (!mongoUri) {
+      console.error('MONGODB_URI environment variable not set.');
+      process.exit(1);
+    }
+
+    await mongoose.connect(mongoUri);
     console.log('Connected to the database');
 
     const yourCurrencyList = [
