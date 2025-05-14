@@ -92,6 +92,17 @@ exports.register = async (req, res) => {
     // Commit transaction
     await session.commitTransaction();
 
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        walletId: user.walletId
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h', algorithm: 'HS256' }
+    );
+
     // Respond with success
     res.status(201).json({
       success: true,
@@ -106,6 +117,7 @@ exports.register = async (req, res) => {
         email: user.email,
         walletId: user.walletId,
         referralCode: newReferralCode,
+        kycStatus: 'pending'
       },
       referralUsed: !!referredBy
     });
