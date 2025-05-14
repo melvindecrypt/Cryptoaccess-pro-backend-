@@ -58,6 +58,129 @@ async function getSimulatedExchangeRate(base, quote) {
   // ... your getSimulatedExchangeRate function ...
 }
 
+// ExchangeController.js
+
+// ... imports, validateCurrency, AVAILABLE_TRADING_PAIRS, initializeTradingPairs, getAvailableTradingPairs, swapCurrency, getSimulatedExchangeRate ...
+
+exports.buyCurrency = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
+
+  try {
+    const { baseCurrency, quoteCurrency, amount } = req.body; // Amount to spend in quoteCurrency
+    const userId = req.user._id;
+    const numericAmount = new Decimal(amount);
+
+    await validateCurrency(baseCurrency);
+    await validateCurrency(quoteCurrency);
+
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
+    }
+
+    const wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      return res.status(404).json(formatResponse(false, 'Wallet not found'));
+    }
+
+    const quoteBalance = new Decimal(wallet.balances.get(quoteCurrency) || 0);
+    const currentPrice = await getSimulatedExchangeRate(baseCurrency, quoteCurrency); // Price of base in quote
+
+    const baseAmountToBuy = numericAmount.dividedBy(currentPrice);
+
+    if (quoteBalance.lessThan(numericAmount)) {
+      return res.status(400).json(formatResponse(false, `Insufficient ${quoteCurrency} balance`));
+    }
+
+    // Update balances
+    await wallet.updateBalance(quoteCurrency, numericAmount.negated(), 'decrement', session);
+    await wallet.updateBalance(baseCurrency, baseAmountToBuy.toNumber(), 'increment', session);
+
+    // Record transaction
+    await Transaction.create({
+      userId,
+      walletId: wallet._id,
+      type: 'buy',
+      baseCurrency,
+      quoteCurrency,
+      amount: baseAmountToBuy.toNumber(), // Amount of base currency bought
+      price: currentPrice.toNumber(),
+      totalCost: numericAmount.toNumber(),
+      status: 'COMPLETED',
+      timestamp: new Date()
+    }, { session });
+
+    await session.commitTransaction();
+    res.json(formatResponse(true, `Successfully bought ${baseAmountToBuy.toFixed(8)} ${baseCurrency}`, { receivedAmount: baseAmountToBuy.toNumber() }));
+
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Buy error: ${error.message}`);
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+};
+
+exports.sellCurrency = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
+
+  try {
+    const { baseCurrency, quoteCurrency, amount } = req.body; // Amount of baseCurrency to sell
+    const userId = req.user._id;
+    const numericAmount = new Decimal(amount);
+
+    await validateCurrency(baseCurrency);
+    await validateCurrency(quoteCurrency);
+
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
+    }
+
+    const wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      return res.status(404).json(formatResponse(false, 'Wallet not found'));
+    }
+
+    const baseBalance = new Decimal(wallet.balances.get(baseCurrency) || 0);
+    const currentPrice = await getSimulatedExchangeRate(baseCurrency, quoteCurrency); // Price of base in quote
+    const quoteAmountToReceive = numericAmount.multipliedBy(currentPrice);
+
+    if (baseBalance.lessThan(numericAmount)) {
+      return res.status(400).json(formatResponse(false, `Insufficient ${baseCurrency} balance`));
+    }
+
+    // Update balances
+    await wallet.updateBalance(baseCurrency, numericAmount.negated(), 'decrement', session);
+    await wallet.updateBalance(quoteCurrency, quoteAmountToReceive.toNumber(), 'increment', session);
+
+    // Record transaction
+    await Transaction.create({
+      userId,
+      walletId: wallet._id,
+      type: 'sell',
+      baseCurrency,
+      quoteCurrency,
+      amount: numericAmount.toNumber(), // Amount of base currency sold
+      price: currentPrice.toNumber(),
+      receivedAmount: quoteAmountToReceive.toNumber(),
+      status: 'COMPLETED',
+      timestamp: new Date()
+    }, { session });
+
+    await session.commitTransaction();
+    res.json(formatResponse(true, `Successfully sold ${numericAmount.toFixed(8)} ${baseCurrency}`, { receivedAmount: quoteAmountToReceive.toNumber() }));
+
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Sell error: ${error.message}`);
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+};
+
 // ... any other functions in your ExchangeController
 
 let AVAILABLE_TRADING_PAIRS = [];
