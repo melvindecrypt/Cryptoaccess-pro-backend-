@@ -2,9 +2,10 @@ const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
 const User = require('../models/User');
 const Wallet = require('../models/Wallet');
+const Currency = require('../models/Currency'); // Import the Currency model
 const Decimal = require('decimal.js');
 
-// Supported currencies with real wallet addresses
+// Supported currencies with real wallet addresses (for deposit/receive)
 const REAL_WALLET_ADDRESSES = Object.freeze({
   BTC: "bc1qrhmqgnwml62udh5c5wnyukx65rdtqdsa58p54l",
   ETH: "0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767",
@@ -20,14 +21,13 @@ const REAL_WALLET_ADDRESSES = Object.freeze({
   MNT: "0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767"
 });
 
-const SUPPORTED_CURRENCIES = Object.keys(REAL_WALLET_ADDRESSES);
-const MAX_WITHDRAWAL = new Decimal(1000000);
-
-// Unified currency validation
-const validateCurrency = (currency) => {
-  if (!SUPPORTED_CURRENCIES.includes(currency)) {
-    throw new Error(`Unsupported currency. Supported: ${SUPPORTED_CURRENCIES.join(', ')}`);
+// Unified currency validation using the Currency model
+const validateCurrency = async (currency) => {
+  const currencyData = await Currency.findOne({ symbol: currency.toUpperCase(), isActive: true });
+  if (!currencyData) {
+    throw new Error(`Unsupported currency: ${currency}`);
   }
+  return currencyData;
 };
 
 exports.getWallet = async (req, res) => {
@@ -56,14 +56,14 @@ exports.depositFunds = async (req, res) => {
     const numericAmount = new Decimal(amount);
 
     // Validate input
-    validateCurrency(currency);
+    await validateCurrency(currency);
     if (numericAmount.lessThanOrEqualTo(0)) {
       return res.status(400).json(formatResponse(false, 'Amount must be positive'));
     }
 
     const wallet = await Wallet.findOneAndUpdate(
       { userId: req.user._id },
-      { 
+      {
         $inc: { [`balances.${currency}`]: numericAmount.toNumber() },
         $push: {
           transactions: {
@@ -72,7 +72,7 @@ exports.depositFunds = async (req, res) => {
             amount: numericAmount.toNumber(),
             status: 'COMPLETED',
             timestamp: new Date(),
-            targetAddress: REAL_WALLET_ADDRESSES[currency]
+            targetAddress: REAL_WALLET_ADDRESSES[currency] // Still using the fixed addresses
           }
         }
       },
@@ -100,7 +100,7 @@ exports.withdrawFunds = async (req, res) => {
     const numericAmount = new Decimal(amount);
 
     // Validate request
-    validateCurrency(currency);
+    await validateCurrency(currency);
     if (!destinationAddress) {
       throw new Error('Destination address required');
     }
@@ -109,16 +109,15 @@ exports.withdrawFunds = async (req, res) => {
       throw new Error('Pro+ subscription and KYC verification required');
     }
 
-    // Check balance with 8 decimal precision
     const wallet = await Wallet.findOne({ userId: user._id }).session(session);
-    const currentBalance = new Decimal(wallet.balances[currency] || 0);
-    
+    const currentBalance = new Decimal(wallet.balances.get(currency) || 0);
+
     if (currentBalance.lessThan(numericAmount)) {
       throw new Error(`Insufficient ${currency} balance`);
     }
 
     // Update balance and record transaction
-    wallet.balances[currency] = currentBalance.minus(numericAmount).toNumber();
+    wallet.balances.set(currency, currentBalance.minus(numericAmount).toNumber());
     wallet.transactions.push({
       type: 'withdrawal',
       currency,
@@ -148,7 +147,7 @@ exports.withdrawFunds = async (req, res) => {
 exports.getDepositAddress = async (req, res) => {
   try {
     const { currency } = req.query;
-    validateCurrency(currency);
+    await validateCurrency(currency);
 
     res.json(formatResponse(true, 'Deposit address retrieved', {
       currency,
@@ -161,8 +160,6 @@ exports.getDepositAddress = async (req, res) => {
   }
 };
 
-// In controllers/walletController.js
-
 exports.sendFunds = async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
@@ -173,7 +170,7 @@ exports.sendFunds = async (req, res) => {
     const numericAmount = new Decimal(amount);
 
     // Validate input
-    validateCurrency(currency);
+    await validateCurrency(currency);
     if (!recipientAddress) {
       throw new Error('Recipient address is required');
     }
@@ -186,29 +183,26 @@ exports.sendFunds = async (req, res) => {
       throw new Error('Wallet not found');
     }
 
-    const currentBalance = new Decimal(wallet.balances[currency] || 0);
+    const currentBalance = new Decimal(wallet.balances.get(currency) || 0);
     if (currentBalance.lessThan(numericAmount)) {
       throw new Error(`Insufficient ${currency} balance`);
     }
 
-    // Simulate sending funds (in a real application, you would interact with a blockchain or custodial service)
-    wallet.balances[currency] = currentBalance.minus(numericAmount).toNumber();
+    // Simulate sending funds
+    wallet.balances.set(currency, currentBalance.minus(numericAmount).toNumber());
     wallet.transactions.push({
       type: 'send',
       currency,
       amount: numericAmount.toNumber(),
       recipientAddress,
-      status: 'PENDING', // Or 'COMPLETED' for a simulated instant send
+      status: 'PENDING',
       timestamp: new Date(),
-      // You might want to include a transaction ID or fee here in a real scenario
     });
 
     await wallet.save({ session });
     await session.commitTransaction();
 
-    res.json(formatResponse(true, 'Send request initiated', {
-      // In a real app, you might return a transaction ID or processing status
-    }));
+    res.json(formatResponse(true, 'Send request initiated', {}));
 
   } catch (error) {
     await session.abortTransaction();
