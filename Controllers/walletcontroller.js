@@ -212,3 +212,87 @@ exports.sendFunds = async (req, res) => {
     session.endSession();
   }
 };
+
+exports.sendFunds = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
+
+  try {
+    const { currency, amount, recipientIdentifier } = req.body; // Changed recipientAddress to recipientIdentifier
+    const senderUserId = req.user._id;
+    const numericAmount = new Decimal(amount);
+
+    await validateCurrency(currency);
+    if (!recipientIdentifier) {
+      throw new Error('Recipient identifier is required');
+    }
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      throw new Error('Amount must be positive');
+    }
+
+    const senderWallet = await Wallet.findOne({ userId: senderUserId }).session(session);
+    if (!senderWallet) {
+      throw new Error('Sender wallet not found');
+    }
+
+    const currentSenderBalance = new Decimal(senderWallet.balances.get(currency) || 0);
+    if (currentSenderBalance.lessThan(numericAmount)) {
+      throw new Error(`Insufficient ${currency} balance`);
+    }
+
+    // Identify the recipient user and their wallet (you'll need to define how you identify users)
+    const recipientUser = await User.findOne({ $or: [{ username: recipientIdentifier }, { email: recipientIdentifier }] }).session(session); // Example: find by username or email
+    if (!recipientUser || recipientUser._id.equals(senderUserId)) {
+      throw new Error('Recipient not found or cannot send to yourself');
+    }
+
+    const recipientWallet = await Wallet.findOne({ userId: recipientUser._id }).session(session);
+    if (!recipientWallet) {
+      throw new Error('Recipient wallet not found');
+    }
+
+    // Update sender's balance
+    senderWallet.balances.set(currency, currentSenderBalance.minus(numericAmount).toNumber());
+    await senderWallet.save({ session });
+
+    // Update recipient's balance
+    const currentRecipientBalance = new Decimal(recipientWallet.balances.get(currency) || 0);
+    recipientWallet.balances.set(currency, currentRecipientBalance.plus(numericAmount).toNumber());
+    await recipientWallet.save({ session });
+
+    // Record transactions for both sender and receiver
+    await Transaction.create({
+      userId: senderUserId,
+      walletId: senderWallet._id,
+      type: 'send',
+      currency,
+      amount: numericAmount.toNumber(),
+      recipientUserId: recipientUser._id,
+      recipientIdentifier,
+      status: 'COMPLETED',
+      timestamp: new Date()
+    }, { session });
+
+    await Transaction.create({
+      userId: recipientUser._id,
+      walletId: recipientWallet._id,
+      type: 'receive',
+      currency,
+      amount: numericAmount.toNumber(),
+      senderUserId,
+      senderIdentifier: senderUser.username || senderUser.email, // Example
+      status: 'COMPLETED',
+      timestamp: new Date()
+    }, { session });
+
+    await session.commitTransaction();
+    res.json(formatResponse(true, 'Funds sent successfully'));
+
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Send funds error: ${error.message}`);
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+};
