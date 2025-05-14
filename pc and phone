@@ -154,3 +154,11 @@ Data Types:
 >  * Button to copy the address to the clipboard.
 >  * Display the currency name and the QR code (if provided).
 > Ensure all components have a clean and intuitive user interface consistent with the overall Binance-style application design.
+
+=====================
+remember to add a prompt to add send and receive buttons on the Dashboard 
+
+"Present two interactive elements on the Dashboard, ideally with accompanying icons, under the wallet ballance field:
+
+* [Send Icon] **Send:** Text label indicating the action of transferring cryptocurrency to another user.
+* [Receive Icon] **Receive:** Text label indicating the action of viewing deposit addresses to receive cryptocurrency.
