@@ -233,8 +233,92 @@ async function initializeTradingPairs() {
   }
 }
 
-// Call this function when your server starts (you might need to adjust where this is called based on your server setup)
+// Call this function when your server starts 
 initializeTradingPairs();
+
+exports.getAvailableTradingPairs = async (req, res) => {
+  res.json(formatResponse(true, 'Available trading pairs retrieved', AVAILABLE_TRADING_PAIRS));
+};
+
+exports.swapCurrency = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
+
+  try {
+    const { baseCurrency, quoteCurrency, amount } = req.body;
+    const userId = req.user._id;
+    const numericAmount = new Decimal(amount);
+
+    // Validate currencies and amount
+    const baseCurrencyData = await validateCurrency(baseCurrency);
+    const quoteCurrencyData = await validateCurrency(quoteCurrency);
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
+    }
+
+    // Check if the trading pair is available (optional, but recommended)
+    const isPairAvailable = AVAILABLE_TRADING_PAIRS.some(
+      pair => (pair.base === baseCurrency && pair.quote === quoteCurrency) || (pair.base === quoteCurrency && pair.quote === baseCurrency)
+    );
+    if (!isPairAvailable) {
+      return res.status(400).json(formatResponse(false, `Trading pair ${baseCurrency}/${quoteCurrency} is not available`));
+    }
+
+    const wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      return res.status(404).json(formatResponse(false, 'Wallet not found'));
+    }
+
+    const baseBalance = new Decimal(wallet.balances.get(baseCurrency) || 0);
+    if (baseBalance.lessThan(numericAmount)) {
+      return res.status(400).json(formatResponse(false, `Insufficient ${baseCurrency} balance`));
+    }
+
+    // Simulate the swap - for simplicity, let's use a fixed exchange rate (you'd likely fetch this from an API)
+    const exchangeRate = await getSimulatedExchangeRate(baseCurrency, quoteCurrency);
+    const receivedAmount = numericAmount.times(exchangeRate);
+
+    // Update balances
+    await wallet.updateBalance(baseCurrency, numericAmount.negated(), 'decrement', session); // Decrement base currency
+    await wallet.updateBalance(quoteCurrency, receivedAmount.toNumber(), 'increment', session); // Increment quote currency
+
+    // Record the transaction
+    await Transaction.create({
+      userId,
+      walletId: wallet._id,
+      type: 'swap',
+      baseCurrency,
+      quoteCurrency,
+      amount: numericAmount.toNumber(),
+      receivedAmount: receivedAmount.toNumber(),
+      rate: exchangeRate,
+      status: 'COMPLETED',
+      timestamp: new Date()
+    }, { session });
+
+    await session.commitTransaction();
+    res.json(formatResponse(true, 'Swap successful', { receivedAmount: receivedAmount.toNumber() }));
+
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Swap error: ${error.message}`);
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+};
+
+// Dummy function for getting a simulated exchange rate
+async function getSimulatedExchangeRate(base, quote) {
+  // In a real app, you'd fetch this from an exchange API
+  if ((base === 'BTC' && quote === 'USD') || (base === 'USD' && quote === 'BTC')) return 30000;
+  if ((base === 'ETH' && quote === 'USD') || (base === 'USD' && quote === 'ETH')) return 2000;
+  if (base === 'ETH' && quote === 'BTC') return 0.067;
+  if (base === 'BTC' && quote === 'ETH') return 1 / 0.067;
+  // Add more simulated rates as needed
+  return Math.random() * 100; // Default random rate for other pairs
+}
+
 
 
 // In-memory order books (for simulation purposes)
