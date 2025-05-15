@@ -181,7 +181,7 @@ exports.getKYCStatus = async (req, res) => {
     let overallMessage = '';
     switch (overallStatus) {
       case 'pending':
-        overallMessage = 'KYC verification is pending. Please wait for admin approval.';
+        overallMessage = 'KYC verification under review.';
         break;
       case 'approved':
         overallMessage = 'KYC verification is approved.';
