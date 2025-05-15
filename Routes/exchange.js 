@@ -4,7 +4,7 @@ const { authenticate } = require('../middleware/authMiddleware');
 const exchangeController = require('../controllers/exchangeController');
 
 // Get available trading pairs
-router.get('/pairs', authenticate, exchangeController.getExchangePairs);
+router.get('/pairs', authMiddleware, exchangeController.getAvailableTradingPairs);
 
 // Place a new order (buy or sell)
 router.post('/order', authenticate, exchangeController.placeOrder);
@@ -15,13 +15,13 @@ router.get('/market-data', authenticate, exchangeController.getMarketData);
 // Add the new swap/convert endpoint
 router.post('/swap', authenticate, exchangeController.swap);
 
-router.get('/pairs', authMiddleware, exchangeController.getAvailableTradingPairs);
+// Swap Currency 
 router.post('/swap', authMiddleware, exchangeController.swapCurrency);
 
-// routes/exchangeRoutes.js
-router.get('/pairs', authMiddleware, exchangeController.getAvailableTradingPairs);
-router.post('/swap', authMiddleware, exchangeController.swapCurrency);
+// Buy Currency 
 router.post('/buy', authMiddleware, exchangeController.buyCurrency);
+
+// Sell Currency 
 router.post('/sell', authMiddleware, exchangeController.sellCurrency);
 
 module.exports = router;
