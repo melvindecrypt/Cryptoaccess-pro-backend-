@@ -155,37 +155,49 @@ exports.getKYCStatus = async (req, res) => {
   const userEmail = req.user.email;
 
   try {
-    logger.info(`Fetching KYC status for user ${userEmail}`, { userId, action: 'get_kyc_status_start' });
+    logger.info(`Fetching detailed KYC status for user ${userEmail}`, { userId, action: 'get_kyc_status_start' });
 
-    const user = await User.findById(userId).select('kycStatus');
+    const user = await User.findById(userId).select('kycStatus kycDocuments');
 
     if (!user) {
       logger.warn(`User not found while fetching KYC status: ${userEmail}`, { userId, action: 'get_kyc_status_failed', reason: 'User not found' });
       return res.status(404).json(formatResponse(false, 'User not found'));
     }
 
-    const status = user.kycStatus;
-    let message = '';
+    const overallStatus = user.kycStatus;
+    const documentStatuses = user.kycDocuments.map(doc => {
+      const details = {
+        docType: doc.docType,
+        status: doc.status // For selfie, utility bill etc.
+      };
+      if (doc.docType === 'PASSPORT' || doc.docType === 'DRIVERS_LICENSE' || doc.docType === 'NATIONAL_ID' || doc.docType === 'GOVERNMENT_ID') {
+        details.frontStatus = doc.frontStatus || doc.status; // Default to overall status if not defined
+        details.backStatus = doc.backStatus || doc.status;   // Default to overall status if not defined
+        delete details.status; // Remove overall status for these types
+      }
+      return details;
+    });
 
-    switch (status) {
+    let overallMessage = '';
+    switch (overallStatus) {
       case 'pending':
-        message = 'KYC verification is pending. Please wait for admin approval.';
+        overallMessage = 'KYC verification is pending. Please wait for admin approval.';
         break;
       case 'approved':
-        message = 'KYC verification is approved.';
+        overallMessage = 'KYC verification is approved.';
         break;
       case 'rejected':
-        message = 'KYC verification was rejected. Please check your submitted documents or contact support.';
+        overallMessage = 'KYC verification was rejected. Please check the status of your submitted documents or contact support.';
         break;
       default:
-        message = 'KYC status is unknown.';
+        overallMessage = 'KYC status is unknown.';
     }
 
-    logger.info(`KYC status fetched successfully for user ${userEmail}: ${status}`, { userId, action: 'get_kyc_status_complete', status });
-    res.json(formatResponse(true, message, { status }));
+    logger.info(`Detailed KYC status fetched successfully for user ${userEmail}: ${overallStatus}`, { userId, action: 'get_kyc_status_complete', overallStatus });
+    res.json(formatResponse(true, overallMessage, { status: overallStatus, documents: documentStatuses }));
 
   } catch (error) {
-    logger.error(`Error fetching KYC status for user ${userEmail}: ${error.message}`, { userId, action: 'get_kyc_status_failed', error: error.message });
+    logger.error(`Error fetching detailed KYC status for user ${userEmail}: ${error.message}`, { userId, action: 'get_kyc_status_failed', error: error.message });
     res.status(500).json(formatResponse(false, 'Failed to fetch KYC status'));
   }
 };
