@@ -104,14 +104,21 @@ const userSchema = new mongoose.Schema({
     default: 'pending'
   },
   kycDocuments: [{
-    docType: String,
-    fileUrl: String,
-    status: {
-      type: String,
-      enum: ['pending', 'verified', 'rejected'],
-      default: 'pending'
-    }
-  }],
+  docType: {
+    type: String,
+    enum: ['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID', 'BIRTH_CERTIFICATE', 'UTILITY_BILL', 'VEHICLE_REGISTRATION', 'GOVERNMENT_ID'],
+    required: true
+  },
+  frontFileUrl: String, // Filename for the front image (if using secure storage)
+  backFileUrl: String,  // Filename for the back image (if applicable)
+  status: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected'],
+    default: 'pending'
+  },
+  uploadedAt: { type: Date, default: Date.now }
+}],
+
 
  // ----- Security Features (Both Versions) -----
 verificationToken: { 
