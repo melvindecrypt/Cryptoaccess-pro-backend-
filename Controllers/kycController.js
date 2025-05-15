@@ -140,3 +140,46 @@ exports.updateKYCStatus = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Failed to update KYC status'));
   }
 };
+
+// ... (your existing submitKYC and updateKYCStatus functions) ...
+
+exports.getKYCStatus = async (req, res) => {
+  const userId = req.user._id;
+  const userEmail = req.user.email;
+
+  try {
+    logger.info(`Fetching KYC status for user ${userEmail}`, { userId, action: 'get_kyc_status_start' });
+
+    const user = await User.findById(userId).select('kycStatus');
+
+    if (!user) {
+      logger.warn(`User not found while fetching KYC status: ${userEmail}`, { userId, action: 'get_kyc_status_failed', reason: 'User not found' });
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    const status = user.kycStatus;
+    let message = '';
+
+    switch (status) {
+      case 'pending':
+        message = 'KYC verification is pending. Please wait for admin approval.';
+        break;
+      case 'approved':
+        message = 'KYC verification is approved.';
+        break;
+      case 'rejected':
+        message = 'KYC verification was rejected. Please check your submitted documents or contact support.';
+        break;
+      default:
+        message = 'KYC status is unknown.';
+    }
+
+    logger.info(`KYC status fetched successfully for user ${userEmail}: ${status}`, { userId, action: 'get_kyc_status_complete', status });
+    res.json(formatResponse(true, message, { status }));
+
+  } catch (error) {
+    logger.error(`Error fetching KYC status for user ${userEmail}: ${error.message}`, { userId, action: 'get_kyc_status_failed', error: error.message });
+    res.status(500).json(formatResponse(false, 'Failed to fetch KYC status'));
+  }
+};
+
