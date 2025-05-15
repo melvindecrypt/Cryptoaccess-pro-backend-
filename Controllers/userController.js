@@ -182,3 +182,69 @@ exports.getDashboardData = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Server error fetching dashboard data', { error: error.message }));
   }
 };
+
+const User = require('../models/User');
+const { formatResponse } = require('../utils/helpers');
+const validator = require('validator'); // For email validation
+
+exports.getSettings = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('name email language');
+
+    if (!user) {
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    res.json(formatResponse(true, 'Settings retrieved successfully', {
+      user: {
+        name: user.name,
+        email: user.email,
+        language: user.language,
+      },
+    }));
+  } catch (error) {
+    res.status(500).json(formatResponse(false, 'Server error', { error: error.message }));
+  }
+};
+
+exports.updateSettings = async (req, res) => {
+  try {
+    const { name, email, language } = req.body;
+    const updateFields = {};
+
+    if (name !== undefined) {
+      updateFields.name = name;
+    }
+
+    if (email !== undefined) {
+      if (!validator.isEmail(email)) {
+        return res.status(400).json(formatResponse(false, 'Invalid email format'));
+      }
+      updateFields.email = email;
+    }
+
+    if (language !== undefined) {
+      updateFields.language = language;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: updateFields },
+      { new: true, runValidators: true, select: 'name email language' }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json(formatResponse(false, 'User not found'));
+    }
+
+    res.json(formatResponse(true, 'Settings updated successfully.', {
+      user: {
+        name: updatedUser.name,
+        email: updatedUser.email,
+        language: updatedUser.language,
+      },
+    }));
+  } catch (error) {
+    res.status(500).json(formatResponse(false, 'Server error', { error: error.message }));
+  }
+};
