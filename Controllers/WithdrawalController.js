@@ -40,9 +40,9 @@ exports.createWithdrawal = async (req, res) => {
     await session.commitTransaction();
     logger.info(`Withdrawal requested: ${withdrawal[0]._id}`);
 
-    res.json(formatResponse(true, 'Withdrawal request submitted', {
+    res.json(formatResponse(true, 'Withdrawal request successful, {
       withdrawalId: withdrawal[0]._id,
-      status: 'pending'
+      status: 'success'
     }));
 
   } catch (error) {
