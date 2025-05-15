@@ -264,7 +264,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'en' // Or your preferred default language
   },
+ // ... other fields ...
+  name: { type: String },
+  surname: { type: String },
+  phone: { type: String }, // You might want to add validation rules for phone numbers
+  email: { /* ... your existing email definition ... */ },
   // ... other fields ...
 }, {
   // ... schema options ...
 });
+
+// ... rest of your User model ...
