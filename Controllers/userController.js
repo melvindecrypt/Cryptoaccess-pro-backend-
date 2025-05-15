@@ -209,42 +209,42 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
   try {
-    const { name, email, language } = req.body;
+    const { name, surname, phone } = req.body;
     const updateFields = {};
 
     if (name !== undefined) {
       updateFields.name = name;
     }
 
-    if (email !== undefined) {
-      if (!validator.isEmail(email)) {
-        return res.status(400).json(formatResponse(false, 'Invalid email format'));
-      }
-      updateFields.email = email;
+    if (surname !== undefined) {
+      updateFields.surname = surname;
     }
 
-    if (language !== undefined) {
-      updateFields.language = language;
+    if (phone !== undefined) {
+      updateFields.phone = phone;
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
       { $set: updateFields },
-      { new: true, runValidators: true, select: 'name email language' }
+      { new: true, runValidators: true, select: 'name surname phone email /* Keep email in select for response */' }
     );
 
     if (!updatedUser) {
       return res.status(404).json(formatResponse(false, 'User not found'));
     }
 
-    res.json(formatResponse(true, 'Settings updated successfully.', {
+    res.json(formatResponse(true, 'Profile updated successfully.', {
       user: {
         name: updatedUser.name,
-        email: updatedUser.email,
-        language: updatedUser.language,
+        surname: updatedUser.surname,
+        phone: updatedUser.phone,
+        email: updatedUser.email, // Include email in the response
       },
     }));
   } catch (error) {
     res.status(500).json(formatResponse(false, 'Server error', { error: error.message }));
   }
 };
+
+
