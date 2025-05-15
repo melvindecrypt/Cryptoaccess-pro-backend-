@@ -12,9 +12,6 @@ router.post('/order', authenticate, exchangeController.placeOrder);
 // Get market data (order book) for a specific pair
 router.get('/market-data', authenticate, exchangeController.getMarketData);
 
-// Add the new swap/convert endpoint
-router.post('/swap', authenticate, exchangeController.swap);
-
 // Swap Currency 
 router.post('/swap', authMiddleware, exchangeController.swapCurrency);
 
