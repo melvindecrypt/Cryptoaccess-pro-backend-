@@ -76,7 +76,7 @@ exports.uploadPaymentProof = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Payment proof uploaded successfully. Awaiting admin verification.',
+      message: 'Payment proof uploaded successfully. Awaiting verification.',
       proofId: paymentProof._id,
       status: 'pending',
     });
