@@ -1,8 +1,10 @@
 // File: controllers/withdrawalController.js
-const Withdrawal = require('../models/Withdrawals');
+const Withdrawal = require('../models/Withdrawal');
 const User = require('../models/User');
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
+const Decimal = require('decimal.js');
+const mongoose = require('mongoose'); // Make sure mongoose is imported
 
 exports.createWithdrawal = async (req, res) => {
   const session = await mongoose.startSession();
@@ -14,15 +16,20 @@ exports.createWithdrawal = async (req, res) => {
 
     // Validate withdrawal
     const user = await User.findById(req.user._id).session(session);
-    if (!user) throw new Error('User not found');
+    if (!user) {
+      throw new Error('User not found');
+    }
+    if (!user.isProPlus) {
+      return res.status(403).json(formatResponse(false, 'Pro+ subscription required for withdrawals'));
+    }
     if (user.kycStatus !== 'approved') {
-      throw new Error('KYC verification required');
+      return res.status(403).json(formatResponse(false, 'KYC verification required for withdrawals'));
     }
 
     // Check balance
     const balance = new Decimal(user.virtualBalances[currency] || 0);
     if (balance.lessThan(numericAmount)) {
-      throw new Error('Insufficient balance');
+      return res.status(402).json(formatResponse(false, 'Insufficient balance'));
     }
 
     // Create withdrawal request
@@ -40,13 +47,14 @@ exports.createWithdrawal = async (req, res) => {
     await session.commitTransaction();
     logger.info(`Withdrawal requested: ${withdrawal[0]._id}`);
 
-    res.json(formatResponse(true, 'Withdrawal request successful, {
+    res.json(formatResponse(true, 'Withdrawal request successful', {
       withdrawalId: withdrawal[0]._id,
       status: 'success'
     }));
 
   } catch (error) {
     await session.abortTransaction();
+    logger.error(`Error creating withdrawal request: ${error.message}`);
     res.status(400).json(formatResponse(false, error.message));
   } finally {
     session.endSession();
