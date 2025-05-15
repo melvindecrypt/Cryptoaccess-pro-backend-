@@ -54,7 +54,7 @@ exports.confirmPaymentForProPlus = async (req, res) => {
     await user.save({ session });
     await session.commitTransaction();
 
-    logger.info(`Pro+ payment confirmed by admin`, {
+    logger.info(`Pro+ payment confirmed`, {
       adminId: req.user._id,
       userId: user._id,
       transactionId
