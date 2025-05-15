@@ -111,8 +111,8 @@ exports.notifyPaymentForProPlus = async (req, res) => {
     });
 
     res.json(formatResponse(true, 'Payment details submitted for review', {
-      nextSteps: 'Admin will review within 24 hours',
-      contact: 'support@yourdomain.com'
+      nextSteps: 'Will be reviewed within 24 hours',
+      contact: 'support@Melvindecrypt@gmail.com'
     }));
 
   } catch (error) {
