@@ -49,20 +49,3 @@ fileFilter: async (req, file, cb) => {
   const isClean = await scanFile(file.path);
   if (!isClean) return cb(new Error('File rejected: potential threat'));
 }
-
-// config/fileStorage.js
-   const multer = require('multer');
-   const path = require('path');
-
-   const storage = multer.diskStorage({
-     destination: (req, file, cb) => {
-       const dir = `./secure-storage/kyc/${req.user.id}`;
-       require('fs').mkdirSync(dir, { recursive: true });
-       cb(null, dir);
-     },
-     filename: (req, file, cb) => {
-       cb(null, `${Date.now()}-${file.originalname}`);
-     }
-   });
-
-   exports.kycUpload = multer({ storage });
