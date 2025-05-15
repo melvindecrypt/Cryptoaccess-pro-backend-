@@ -150,54 +150,105 @@ exports.updateKYCStatus = async (req, res) => {
   }
 };
 
-exports.getKYCStatus = async (req, res) => {
-  const userId = req.user._id;
-  const userEmail = req.user.email;
+exports.updateKYCStatus = async (req, res) => {
+  const { userId, docType, frontStatus, backStatus, status, reason } = req.body;
+  const adminId = req.user._id;
 
   try {
-    logger.info(`Fetching detailed KYC status for user ${userEmail}`, { userId, action: 'get_kyc_status_start' });
-
-    const user = await User.findById(userId).select('kycStatus kycDocuments');
-
-    if (!user) {
-      logger.warn(`User not found while fetching KYC status: ${userEmail}`, { userId, action: 'get_kyc_status_failed', reason: 'User not found' });
-      return res.status(404).json(formatResponse(false, 'User not found'));
-    }
-
-    const overallStatus = user.kycStatus;
-    const documentStatuses = user.kycDocuments.map(doc => {
-      const details = {
-        docType: doc.docType,
-        status: doc.status // For selfie, utility bill etc.
-      };
-      if (doc.docType === 'PASSPORT' || doc.docType === 'DRIVERS_LICENSE' || doc.docType === 'NATIONAL_ID' || doc.docType === 'GOVERNMENT_ID') {
-        details.frontStatus = doc.frontStatus || doc.status; // Default to overall status if not defined
-        details.backStatus = doc.backStatus || doc.status;   // Default to overall status if not defined
-        delete details.status; // Remove overall status for these types
-      }
-      return details;
+    logger.info(`Admin ${adminId} initiating KYC status update for user ${userId}, docType: ${docType}`, {
+      adminId,
+      userId,
+      action: 'kyc_document_status_update_start',
+      docType,
+      frontStatus,
+      backStatus,
+      status
     });
 
-    let overallMessage = '';
-    switch (overallStatus) {
-      case 'pending':
-        overallMessage = 'KYC verification under review.';
-        break;
-      case 'approved':
-        overallMessage = 'KYC verification is approved.';
-        break;
-      case 'rejected':
-        overallMessage = 'KYC verification was rejected. Please check the status of your submitted documents or contact support.';
-        break;
-      default:
-        overallMessage = 'KYC status is unknown.';
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
     }
 
-    logger.info(`Detailed KYC status fetched successfully for user ${userEmail}: ${overallStatus}`, { userId, action: 'get_kyc_status_complete', overallStatus });
-    res.json(formatResponse(true, overallMessage, { status: overallStatus, documents: documentStatuses }));
+    const kycDocument = user.kycDocuments.find(doc => doc.docType.toUpperCase() === docType.toUpperCase());
+
+    if (!kycDocument) {
+      logger.warn(`KYC document of type ${docType} not found for user ${userId}`, { adminId, userId, docType });
+      return res.status(404).json(formatResponse(false, `KYC document of type ${docType} not found for this user.`));
+    }
+
+    const previousStatus = {
+      front: kycDocument.frontStatus,
+      back: kycDocument.backStatus,
+      overall: kycDocument.status
+    };
+
+    if (frontStatus) {
+      kycDocument.frontStatus = frontStatus.toLowerCase();
+    }
+    if (backStatus) {
+      kycDocument.backStatus = backStatus.toLowerCase();
+    }
+    if (status) {
+      kycDocument.status = status.toLowerCase();
+    }
+
+    // Update overall kycStatus based on individual document statuses
+    const allApproved = user.kycDocuments.every(doc => doc.status === 'verified' || (doc.frontStatus === 'verified' && doc.backStatus === 'verified'));
+    const hasRejection = user.kycDocuments.some(doc => doc.status === 'rejected' || doc.frontStatus === 'rejected' || doc.backStatus === 'rejected');
+
+    if (allApproved) {
+      user.kycStatus = 'approved';
+    } else if (hasRejection) {
+      user.kycStatus = 'rejected';
+    } else {
+      user.kycStatus = 'pending';
+    }
+
+    await user.save();
+
+    await AuditService.log('kyc_document_status_change', {
+      userId: adminId,
+      entityType: 'KYCDocument',
+      entityId: kycDocument._id, // Assuming each document gets an _id by MongoDB
+      metadata: {
+        docType,
+        previousStatus,
+        newStatus: { front: kycDocument.frontStatus, back: kycDocument.backStatus, overall: kycDocument.status },
+        reason
+      }
+    });
+
+    // Send appropriate notifications (consider refining based on approval/rejection of specific documents)
+    if (user.kycStatus === 'approved') {
+      await emailService.sendKYCApproval(user.email);
+    } else if (user.kycStatus === 'rejected') {
+      await emailService.sendKYCRejection(user.email, reason);
+    }
+
+    logger.info(`KYC status updated for user ${user.email}, docType: ${docType} to front: ${kycDocument.frontStatus}, back: ${kycDocument.backStatus}, overall: ${kycDocument.status}`, {
+      adminId,
+      userId,
+      action: 'kyc_document_status_update_complete',
+      docType,
+      frontStatus: kycDocument.frontStatus,
+      backStatus: kycDocument.backStatus,
+      status: kycDocument.status
+    });
+
+    res.json(formatResponse(true, `KYC status updated for ${docType}`));
 
   } catch (error) {
-    logger.error(`Error fetching detailed KYC status for user ${userEmail}: ${error.message}`, { userId, action: 'get_kyc_status_failed', error: error.message });
-    res.status(500).json(formatResponse(false, 'Failed to fetch KYC status'));
+    logger.error(`KYC status update failed: ${error.message}`, {
+      adminId,
+      userId,
+      action: 'kyc_document_status_update_failed',
+      error: error.message,
+      docType,
+      frontStatus,
+      backStatus,
+      status
+    });
+    res.status(500).json(formatResponse(false, 'Failed to update KYC status'));
   }
 };
