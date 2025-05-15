@@ -104,21 +104,36 @@ const userSchema = new mongoose.Schema({
     default: 'pending'
   },
   kycDocuments: [{
-  docType: {
-    type: String,
-    enum: ['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID', 'BIRTH_CERTIFICATE', 'UTILITY_BILL', 'VEHICLE_REGISTRATION', 'GOVERNMENT_ID'],
-    required: true
-  },
-  frontFileUrl: String, // Filename for the front image (if using secure storage)
-  backFileUrl: String,  // Filename for the back image (if applicable)
-  status: {
-    type: String,
-    enum: ['pending', 'verified', 'rejected'],
-    default: 'pending'
-  },
-  uploadedAt: { type: Date, default: Date.now }
-}],
-
+    docType: {
+      type: String,
+      enum: ['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID', 'BIRTH_CERTIFICATE', 'UTILITY_BILL', 'VEHICLE_REGISTRATION', 'GOVERNMENT_ID', 'SELFIE'],
+      required: true
+    },
+    frontFileUrl: String,
+    backFileUrl: String,
+    selfieFileUrl: String, // Add selfie file URL here as well
+    frontStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: 'pending'
+    },
+    backStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: 'pending'
+    },
+    status: { // General status for documents without front/back
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: 'pending'
+    },
+    uploadedAt: { type: Date, default: Date.now }
+  }],
+  // ... other fields ...
+}, {
+  timestamps: true,
+  versionKey: false
+});
 
  // ----- Security Features (Both Versions) -----
 verificationToken: { 
