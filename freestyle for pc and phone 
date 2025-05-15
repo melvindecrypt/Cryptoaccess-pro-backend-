@@ -51,6 +51,7 @@ look at the ending of the prompt that part that it states that "Admin dashboard 
    * Khmer (ភាសាខ្មែរ)
    * Pashto (پښتو)
    * Tajik (тоҷикӣ)
+Frontend makes a PATCH request to /api/users/settings with the selected language code in the body.
  * The modal should have a clear way for the user to select a language and confirm their choice (e.g., by clicking on a language option or a "Confirm" button).
  * The modal should be fully responsive and mobile-friendly.
 2. Saving Language Preference:
@@ -107,9 +108,10 @@ export const translations = {
  * If it does, use this value to dynamically look up the appropriate translation from the translations object to display text across the application. For example, if selectedLanguage is "arabic", the text for the "login" button should be translations.arabic.login.
  * If localStorage does not contain a value for selectedLanguage, display the language selection modal (as described in step 1).
 6. Subsequent Visits:
- * On subsequent visits after a language has been selected and saved in localStorage, the language selection modal should not appear automatically. The application should directly use the language preference stored in localStorage to display the translated text.
+ * On subsequent visits after a language has been selected and saved in localStorage, the language selection modal should not appear automatically. After successful authentication, the frontend makes a GET request to /api/users/settings to fetch the user's preferred language from the backend.
+    If the language fetched from the backend is different from the one in localStorage, the frontend should update its state and potentially localStorage to ensure consistency.The application should directly use the language preference stored in localStorage to display the translated text.
 7. Language Switching Mechanism:
- * A mechanism for users to change their selected language after the initial selection. This could be a dropdown menu or a similar UI element in the app's settings or navigation. If you include this, the selection should update the selectedLanguage in localStorage and refresh the UI with the new translations.
+ * A mechanism for users to change their selected language after the initial selection. This could be a dropdown menu or a similar UI element in the app's settings or navigation. If you include this, the selection should update the selectedLanguage in localStorage and refresh the UI with the new translations.Frontend makes a PATCH request to /api/users/settings to update the user's language preference on the backend.
 
 
 ==================================
