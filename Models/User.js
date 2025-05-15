@@ -253,3 +253,18 @@ module.exports = mongoose.model('User', userSchema);
     currency: String,
     label: String
   }]
+
+// In models/User.js
+const mongoose = require('mongoose');
+// ... other imports and schema definition ...
+
+const userSchema = new mongoose.Schema({
+  // ... other fields ...
+  language: {
+    type: String,
+    default: 'en' // Or your preferred default language
+  },
+  // ... other fields ...
+}, {
+  // ... schema options ...
+});
