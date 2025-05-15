@@ -5,6 +5,7 @@ const Authenticate = require('../middlewares/authMiddleware);
 const auditLog = require('../middlewares/auditLog');
 const kycController = require('../controllers/kycController');
 
+// Route to submit KYC documents
 router.post(
   '/submit',
   Authenticate,
@@ -13,17 +14,10 @@ router.post(
     { name: 'selfieImage', maxCount: 1 }
   ]),
   auditLog('kyc_submission'),
-  kycController.upload
+  kycController.submitKYC
 );
+ 
+// New route to get KYC status
+router.get('/status', Authenticate, kycController.getKYCStatus);
 
 module.exports = router;
-
-// routes/kyc.js
-     router.get('/documents/:file', authMiddleware, (req, res) => {
-       const filePath = path.join(__dirname, `../secure-storage/kyc/${req.user.id}/${req.params.file}`);
-       if (fs.existsSync(filePath)) {
-         res.sendFile(filePath);
-       } else {
-         res.status(404).send('File not found');
-       }
-     });
