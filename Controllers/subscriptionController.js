@@ -3,6 +3,29 @@ const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
 const { validateProPlusPayment } = require('../validators/subscriptionValidators');
 
+// Define your wallet addresses here (or fetch from config/walletAddresses)
+const proPlusPaymentDetails = {
+  price: 299.99,
+  currency: 'USD',
+  wallets: {
+    BTC: 'bc1qrhmqgnwml62udh5c5wnyukx65rdtqdsa58p54l',
+    ETH: '0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767',
+    SOL: 'ChbMRwr4xbH9hQSJA5Ei5MmRWAjn5MPUsVpNUMabsf5K',
+    BNB: '0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767',
+    USDT_ERC20: '0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767',
+    USDC_ERC20: '0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767',
+    DAI: '0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767',
+    XRP: 'rGcSBHz3dURpsh3Tg4y2qpbMMpMaxTMQL7',
+    DOGE: 'DJWWvsfk7cZLFjeWhb9KDyustcZ4vVu7ik',
+    TRX: 'TJ3JRojmo9USXSZ7Sindzycz15EHph3ZYP',
+    USDT_TRC20: 'TJ3JRojmo9USXSZ7Sindzycz15EHph3ZYP',
+    LTC: 'ltc1qp36qqd669xnvtmehyst3ht9suu8z73qasgnxps',
+    MNT: '0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767',
+  },
+  features: ['Advanced charting tools','Unlimited account balance', 'LNF', 'Faster execution speed of up to 15ms', 'Higher trading limits', Access to our top end Trading Bots', 'secure transactions with wallet tracking', 'Dedicated support'],
+  paymentInstructions: 'Please send a one-time payment of $299.99 (or equivalent in your chosen cryptocurrency) to one of the wallets below. After making the payment, upload your proof of payment (transaction ID and/or screenshot) to notify for review.'
+};
+
 // Admin endpoints
 exports.confirmPaymentForProPlus = async (req, res) => {
   const session = await User.startSession();
@@ -146,43 +169,19 @@ exports.getPendingPayments = async (req, res) => {
 
 exports.getProPlusPlan = async (req, res) => {
   try {
-    const proPlusPlanDetails = {
+    const proPlusPlanDetailsToSend = {
       name: 'Pro+',
-      price: 19.99, // Example
-      currency: 'USD',
-      features: ['Advanced charting tools', 'Higher trading limits', 'Dedicated support'], // Example
+      price: proPlusPaymentDetails.price,
+      currency: proPlusPaymentDetails.currency,
+      features: proPlusPaymentDetails.features,
+      paymentWallets: proPlusPaymentDetails.wallets,
+      paymentInstructions: proPlusPaymentDetails.paymentInstructions,
     };
 
-    res.json(formatResponse(true, 'Pro+ plan details retrieved successfully', proPlusPlanDetails));
+    res.json(formatResponse(true, 'Pro+ plan details retrieved successfully', proPlusPlanDetailsToSend));
 
   } catch (error) {
     console.error('Error fetching Pro+ plan details:', error);
     res.status(500).json(formatResponse(false, 'Server error fetching Pro+ plan details', { error: error.message }));
   }
-};
-
-// In controllers/subscriptionController.js
-
-exports.upgradeProPlus = async (req, res) => {
-  try {
-    // Logic to process the Pro+ upgrade payment
-    const paymentSuccessful = await processProPlusPayment(req.user._id, req.body); // Placeholder
-
-    if (paymentSuccessful) {
-      await User.findByIdAndUpdate(req.user._id, { proPlusStatus: true });
-      res.json(formatResponse(true, 'Successfully upgraded to Pro+'));
-    } else {
-      res.status(402).json(formatResponse(false, 'Pro+ upgrade payment failed'));
-    }
-
-  } catch (error) {
-    console.error('Error upgrading to Pro+:', error);
-    res.status(500).json(formatResponse(false, 'Server error during Pro+ upgrade', { error: error.message }));
-  }
-};
-
-// Placeholder for the actual payment processing logic
-async function processProPlusPayment(userId, paymentDetails) {
-  // Implement your payment gateway integration here
-  return true; // Example: Replace with actual payment processing outcome
-}
+};    
