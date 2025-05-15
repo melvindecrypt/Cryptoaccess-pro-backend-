@@ -184,3 +184,16 @@ app.use('/api/plans', subscriptionRoutes);
 // In your app.js or server.js
 const exchangeRoutes = require('./routes/exchange');
 app.use('/api/exchange', exchangeRoutes);
+
+// In your app.js or server.js
+const express = require('express');
+const app = express();
+const walletRoutes = require('./routes/wallet');
+const withdrawalRoutes = require('./routes/withdrawal'); // Import the new withdrawal routes
+
+// ... other middleware and setup ...
+
+app.use('/api/wallets', walletRoutes);
+app.use('/api/wallets/withdraw', withdrawalRoutes); // Mount the withdrawal routes under the correct path
+
+// ... error handling and start the server ...
