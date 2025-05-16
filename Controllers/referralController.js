@@ -9,7 +9,7 @@ const REFERRAL_REWARD_AMOUNT = 100; // Define the referral reward amount
 exports.getReferralInfo = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate({
-      path: 'referralUsers',
+      path: 'referredUsers',
       select: 'email createdAt accessPaymentCompleted proPlusStatus', // Select relevant fields
     });
 
