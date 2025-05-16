@@ -298,3 +298,28 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+// In AuthController.js
+
+exports.logout = async (req, res) => {
+  try {
+    // Log the logout action on the server (optional but good for audit trails)
+    console.log(`User ${req.user?.id} logged out.`);
+
+    // Respond with a success message
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully.'
+    });
+
+    // The frontend will handle deleting the token and redirecting.
+
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server Error',
+      message: error.message
+    });
+  }
+};
