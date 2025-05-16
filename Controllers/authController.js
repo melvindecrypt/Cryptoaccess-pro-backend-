@@ -10,7 +10,7 @@ exports.register = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { email, password, referralCode } = req.body;
+    const { email, password, referralCode: refcode } = req.body;
 
     // Validation
     if (!email || !password) {
@@ -53,20 +53,6 @@ exports.register = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Optional referral logic
-    let referredBy = null;
-    if (referralCode) {
-      const referrer = await User.findOne({ referralCode }).session(session);
-      if (referrer) {
-        referredBy = referrer._id;
-
-        // Optionally track referral event in a separate collection
-        // await Referral.create([{ referrerId: referrer._id, referredEmail: email }], { session });
-
-        // Optional: add bonus to referrer or stats
-      }
-    }
-
     // Generate referral code for new user
     const newReferralCode = uuidv4().slice(0, 8);
 
@@ -75,12 +61,38 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       walletId: `WALLET-${uuidv4().replace(/-/g, '').substring(0, 16)}`,
-      referredBy,
+      referredBy: null,
       kycStatus: 'pending', // Auto trigger KYC status
       referralCode: newReferralCode // generate their own referral code
     });
 
     await user.save({ session });
+
+    // Handle referral tracking if a referral code was provided during registration
+    if (refCode) {
+      const referrer = await User.findOne({ referralCode: refCode }).session(session);
+      if (referrer) {
+        user.referredBy = referrer._id; // Set the 'referredBy' field of the new user
+        referrer.referredUsers.push(user._id); // Add the new user's _id to the referrer's 'referredUsers'
+        await referrer.save({ session }); // Save the referrer
+      } else {
+        console.log(`Referrer with code ${refCode} not found.`);
+        // You might want to handle this case (e.g., log it, inform the user - though not typically done during signup)
+      }
+    }
+
+    await user.save({ session });
+    await session.commitTransaction();
+    res.status(201).json({ success: true, message: 'User registered successfully', userId: user._id });
+
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Registration error:', error);
+    res.status(500).json({ success: false, error: 'Server Error', message: error.message });
+  } finally {
+    session.endSession();
+  }
+};
 
     // Create wallet for the new user
     const wallet = new Wallet({ userId: user._id });
