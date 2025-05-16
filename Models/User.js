@@ -6,7 +6,7 @@ const crypto = require('crypto');
 // Constants
 const PASSWORD_REGEX = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,}$/;
 const WALLET_PREFIX = 'WALLET-';
-const REFERRAL_CODE_LENGTH = 8;
+const REFERRAL_CODE_LENGTH = 10;
 
 const userSchema = new mongoose.Schema({
   // ----- Core User Info (Both Versions) -----
