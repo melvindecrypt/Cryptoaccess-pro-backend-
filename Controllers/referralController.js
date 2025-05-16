@@ -1,7 +1,6 @@
 const User = require('../models/User');
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
-const { generateUniqueReferralCode } = require('../utils/referralUtils'); // Assuming you have this utility
 const emailService = require('../services/emailService'); // Assuming you have an email service
 
 const REFERRAL_REWARD_AMOUNT = 100; // Define the referral reward amount
