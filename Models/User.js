@@ -52,10 +52,14 @@ const userSchema = new mongoose.Schema({
   }],
 
   // ----- Referral System (Both Versions) -----
+const REFERRAL_CODE_LENGTH = 10; // You can adjust this length
+
+const generateReferralCode = () => uuidv4().slice(0, REFERRAL_CODE_LENGTH).toUpperCase();
+
   referralCode: {
     type: String,
     unique: true,
-    default: () => generateReferralCode()
+    default: generateReferralCode
   },
   referredBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -66,6 +70,9 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+  createdAt: { type: Date, default: Date.now }, // Add signup date
+  accessPaymentCompleted: { type: Boolean, default: false }, // Add access payment status
+  proPlusStatus: { type: Boolean, default: false }, // Add Pro+ status
 
   // ----- Subscription System (New Version Additions) -----
   subscription: {
