@@ -29,7 +29,7 @@ router.use(isAdmin);
 // ================== User Management Endpoints ==================
 
 router.patch('/approve-user', adminController.approveUser);
-router.patch('/bypass-payment', adminController.bypassPayment);
+router.patch('/bypass-access-fee', adminController.bypassPayment);
 router.patch('/grant-pro-plus', adminController.grantProPlus);
 router.patch('/verify-kyc', adminController.verifyKyc);
 router.patch('/update-balance', adminController.updateBalance);
