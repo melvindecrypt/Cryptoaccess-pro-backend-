@@ -239,6 +239,12 @@ exports.updateProofStatus = async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
+        // --- Add this validation ---
+        const validStatuses = ['approved', 'rejected'];
+        if (!status || !validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status value. Expected "approved" or "rejected".' });
+        }
+
         const paymentProof = await PaymentProof.findByIdAndUpdate(id, { status, updatedAt: Date.now() }, { new: true });
 
         if (!paymentProof) {
