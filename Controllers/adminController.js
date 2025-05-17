@@ -187,22 +187,6 @@ exports.grantProPlus = async (req, res) => {
   }
 };
 
-//Verify kyc Documents 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Verify kyc Documents - Handles Approve/Reject based on original definition
 exports.verifyKyc = async (req, res) => {
   try {
@@ -327,67 +311,6 @@ exports.verifyKyc = async (req, res) => {
 
     // Default: If error is not a specific validation/404 error handled above, return 500
     res.status(500).json(formatResponse(false, err.message || 'An unexpected error occurred.'));
-  }
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-exports.verifyKyc = async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json(formatResponse(false, 'Email required'));
-
-    const user = await handleAdminAction('verify-kyc', req, async (session) =>
-      User.findOneAndUpdate(
-        { email },
-        {
-          kycStatus: 'approved',
-          'kycDocuments.$[].status': 'verified',
-          kycVerifiedBy: req.user.userId
-        },
-        { new: true, session }
-      ).select('-password -__v')
-    );
-
-    if (!user) return res.status(404).json(formatResponse(false, 'User not found'));
-
-    // Move notification logic to the controller
-    await notificationService.create(
-      user._id,
-      'kyc',
-      'KYC Approved',
-      'Your identity verification has been approved',
-      { kycStatus: 'approved' }
-    );
-
-    await notificationService.sendEmailNotification(
-      user.email,
-      'KYC Approved',
-      'kycApproved',
-      { name: user.firstName }
-    );
-
-    res.json(formatResponse(true, 'KYC verified', user));
-  } catch (err) {
-    logger.error('Error verifying KYC:', err); // Enhanced error logging
-    res.status(500).json(formatResponse(false, err.message));
   }
 };
 
