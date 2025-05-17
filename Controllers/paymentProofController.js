@@ -254,9 +254,11 @@ exports.updateProofStatus = async (req, res) => {
         if (status === 'approved' && paymentProof.paymentType === 'pro-plus') {
             const user = await User.findById(paymentProof.userId);
             if (!user) {
-                console.error('Error finding user for Pro+ approval.');
-                return;
-            }
+                console.error('Error finding user for Pro+ approval for proof ID:', id);
+    // Abort transaction if you were using one here, although updateOne/findById doesn't need it
+    return res.status(500).json({ success: false, message: 'Internal error: Could not find user associated with proof.' });
+}
+  }
             user.subscription = {
                 isProPlus: true,
                 subscribedAt: new Date(),
