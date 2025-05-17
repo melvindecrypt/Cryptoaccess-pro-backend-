@@ -370,13 +370,25 @@ exports.getUsers = async (req, res) => {
     if (status) filter.kycStatus = status; // e.g., 'pending', 'approved'
     if (isProPlus) filter['subscription.isProPlus'] = isProPlus === 'true';
 
+    // --- Add these lines to get the total count ---
+    const totalCount = await User.countDocuments(filter);
+    const totalPages = Math.ceil(totalCount / parseInt(limit));
+    // ---------------------------------------------
+
     const users = await User.find(filter)
       .select('-password -__v -verificationToken')
-      .skip((page - 1) * limit)
+      .skip((page - 1) * parseInt(limit)) // Ensure limit is parsed as integer here too
       .limit(parseInt(limit))
       .lean();
 
-    res.json(formatResponse(true, 'Users fetched', { users }));
+    // --- Modify the response payload ---
+    res.json(formatResponse(true, 'Users fetched', {
+      users,
+      totalCount, // Include total count
+      totalPages  // Include total pages
+    }));
+    // ----------------------------------
+
   } catch (err) {
     logger.error(`Admin user list error: ${err.message}`);
     res.status(500).json(formatResponse(false, 'Failed to fetch users'));
