@@ -188,6 +188,167 @@ exports.grantProPlus = async (req, res) => {
 };
 
 //Verify kyc Documents 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Verify kyc Documents - Handles Approve/Reject based on original definition
+exports.verifyKyc = async (req, res) => {
+  try {
+    const updatedUser = await handleAdminAction('verify-kyc-action', req, async (session) => {
+      const { userId, action, rejectionReason } = req.body;
+
+      const validActions = ['approve', 'reject'];
+      if (!userId || !action || !validActions.includes(action) || (action === 'reject' && !rejectionReason)) {
+          res.status(400).json(formatResponse(false, 'Invalid input: User ID, valid action ("approve"/"reject"), and rejection reason (if rejecting) are required.'));
+          throw new Error('Validation failed: Invalid input for verifyKyc');
+      }
+
+      const user = await User.findById(userId).session(session).select('-password -__v -kycDocuments -transactions'); // Exclude sensitive/large fields not needed for response/update determination
+
+      if (!user) {
+          res.status(404).json(formatResponse(false, 'User not found.'));
+          throw new Error('User not found for KYC verification');
+      }
+
+      // Optional: Prevent re-processing if status is already final
+      if (user.kycStatus === 'approved' || user.kycStatus === 'rejected') {
+          res.status(400).json(formatResponse(false, `User KYC is already ${user.kycStatus}.`));
+          throw new Error(`User KYC status is already final: ${user.kycStatus}`);
+      }
+
+
+      let updateFields = {};
+      if (action === 'approve') {
+        updateFields = {
+          kycStatus: 'approved',
+          // Note: This sets ALL kycDocuments.$.status to 'verified'. Adjust if specific document status needs updating.
+          // You might need a separate endpoint/logic for per-document status updates if necessary.
+          'kycDocuments.$[].status': 'verified',
+          kycVerifiedBy: req.user.userId,
+          kycReviewedAt: new Date(),
+          rejectionReason: null
+        };
+
+      } else if (action === 'reject') {
+         updateFields = {
+          kycStatus: 'rejected',
+           // Note: This sets ALL kycDocuments.$.status to 'rejected'. Adjust if specific document status needs updating.
+          'kycDocuments.$[].status': 'rejected',
+          kycRejectedBy: req.user.userId,
+          kycReviewedAt: new Date(),
+          rejectionReason: rejectionReason
+        };
+      }
+
+      // Use findByIdAndUpdate with the userId within the session
+      const userAfterUpdate = await User.findByIdAndUpdate(
+        userId,
+        updateFields,
+        { new: true, session: session }
+      ).select('-password -__v -kycDocuments -transactions'); // Select fields to return in the response
+
+
+      // Notifications are ideally sent AFTER the transaction commits successfully.
+      // The handleAdminAction helper manages the transaction.
+      // You would access the necessary data (user email, action, reason) from
+      // the `updatedUser` object and `req.body` *after* this handleAdminAction
+      // call resolves successfully in the outer try block.
+      // For the purpose of this snippet *within* the handleAdminAction operation,
+      // we just perform the DB update. Notifications will be called outside this internal function.
+
+      return userAfterUpdate; // Return the updated user document for the outer scope
+    });
+
+    // --- Notifications called AFTER successful transaction commit ---
+    // Access data needed for notifications from req.body and the result (updatedUser)
+    const { action, rejectionReason } = req.body; // Get action/reason from original request
+    const userForNotification = updatedUser; // Use the updated user object
+
+    // Determine notification content based on action
+    const notificationTitle = action === 'approve' ? 'KYC Approved' : 'KYC Rejected';
+    const notificationMessage = action === 'approve' ? 'Your identity verification has been approved.' : `Your identity verification was rejected. Reason: ${rejectionReason}`;
+    const emailTemplate = action === 'approve' ? 'kycApproved' : 'kycRejected';
+
+
+     if (userForNotification) {
+         // Ensure notificationService methods exist and work with these arguments
+        await notificationService.create( userForNotification._id, 'kyc', notificationTitle, notificationMessage, { kycStatus: userForNotification.kycStatus, rejectionReason: userForNotification.rejectionReason });
+        await notificationService.sendEmailNotification( userForNotification.email, notificationTitle, emailTemplate, { name: userForNotification.firstName, reason: rejectionReason }); // Assuming user has firstName for template
+     } else {
+         logger.error(`Could not retrieve updated user (${updatedUser?._id}) for notifications after successful KYC action (${action})`);
+     }
+    // --- End Notifications ---
+
+
+    // Send the final success response
+    res.json(formatResponse(true, `User KYC status updated to ${action}`, {
+      user: updatedUser // Include the updated user object in the response data
+    }));
+
+  } catch (err) {
+    // Catch errors thrown by validation, handleAdminAction (which re-throws), or notifications
+    logger.error('Error during verifyKyc action:', err.message, { stack: err.stack, body: req.body, adminId: req.user?.userId });
+
+    // Check if a response status has already been sent (e.g., by inner validation throws)
+    if (res.headersSent) {
+        // If headers were sent (meaning status/response was already set inside), just log and exit
+        return;
+    }
+
+    // Handle specific error messages thrown by validation/user not found inside handleAdminAction operation
+    if (err.message.includes('Validation failed')) {
+         // The status (400) and response body should have already been set before the throw inside
+         // handleAdminAction's operation. So the check `res.headersSent` above should ideally catch this.
+         // If handleAdminAction doesn't set the response on error, you might need more complex parsing here.
+         // Assuming handleAdminAction propagates the inner response status/body: nothing more needed here.
+         // If handleAdminAction just re-throws simple Errors, then handle 404 specifically:
+         if (err.message.includes('User not found')) {
+              return res.status(404).json(formatResponse(false, 'User not found.'));
+         }
+         // Or handle 400 specifically:
+         if (err.message.includes('Invalid input')) {
+             return res.status(400).json(formatResponse(false, err.message)); // Return 400 with the validation message
+         }
+
+    }
+
+
+    // Default: If error is not a specific validation/404 error handled above, return 500
+    res.status(500).json(formatResponse(false, err.message || 'An unexpected error occurred.'));
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 exports.verifyKyc = async (req, res) => {
   try {
     const { email } = req.body;
