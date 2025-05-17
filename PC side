@@ -1,0 +1,1287 @@
+
+Remember to add stuff like open modal with about for /about for places that need to open modals 
+And website's layout should adjusts dynamically based on the device's dimensions and resolution.
+
+
+
+
+
+ Build a full-stack responsive web app Frontend called Crypto Access Pro — a Binance-style crypto app simulation with premium UI/UX and multipage flow. Use Next.js, Tailwind CSS, and ShadCN/UI components with smooth transitions and app-like UX for both desktop and mobile.. The app simulates trading, wallet balances, and investments with virtual data only. No live data, no external APIs. The only real interaction is when users send access payments to admin's actual wallet addresses. 
+
+The web app must include two secure panels:
+1.  Main User Side (Frontend: React.js + Vite)
+• Home Page Design & Features (Binance-style, fully responsive, animated design, app-like experience):
+Use the attached image as the exact visual reference for the homepage design of "Crypto Access Pro". 
+Replace all placeholder texts and headings in the image with the following custom wording:
+
+ "Crypto Access pro", using the following structure and replacing the text content with the text provided below and add the text which i have provided below. **Crucially maintain and Match the colors, font sizes, spacing, icons, and visual layout of each section, including the placement of any images that were likely present in the original design.**
+
+**1. Hero Section:**
+  **Headline:** 'Welcome to Crypto Access Pro — Your Crypto Gateway, Redefined'
+ **Subheadline/Description:** 'Buying, selling, investing, and managing crypto has never been this smooth. Whether you’re a seasoned trader or a first-time investor, Crypto Access Pro gives you the tools, speed, and security to take full control of your digital wealth.' Include '(floating animations and Maintain the visual structure of this section).
+  **Call to Action:** 'Start your Crypto Access Pro journey now and experience the power of true crypto freedom.' (as a prominent button) **Maintain the button's visual style and placement.**
+ **App Download Promotion:** 'Download the App(with an app download link) Elevate your Access.' Include placeholders for app store badges. **Maintain the visual placement of these badges.**
+  **Statistics:** Include a graphic or clear text displaying '17M+ Users | $25M+ In User Transactions | 150+ Supported Coins'. **Maintain the visual style and placement of this statistics block.**
+
+**2. "WHAT WE OFFER" Section:**
+  **Headline:** 'WHAT WE OFFER'
+  **Subheadline:** 'Everything you need to power your crypto lifestyle' followed by 'Crypto Access Pro offers a seamless and immersive experience that feels familiar to the world’s best apps — now available for mobile and web.' **Maintain the overall layout of this section, including any visual separators or background styles.**
+  **Feature Blocks:**
+    **WALLETS:**
+      **Title:** 'Wallets'
+      **Subheadline:** 'Swift, Secure, Seamless'
+      **Description:** 'Manage over 150+ crypto assets in one sleek interface. Your wallet updates in real-time, giving you full transparency over every balance, transaction, and portfolio change. > BTC, ETH, BNB, USDT, XRP, SOL, DOGE, TRX, and more — all in one place.' **If the original had an icon or image associated with 'WALLET', maintain its placement.**
+    **PRO INVESTMENTS:**
+ **Title:** 'Pro Investments'
+      **Subheadline:** 'ROI Like Never Before'
+      **Description:** 'Ready to grow your crypto? With Crypto Access Pro you unlock premium investment plans with up to 20% weekly ROI.” Track progress, monitor ROI, and withdraw when ready — all controlled by you.' 
+    **ADVANCED EXCHANGE:**
+      **Title:** 'Advanced Exchange'
+      **Subheadline:** 'Fast, Real, Intuitive Trading'
+     * **Description:** 'Trade over 50+ crypto pairs instantly with ultra-low fees. Buy/Sell like a pro using clean, user-friendly interfaces and instant balance updates. > ETH/BTC, DOGE/USDT, TRX/BTC, BNB/USDT and many more.'
+   * **BUSINESS:**
+     * **Title:** 'BUSINESS'
+     * **Subheadline:** 'Take Your Business To The Next Level with Crypto Access Pay'
+ * **Description:** 'Now you can accept crypto payments from anywhere in the world — instantly. Whether you're a freelancer, entrepreneur, eCommerce store, or agency, our dynamic payment links let you collect funds from global clients without worrying about price volatility or blockchain complexity. > Accept BTC, ETH, USDT, and more in minutes Generate one-time or reusable payment links Get notified instantly when funds land Crypto Access Pay helps you scale fast, borderless, and secure.' **If the original had an icon or image associated with 'BUSINESS', maintain its placement.**
+   * **DEVELOPERS:**
+     * **Title:** 'DEVELOPERS'
+  * **Subheadline:** 'Plug In and Build with Our Powerful Crypto API'  *
+ **Description:** 'No need to spend weeks integrating complicated systems. With our API suite, you can connect your app or platform to Crypto Access Pro’s features in minutes. > simple integration Intelligent fraud detection Dev support Simple and secure documentation Military grade security' **If the original had an icon or image associated with 'DEVELOPERS', maintain its placement.**
+   * **CUSTOMER SUPPORT:**
+     * **Title:** 'Customer Support That Listens'
+     * **Subheadline:** (Implicit from the title)
+     * **Description:** '24/7 in-app support, email assistance, and fast responses keep you protected and confident. Need help? Tap support in-app or email Melvindecrypt@gmail.com'
+
+**3. "Built on Experience You Can Trust" Section:**
+ * **Headline:** 'Built on Experience You Can Trust'
+ * **Description:** 'With 6+ years of blockchain and fintech experience, the team behind Crypto Access Pro has built one of the most reliable platforms in the space, modeled to meet global standards of quality, privacy, and innovation. We combine deep technical expertise with practical crypto tools for real users.' **Maintain the visual layout of this section, including any background styles or image placements.**
+
+**4. "Hear From Our Users" Section:**
+ * **Headline:** 'Hear From Our Users'
+ * **Content:** Include the following testimonials: ... **Maintain the visual layout of the testimonial section, including any avatars or visual styling.**
+
+**5. "And That’s Just The Beginning..." Section:**
+ * **Headline:** 'And That’s Just The Beginning...'
+ * **Description:** 'Swap crypto instantly, convert currencies, withdraw on demand, or grow your funds — all inside Crypto Access Pro. There’s no limit to what you can do here.' **Maintain the visual layout of this section.**
+
+**6. "Secure, Fast, Ready Anywhere" Section:**
+ * **Headline:** 'Secure, Fast, Ready Anywhere'
+ * **Subheadline:** 'Whether you're using Android, iOS, or desktop — we’ve built the app to work beautifully across devices. > The future of finance is mobile. Crypto Access Pro is already there.' **Maintain the visual layout of this section, including any visual cues for the platforms (logos, etc.).**
+
+**7. Footer:**
+ * **Copyright Information:** '© 2025 Crypto Access Pro All rights reserved. Built with integrity. Powered by expertise. Designed for global crypto users.' **Maintain the visual style and layout of the footer.**
+
+**Visual Elements:** Remember to maintain the general layout and structure of the Roqqu homepage, preserving the placement of elements, including any images or icons that were likely present. Only replace the text content with the provided 'Crypto Access Pro' wording."
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+=============1. Header /Navigation Bar
+Fixed, sleek top navbar with logo (Crypto Access Pro)
+Right-aligned navigation options:
+/About – Navigates to a section with a professional-looking about message with this message "About Crypto Access Pro
+
+Crypto Access Pro — Your All-In-One Gateway to the Crypto World
+Welcome to Crypto Access Pro, the next-generation crypto platform designed for bold, modern investors. With a user experience inspired by the world's top exchanges like Binance, our platform delivers seamless access to powerful crypto tools, real investment opportunities, multi-coin wallets, and professional trading features — all in one place.
+
+We combine elegant design with enterprise-level infrastructure to offer you a secure, fast, and intuitive platform that fits right into your lifestyle. Whether you're holding, trading, investing, or managing your digital assets — Crypto Access Pro makes it effortless.
+
+
+Why Choose Crypto Access Pro?
+True Multi-Wallet Support
+Instantly access wallet balances across top cryptocurrencies including BTC, ETH, USDT, BNB, XRP, DOGE, TRX, SOL, LTC, USDC, DAI, MNT and many more. View, manage, and trade from your personal dashboard with total control.
+
+Premium Investment Plans with Real ROI
+Upgrade to Pro+ and unlock exclusive plans such as “Invest $500–10 BTC for 20% ROI weekly for 6 months.” Watch your capital grow, track your ROI, and manage your funds with precision.
+
+Next-Level Trading Experience
+Trade 50+ top crypto pairs in a beautifully designed exchange interface featuring professional-style charts, instant feedback, and smart tools. Execute Buy/Sell actions confidently in real time. Security, Trust, and Admin Control
+All activity is managed through a protected infrastructure — including KYC verification, withdrawal handling, wallet updates, and investment approvals. Admin oversight ensures safety and transparency every step of the way.
+
+One-Time Access Fee, Lifetime Value
+Gain access to the entire ecosystem with a one-time $99.90 activation you cam experience advanced tools, faster transaction speed like never before, and full investment access. Pay securely using BTC, ETH, BNB, USDT, and other top crypto assets.
+
+
+A Crypto game changing-Class Experience, Made for You
+
+Crypto Access Pro isn’t just another platform 
+— it’s an elite-level app experience built with cutting-edge design and performance in mind. From smooth transitions to responsive layouts and mobile-ready dashboards, everything looks and feels like you're using the most trusted names in crypto.
+
+Whether you're checking your balances, trading on the go, investing long-term, or submitting KYC — every click is built for power and simplicity.
+
+
+“Get Started Today” Button (direct to /sign up modal)
+
+Crypto Access Pro puts your financial future in your hands. No distractions, no complexity — just the tools, confidence, and access you need to grow in the digital age.
+
+Join now, activate your access, and take full control of your crypto journey".
+Language Selector – Dropdown to switch app language (supports multilingual selection: English, French, Spanish, etc.)
+
+“Signup”– Scrolls to the signup form section
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+============2. Hero Section (First fold)
+
+Engaging title like: “Your Gateway to the Future of Crypto Finance”
+Subtext: “Invest, Trade, and Earn – Full Experience. All in one place.”
+Large “Get Started” button (navigates to /signup form modal)
+Background: Animated SVG, gradient, or dark-mode themed with crypto icons
+Scrollable User Reviews (Carousel style)
+Horizontally scrollable (mobile swipe + desktop scroll)
+8 fake but realistic user testimonials (e.g., “Crypto Access Pro helped me understand the crypto world risk-free!”)
+Star ratings, fake names, profile avatars, country flags
+About Section: that takes to the about page already created (like already included) Fake but professional content about Crypto Access  (emphasize on paying $99.90 for access/Pro+)
+
+
+5. ============/Signup 
+
+Clean, styled form with following fields:
+
+•	First Name
+•	Last Name
+•	Email
+•	Password
+On submit: Sends email verification
+
+Displays message: “Check your email to verify.”
+After email verification, account remains in pending state until admin manually approves via backend
+
+Below the form:
+Text: “Already have an account?”
+Link: “Click here to log in” → navigates to /login modal
+
+
+
+6. ==============Footer
+
+Compact footer with links:
+Terms & Conditions
+Privacy Policy
+Contact
+Social icons: Twitter, Telegram, Discord (links can be dummies)
+Copyright © Crypto Access Pro
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=============/login Page 
+Clean, modern UI with dark/light theme toggle (optional)
+Centered login card with brand logo above it (Crypto Access Pro)
+Slightly blurred or animated background for premium look (crypto pattern, globe animation, or abstract tech art)
+Login Form Components
+Fields: 
+•	Email
+•	Password
+Remember Me checkbox
+
+Actions:
+“Login” button (disabled until both fields are filled)
+“Forgot password?” (link) 
+
+Login Logic Flow:
+Submit via email/password: Authenticated with backend
+If email is unverified: Show error: “Please verify your email before logging in.”
+If approved: Redirect to /access-fee page (where $99.90 access fee or admin bypass happens)
+
+Additional Elements:
+Below the form: 
+Text: “New here?”
+Link: “Click here to sign up” → navigates to /signup
+
+Responsive: Fully optimized for mobile, tablet, and desktop
+Security: 
+Prevent brute force: show warning after 5 failed attempts 
+Use secure input types (password masked, secure storage if "remember me" is selected)
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===========/access-fee
+Purpose
+Prompt user to pay a $99.90 one-time access fee via crypto before unlocking their dashboard.
+Page Layout:
+Header Section:
+Title: Activate Your Account - One-Time Access Fee 
+Subtitle: Get access to the most private, reliable and secured digital currency in the world. 
+Subtext: Pay $99.90 using any of the supported cryptocurrencies below. Once paid, click "I Have Paid".
+
+Payment Wallet Grid (Responsive Cards):
+Display all crypto wallet addresses as individual cards, with:
+Coin name (e.g., Bitcoin)
+Coin icon (BTC, ETH, etc.)
+Wallet address
+QR code image (can be a placeholder for now)
+Copy button: On click, copies address & shows “Copied!” toast
+Address text itself should be copyable
+Tap entire card (on mobile) to copy address
+Design: Shadowed cards, hover effect, clean Binance-style UI
+
+Example Wallet Card Structure (Repeat for each):
+[BTC Icon] Bitcoin Address: bc1qrhmqgnwml62udh5c5wnyukx65rdtqdsa58p54l [Copy] [QR Code] 
+Wallets to Include:
+•	       BTC: bc1qrhmqgnwml62udh5c5wnyukx65rdtqdsa58p54l
+•	ETH: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	SOL: ChbMRwr4xbH9hQSJA5Ei5MmRWAjn5MPUsVpNUMabsf5K
+•	BNB Smart Chain: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	USDT (ERC20): 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	USDC (ERC20): 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	DAI: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	XRP: rGcSBHz3dURpsh3Tg4y2qpbMMpMaxTMQL7
+•	DOGE: DJWWvsfk7cZLFjeWhb9KDyustcZ4vVu7ik
+•	TRX (TRON): TJ3JRojmo9USXSZ7Sindzycz15EHph3ZYP
+•	USDT (TRC20): TJ3JRojmo9USXSZ7Sindzycz15EHph3ZYP
+•	LTC: ltc1qp36qqd669xnvtmehyst3ht9suu8z73qasgnxps
+•	MNT (Mantle): 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+
+MoonPay / Transak Card Options (Fake): 
+Display card options labeled “Pay with card (MoonPay)” and “Pay with card (Transak)” When clicked: Show error toast: "Currently unavailable. Please contact support."
+Gray out the cards after the toast is shown
+"I Have Paid" Button:
+ Label: I Have Paid
+Action: Sends payment pending notification to admin via backend
+Shows status: “Waiting for confirmation...”
+Disable further interaction until admin manually approves backend
+
+Support Section:
+Bottom of the page
+Text: "Need help? Contact Support"
+When clicked: Reveal: Melvindecrypt@gmail.com with “Copy” button beside it
+
+Mobile UX Considerations:
+All wallet cards should stack vertically with tap-to-copy enabled
+Sticky “I Have Paid” button for mobile
+Scroll-friendly QR sections
+Support and error toasts positioned visibly
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===========/Main Dashboard — Crypto Access Pro (Binance-style UI)
+Purpose: Simulate a professional, responsive crypto user dashboard with wallet balances, investment tab, fake trading, charts, and funding instructions.
+Dashboard Layout Structure: Header Navigation: Logo (top-left)
+Tabs: Dashboard | Exchange | Investments (Pro+ only) | Charts | Support | Profile
+(Top-right) user dropdown: Profile | Settings | Logout
+
+1. Virtual Wallet Cards Overview
+Display Style: Responsive Grid Layout on desktop (4 per row)
+Horizontal Scrollable Cards on mobile (snap-to-scroll with momentum)
+Each Wallet Card Contains: Coin Icon + Symbol (e.g., BTC icon + "BTC")
+Coin Name: e.g., Bitcoin
+Fake Balance Display: e.g., “₿0.000”
+Label: Wallet Balance
+Arrow Icon ( > ) to indicate interactivity
+Clickable Behavior: On desktop: click opens /charts?coin=BTC
+On mobile: smooth animated left-slide to /charts?coin=BTC
+And remember all wallets balance start with 0.000
+Coins to Display:
+•	BTC
+•	ETH
+•	SOL
+•	BNB
+•	USDT
+•	USDC
+•	DAI
+•	XRP
+•	DOGE
+•	TRX
+•	LTC
+•	MNT
+•	ADA
+•	AVAX
+•	DOT
+•	MATIC
+•	SHIB
+•	TON
+•	NEAR
+•	OP
+•	ARB
+•	LINK
+•	APE
+•	RNDR
+•	ICP
+•	XLM
+•	VET
+•	EOS
+•	FIL
+•	GRT
+Bonus UX Tips: Clicking on a pair opens the full trade interface for that pair with static/fake chart and controls
+Hover glow & slight card lift (desktop)
+Tap ripple and slide transition (mobile)
+Shadow + outline that matches each coin's theme color
+
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+============= Deposit / Buy Section
+Header Title: > "Deposit"
+Deposit Card Grid (Responsive)
+Each card includes: 
+Coin Icon + Symbol
+Coin Full Name
+Admin Wallet Address (real)
+•	BTC: bc1qrhmqgnwml62udh5c5wnyukx65rdtqdsa58p54l
+•	ETH: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	SOL: ChbMRwr4xbH9hQSJA5Ei5MmRWAjn5MPUsVpNUMabsf5K
+•	BNB Smart Chain: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	USDT (ERC20): 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	USDC (ERC20): 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	DAI: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+•	XRP: rGcSBHz3dURpsh3Tg4y2qpbMMpMaxTMQL7
+•	DOGE: DJWWvsfk7cZLFjeWhb9KDyustcZ4vVu7ik
+•	TRX (TRON): TJ3JRojmo9USXSZ7Sindzycz15EHph3ZYP
+•	USDT (TRC20): TJ3JRojmo9USXSZ7Sindzycz15EHph3ZYP
+•	LTC: ltc1qp36qqd669xnvtmehyst3ht9suu8z73qasgnxps
+•	MNT (Mantle): 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+
+QR Code (placeholder image, same size for all)
+"Copy Address" button
+On click: tooltip Copied to clipboard! or mobile toast
+Mobile: Entire card is tap-to-copy
+Quick-access copy icon over QR
+Optional Enhancements: Floating Help Button: “Need help?” → opens modal with:
+Contact Email: Melvindecrypt@gmail.com (tap-to-copy)
+Note: “Currently, only wallet payments supported. Moon Pay/Transak temporarily unavailable.”
+"I’ve Paid" Button: Triggers notification to admin
+Shows message: “Payment submitted. Awaiting confirmation.”
+
+Styling Inspiration: Use Binance yellow for CTA buttons
+Rounded cards with light shadows, borders using coin theme color
+Animations: slide/fade in, feedback on interaction
+MoonPay / Transak Card Payment :
+Two cards: “Buy with Card (MoonPay)” and “Buy with Card (Transak)”
+When clicked: 
+Show toast: "Currently unavailable. Please contact support." (Fade or gray out the buttons temporarily)
+ "I Have Paid" Button (Sticky): Appears below wallets section
+Label: I Have Paid
+Action: Triggers a pending notification to admin
+Status changes to: “Waiting for confirmation...”
+UI disables further input until manually approved via backend
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5. ================/exchange – Fake Trading System (Simulated UX)
+
+Top Navigation: Search Bar with magnifying icon (top center)
+Placeholder: “Search coins (e.g., BTC, ETH, DOGE)”
+Filters through a list of 50+ static pairs in real-time
+
+Add a simulated live chart component to my Crypto Access Pro app that displays real-time crypto prices (like BTC/ETH) but in a simulated format. Use CoinGecko’s public API to fetch the current market price every 5–10 seconds. Generate a fake dataset of chart points that fluctuates slightly around the current price using small random offsets. Use Recharts (or ApexCharts if preferred) to display the chart and update it dynamically every few seconds. The chart should simulate activity over the last 30–60 minutes, with new data points added and old ones removed continuously. Make the component mobile-responsive and visually 
+consistent with the Binance-style UI of the app. No actual trading or WebSocket integration is required — just real price + simulated chart behavior.
+
+Trading Pairs List:
+Show at least 50 fake trading pairs (expandable list with scrolling):
+Examples (First 20):
+
+BTC/USDT
+
+ETH/BTC
+
+BNB/USDT
+
+SOL/BTC
+
+DOGE/USDT
+
+ADA/USDT
+
+TRX/USDT
+
+XRP/BTC
+
+SHIB/USDT
+
+LTC/USDT
+
+AVAX/USDT
+
+MATIC/USDT
+
+DOT/BTC
+
+TON/USDT
+
+NEAR/USDT
+
+LINK/ETH
+
+OP/USDT
+
+ARB/USDT
+
+MNT/BTC
+
+DAI/USDT
+
+> UX Tip: Clicking on a pair opens the full trade interface for that pair with simulated live chart and controls
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+=============Trading View Layout: (Mimics Binance Mobile/Desktop trade panel)
+
+* Simulated live Chart Area
+
+Add a simulated live chart component to my Crypto Access Pro app that displays real-time crypto prices (like BTC/ETH) but in a simulated format. Use CoinGecko’s public API to fetch the current market price every 5–10 seconds. Generate a fake dataset of chart points that fluctuates slightly around the current price using small random offsets. Use Recharts (or ApexCharts if preferred) to display the chart and update it dynamically every few seconds. The chart should simulate activity over the last 30–60 minutes, with new data points added and old ones removed continuously. Make the component mobile-responsive and visually consistent with the Binance-style UI of the app. No actual trading or WebSocket integration is required — just real price + simulated chart behavior.
+
+Candlestick-style chart (simulated live charts)
+Dropdown to switch between chart styles (bar, candle, line)
+Chart timeframe tabs: 1m, 5m, 1h, 1D (simulated live chart timeframe)
+
+
+* Trade Panel: Buy/Sell Form
+
+Two Tabs:
+Buy
+Sell
+Each includes: Price (Hardcoded): e.g., BTC/USDT = $67,420
+Amount Input: user types how much to buy/sell
+Total Value: auto-calculated (price × amount)
+Submit Button (Buy or Sell)
+On click: success toast: “Trade successful! Balance updated.”
+
+> UI reacts with subtle animations: fade in/out success message, button glow on hover, ripple effect on mobile tap
+
+
+*Fake Order History (Below Trade Panel)
+
+Table Layout (Binance style):
+Auto-populates with user's simulated trades
+Stored client-side only (no backend or DB required)
+Refreshable list
+Responsive & Animated UX:
+Mobile: full-screen modal for trading interface
+Sliding transition between pairs
+Tabs animate when switching (Buy/Sell)
+Smooth chart animations (static image with movement simulation)
+Styling & Behavior:
+Use Binance black/yellow theme
+Dark mode by default
+All fonts, spacings, paddings mimic real Binance app
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+
+ ===========/dashboard > Investments Tab 
+(Pro+ Users Only)
+
+> Visibility: This tab only appears if user.isProPlus === true. If not, it's completely hidden from the UI.
+
+============Header Section
+Title: Pro+ Investments
+Subtitle: “Earn 20% weekly ROI for 6 months on your crypto.”
+Investment Form (Interactive & Smooth)
+A fluid, Binance-inspired card interface allowing users to start investing:
+Step 1: Choose Investment Amount
+Amount input field:
+Placeholder: “Enter amount (min $500 - max 10 BTC)”
+Accepts both fiat (USD) and crypto input (BTC, ETH, etc.)
+Auto-convert below in a small label (e.g., “≈ 0.012 BTC”)
+Validation with tooltip: “Minimum $500, maximum 10 BTC”
+
+Step 2: Select Currency
+Dropdown with logos and ticker: BTC, ETH, USDT, BNB, LTC, SOL, etc.
+Auto-display your virtual wallet balance
+
+Step 3: Invest Button
+[Invest Now] (yellow Binance-style button)
+On click: triggers backend request
+Shows confirmation modal: “Are you sure you want to invest X in [currency]?”
+Then: show success message “Investment Activated — ROI starts within 24 hrs”
+
+Current Investments Display
+Card grid showing:
+•	Amount Invested
+•	Start Date / End Date
+•	Weekly ROI (20%)
+•	Next Payout Countdown Timer
+•	Total ROI So Far
+•	Status: Active / Completed / Cancelled
+•	ROI Payout Tracker
+•	Progress bar with time-based ROI milestones
+•	Each payout shown as a mini milestone (e.g., “Week 1: +0.1 BTC”)
+•	Investment History
+•	Table or scrollable list: Date | Amount | Currency | ROI Earned | Status
+
+Admin Approval Notes (Optional Overlay)
+If investment is pending manual confirmation:
+Dim background and show modal: “Your investment request is under review. You’ll be notified shortly.”
+
+Style Notes
+Clean Binance-style card layouts
+Soft transitions, hover effects, and tooltips
+Mobile-friendly with dropdowns, toggles, and responsive charts
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+============Charts Tab (Static Data Only):
+
+Fake line/bar charts for BTC, ETH, etc.
+Use chart libraries like Recharts or Chart.js
+Random historical data
+Label as: “Market Trends"
+
+Redirect Behavior:
+When user clicks any coin in wallet list:
+Redirects to: /charts?coin=BTC (or clicked symbol)
+
+Chart Page Behavior (/charts):
+Fake price chart (candlesticks or bars)
+Buy / Sell inputs
+Fake “Market Order” button
+Static or randomly-generated data
+Confirmations like “Trade successful!” (no real processing)
+
+Example Click-to-Trade Flow:
+1. User sees BTC Wallet: ₿0.25
+2. Clicks BTC card
+3. Redirects to /charts?coin=BTC
+4. Fake candlestick chart for BTC appears
+5. User enters fake amount, clicks "Buy BTC"
+6. Toast: “BTC Buy Order Executed!”
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+=============Support Tab:
+
+Bottom of every page (footer or floating button)
+Click reveals: Support Email: Melvindecrypt@gmail.com
+“Copy” button next to email
+Mobile Responsiveness:
+Wallets collapse into accordion views
+Sticky footer with Dashboard | Exchange | Investments | Profile
+Tap-friendly buttons, full-width “I Have Paid” CTA Floating support icon on bottom right
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/settings – Full UI/UX Design (Binance-Style)
+Framework: React + Vite
+Style: Clean, modern, mobile-first, scrollable, minimal animations, real Binance feel.
+
+Top Section: Page Header
+Title: Settings
+Sticky top bar (white/black depending on theme)
+Left: Back arrow or menu icon
+Right: Language icon or user avatar
+
+1. Profile Settings Card
+Label: “Profile Information”
+Clickable row with avatar + user name
+On tap/click: Redirects to /profile/edit
+
+UI Style: Chevron > or pen icon shows it's editable
+
+Inside  /profile/edit page:
+Form-style layout with editable fields: 
+•	First Name
+•	Last Name
+•	Phone Number
+•	Email Address (read-only if already verified)
+•	Country
+•	Date of Birth
+•	Preferred Currency
+Survey Additions: 
+•	“What do you plan to use Crypto Access Pro for?” (dropdown)
+•	“Experience Level” (Beginner, Intermediate, Expert)
+•	“How often do you trade?” (Daily, Weekly, Occasionally)
+•	“Do you invest long-term?” (Yes/No)
+Save Button: Bottom-anchored, confirmation toast on save
+Security Notice: "Your data is securely 
+stored and not shared"
+
+2. Language Selector
+Label: Language
+Default: English
+On tap/click: Modal or dropdown opens
+Languages to show: 
+English
+Français
+Español
+Deutsch
+Italiano
+Português
+العربية
+हिंदी
+中文
+UI Behavior: Select one → Save → App refreshes to reflect language (simulated)
+
+3. KYC Verification Section
+Label: Verify KYC
+Subtitle: “Upload your ID and photo for full access”
+On tap/click: Open KYC page or modal /kyc
+Inside  /kyc page:
+Step-by-step form: 
+•	Full Name (auto-filled)
+•	Date of Birth
+•	Country of Residence
+•	ID Type (dropdown): 
+•	National ID
+•	Passport
+•	Driver’s License
+•	Upload fields: 
+•	Upload Front of ID
+•	Upload Back (optional if passport)
+•	Upload Selfie (with clear instructions)
+Buttons: 
+"Submit KYC"
+"Cancel"
+After submit: Toast: “KYC submitted for review. You’ll be notified via email.”
+
+4. Security Settings 
+Add 2FA toggle (fake visual toggle)
+Notification preferences (Email on withdrawal, etc.)
+
+5. Logout
+Position: Bottom of page, red text or button
+On click: Shows confirmation modal: 
+“Are you sure you want to logout?”
+Yes → clears session/token and redirects to login
+
+Mobile-Friendly Features:
+Touch-friendly buttons and lists
+Scrollable if needed
+Animated dropdowns or modals
+Dark/light theme compatible
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/pro-plus – Pro+ Upgrade Page (Binance-Style)
+
+Purpose: Collect one-time Pro+ upgrade fee of $299.99, paid directly to the admin’s wallet.
+Trigger: Unlocks additional features like “Investments,” ability to withdraw, etc., after manual admin confirmation.
+Top Section: Header
+Title: Upgrade to Pro+
+Description text: “One-time payment of $299.99 to unlock all Crypto Access exclusive Pro+ features including Investments, ai trading bot, coin tracking, and Priority Support.”
+ 
+Styling: Large Binance-yellow Pro+ icon or badge with a glowing effect.
+
+Subtitle: “Pay once. Enjoy for life.”
+Main Section: Crypto Wallet Payment UI
+Wallets List (Scroll-enabled, clean Binance-style list):
+Each includes:
+Label (e.g., BTC Wallet)
+Full address (e.g., bc1qrhmqgnwml62udh5c5wnyukx65rdtqdsa58p54l)
+Tap-to-copy address
+“Copy” icon or QR code (tap to copy)
+QR image optional if needed
+Wallets to Display:
+BTC: bc1qrhmqgnwml62udh5c5wnyukx65rdtqdsa58p54l
+
+ETH: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+
+USDT ERC20: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+
+USDC: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+
+BNB: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+
+DAI: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+
+MNT: 0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767
+
+SOL: ChbMRwr4xbH9hQSJA5Ei5MmRWAjn5MPUsVpNUMabsf5K
+
+XRP: rGcSBHz3dURpsh3Tg4y2qpbMMpMaxTMQL7
+
+DOGE: DJWWvsfk7cZLFjeWhb9KDyustcZ4vVu7ik
+
+TRX / USDT TRC20: TJ3JRojmo9USXSZ7Sindzycz15EHph3ZYP
+
+LTC: ltc1qp36qqd669xnvtmehyst3ht9suu8z73qasgnxps
+
+Fake Fiat On-Ramp Options (Unavailable)
+Card logos (Visa/MasterCard + MoonPay/Transak icons)
+Greyed out with a yellow warning badge: > “Currently unavailable. Please use crypto wallet above or contact support.”
+
+Support Info
+Clickable “Need help?” section at the bottom
+On tap: Show popup or modal with:
+Email: Melvindecrypt@gmail.com
+Tap-to-copy function
+"I Have Paid" Confirmation Button
+Label: I have paid
+On click: Triggers backend notification to admin (pending approval)
+Toast message: “Payment submitted. Please wait while we verify.”
+Button becomes disabled with a spinner or checkmark
+
+After Admin Approval
+Auto-trigger or next login:
+App unlocks:
+Investments tab in the dashboard
+Withdrawal tab in wallet
+Badge: “Pro+” added near avatar with a pro+ badge  
+Optional modal or toast: “Welcome to Pro+! Your exclusive features are now active.”
+Mobile-Friendly Design
+Responsive flexbox/grid layout
+Sticky header
+Scrollable wallet card section
+Accessible tap targets for copy buttons and support
+
+Investment plans
+Withdraw
+Live support (chat form)
+
+/withdraw Tab – Pro+ Only Virtual Withdrawal Request System
+Access Condition: 
+Visible only if:
+user.isProPlus === true
+user.isKYCApproved === true
+
+Layout and Features
+1. Header Section
+Title: "Withdraw Funds"
+
+2. Wallet Selector Dropdown
+Label: "Select Crypto Wallet to Withdraw From" Dropdown showing user’s virtual wallets (e.g., BTC, ETH, USDT, etc.) with fake balances: 
+BTC – ₿0.253
+ETH – Ξ1.95
+USDT – $1200.00 etc.
+Only coins with balance > 0 are shown
+
+3. Amount Input
+Label: "Amount to Withdraw"
+User inputs amount (validated against virtual wallet balance)
+Optional: Slider to auto-fill percentage (25%, 50%, 100%)
+
+
+
+4. Real Wallet Address Input
+Label: "wallet address"
+Input field (required)
+Optional: Add QR code scanner icon (simulated, no real scan)
+
+5. Network Type Selector (Dropdown)
+E.g., ERC20, TRC20, BEP20
+Only shown for multi-network coins (like USDT, ETH, etc.)
+
+6. Withdrawal Summary Box
+Shows:
+Selected coin
+Entered amount
+Entered wallet address
+Network
+
+Styled like Binance’s confirmation UI
+
+7. "Withdraw" Button
+On click:
+Shows modal: “Confirm withdrawal request?”
+After confirmation, show fake success message:
+"Withdrawal successful."
+Triggers notification to admin in backend
+
+
+8. Withdrawal Rules / Notices
+Displayed in small text below the form:
+"Important: Verify the withdrawal address and amount carefully Cryptocurrency transaction are irreversible. Crypto Access Pro will not be held liable for any assets sent to an incorrect address."
+"Processing time: 5–20mins."
+
+9. Support CTA
+Button or text: "Need Help?"
+On click, shows: Email support: Melvindecrypt@gmail.com (tap-to-copy)
+
+10. Withdrawal History Table
+Columns: Coin | Amount | Real Wallet Address | Status | Date
+Example rows:
+BTC | ₿0.10 | bc1q... | Pending | May 4, 2025
+
+USDT | $500 | 0xE... | Approved | May 1, 2025
+
+Bonus UX Enhancements
+Use toast notifications like "Copied!" when user taps address
+Use smooth transitions when switching wallet types
+Show small coin logos/icons beside balances
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/settings > Referrals Tab – Referral System 
+
+UI (Binance-style)
+Purpose: Display referral rewards, referral code, referral count, and earnings. Encourage sharing and growth.
+Header Section
+Title: Invite & Earn
+Subtitle: “Refer friends and earn $100 per successful user!”
+User Referral Summary
+Your Referral Code: Large bold code (e.g., CRYPTO ACCESS123)
+[ Copy Code ] button with clipboard icon
+Your Referral Link: e.g., https://Crypto Access.pro/signup?ref=CRYPTO ACCESS123
+Tap-to-copy button beside the link
+Referral Stats Panel Styled with Binance-like rounded cards or grid boxes:
+Total Referrals: 12 (All numbers are dynamic and simulate live updates).
+Total Earned: $1,200 (All numbers are dynamic and simulate live updates).
+Pending Referrals: 3 (All numbers are dynamic and simulate live updates).
+Approved Referrals: 9 (All numbers are dynamic and simulate live updates).
+How It Works (Expandable/Accordion section)
+Invite a friend using your link or code
+Friend signs up, deposits at least $1000 and is approved
+You earn $100, which is instantly withdrawable
+Earnings are credited to your wallet after approval
+
+Share Buttons
+Social buttons: WhatsApp, Telegram, Twitter, Copy Link
+
+Style
+Binance-black background with yellow accents
+Rounded card sections for stats
+Clean, mobile-first responsive layout
+Fade-in animation for new referral entries
+
+Support Info
+Clickable “Need help?” section at the bottom
+On tap: Show popup or modal with:
+Email: Melvindecrypt@gmail.com
+Tap-to-copy function
+
+
+(Important: website’s layout should adjusts dynamically based on the device’s dimensions and resolution), Design only the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================ Admin Side (Admin Panel Overview)
+
+Route Security:
+Admin login page: /admin/login
+If non-admin tries accessing any /admin/* route:
+Redirect to /login
+Show error: “Invalid access. Admins only.”
+After successful admin login
+Redirect to /admin/dashboard
+All /admin/* routes are protected using:
+JWT token-based authentication or secure session cookies
+
+Admin UI Design Requirements
+Binance-style UI/UX (clean layout, dark/light mode toggle)
+Mobile responsive with sidebar drawer
+Professional navigation bar with admin avatar and dropdown (Profile, Settings, Logout)
+Uses modular components: cards, tables, tabs, modals, toasts
+
+Main Routes:
+/admin/login
+/admin/dashboard
+/admin/users
+/admin/kyc
+/admin/withdrawals
+/admin/wallets
+/admin/logs
+/admin/notifications
+/admin/settings
+
+Admin Functional Specs
+1. Approve/Reject Users
+Table: New users with email, full name, signup date
+Actions:
+Approve: User becomes active
+Reject: User account is soft-deleted or flagged
+
+2. Bypass $99.90 Access Fee
+Search user by email
+Button: “Mark Access Fee as Paid”
+Tooltip: “User bypassed payment”
+
+3. Mark Payments as Confirmed
+Pending access fee/Pro+ users
+Button: “Confirm Payment”
+Automatically unlock next feature (Pro or app entry)
+
+4. Upgrade to Pro+
+Search user by email
+Action: “Upgrade to Pro+”
+Confirmation popup before applying
+
+5. View All Users & Balances
+Table: User Email, Wallet Balances (BTC, ETH, etc.), Pro+ status
+Optional: Export to CSV
+
+6. Add/Remove Virtual Funds
+Search user > Select coin
+Input amount (+ or -)
+Buttons: “Credit” or “Debit”
+Confirmation and balance update toast
+
+7. Approve/Reject KYC
+View user KYC submissions
+Image previews: ID + selfie
+Dropdown: “Approve” or “Reject”
+Add note on rejection
+
+8. Approve/Reject Withdrawals
+View requests: Email, amount, coin, address
+Action: Approve or Deny
+“Mark as Paid” tag (optional)
+
+9. Edit Admin Wallet Addresses
+Form with all listed cryptos
+Admin can update wallet address
+Confirm button with toast notification
+
+10. Trigger Notifications
+Select user(s)
+Message box: Subject + body
+Option: Send in-app or email
+
+11. User Activity Logs
+View login attempts, KYC uploads, trades, deposits
+Filters: date range, user, type
+
+12. Ban/Restrict User
+Toggle to deactivate or restrict user
+Add reason for recordkeeping
+
+Admin Panel UX Enhancements
+Toasts on every action (e.g., “User upgraded to Pro+”)
+Search bar with filters (e.g., by user, coin, status) Action: allow admin to search and edits user balances, accept or reject kyc etc)
+Real time dashboard cards:
+New Signups (24h)
+Pending KYC
+Withdrawal Requests
+Active Pro+ Users
+
+Technical Notes:
+Frontend: React.js + vite (must be fully responsive)
+Styling: TailwindCSS 
+API: Axios(JWT handling)
+Email verification must be handled
+KYC uploads should be stored locally (no cloud)
+Static data only — no external APIs or real-time prices
+Clean UI with multi-page routing and smooth transitions
+Admin has full control — nothing happens without admin manual action
+Real wallet addresses must appear clearly where required
+
+UI/UX Instructions:
+Replicate Binance app style (dark/light theme. Clean tabs)
+Smooth transitions between pages
+Clean spacing, intuitive navigation responsive designs
+
+Adaptive Layouts:
+The website's layout should adjusts dynamically based on the device's dimensions and resolution.
+
+Fluid Grid System:
+Content should be arranged in a grid that adapts to the screen size, preventing elements from overflowing or being cut off.
+
+Responsive Images:
+Images should be sized and scaled to fit the available space, ensuring they appear sharp and clear on all devices.
+
+Mobile-First Approach:
+The design should prioritizes mobile usability, meaning the website's structure should first be developed for mobile screens and then adapted for larger screens
+
+Show pop-up messages on actions (e.g., “Email verified,” “KYC Submitted,” etc.)
+
+ I only need the frontend built to connect to an existing node.js backend. The backend for this app is fully completed already, including user auth, KYC, wallet, investments, admin controls, and all secured API endpoints for all core features, including:
+
+•	User registration and login with email verification
+•	Access fee payment screen ($99.90 in crypto to admin wallet)
+•	Pro+ subscription upgrade ($299.99 crypto to admin wallet)
+•	Virtual wallet with real/virtual balances and activity
+•	Simulated crypto investment system with ROI
+•	Simulated crypto trading/exchange panel
+•	User-to-user P2P trading (admin-controlled)
+•	KYC system (ID + selfie uploads, no cloud storage)
+•	Withdrawal request system (Pro+ users only)
+•	Multilingual support (language selection on entry + inside app)
+•	Admin dashboard (secured route, not part of this frontend scope)
+
+Design the frontend to call my existing backend endpoints using axios. Use dummy data or mocks where needed to simulate the backend flow.
+
+Main app pages (in order):
+Splash/welcome page with language selector
+Access fee payment screen (shows crypto wallet address)
+Email verification flow
+Dashboard home (wallet overview, stats)
+Investment tab (select amount, show ROI history)
+Exchange tab (buy/sell crypto, use virtual funds)
+P2P trading tab (offers, admin approval info)
+Pro+ upgrade page
+KYC submission page (upload ID and selfie locally)
+Withdrawal request page (locked until Pro+ and KYC are complete)
+Profile/settings (language change, logout)
+
+Make the UI as smooth and visually polished as Binance. Use modern fonts, subtle shadows, smooth tab transitions, animated buttons, and properly spaced layouts. Prioritize mobile-first design.
+
+Backend Notes:
+- No real-time market data or exchange APIs.
+- Email, KYC, Pro+, and withdrawal logic already built (no need to code backend).
+- Wallets are virtual, with full admin control.
+- ROI calculated weekly and updated.
+- All payments (access and Pro+) are shown to user as crypto addresses only — no payment gateway
+ Delivery checklist 
+[ ] All real wallet addresses show up correctly
+[ ] Signup, email verify, and admin approval flow works
+[ ] Payment screen with wallet addresses and bypass works properly
+[ ] Admin dashboard protected from public access
+[ ] No real crypto functionality — only visual and virtual
+[ ] Fully responsive on macOS, windows, Android and iOS browsers
+[ ] Admin can control every part of the system
