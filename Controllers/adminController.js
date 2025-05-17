@@ -474,7 +474,7 @@ exports.deleteUser = async (req, res) => {
       ip: req.ip
     });
 
-    res.json(formatResponse(true, 'User deleted successfully, {
+    res.json(formatResponse(true, 'User deleted successfully', {
       userId: targetUser._id,
       archived: true
     }));
