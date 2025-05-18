@@ -173,15 +173,12 @@ module.exports = app;
 const chartRoutes = require('./routes/charts');
 app.use('/api/charts', chartRoutes);
 
-// In server.js
 app.use('/api/plans', subscriptionRoutes);
 
 // In your app.js or server.js
 const exchangeRoutes = require('./routes/exchange');
 app.use('/api/exchange', exchangeRoutes);
 
-// In your app.js or server.js
-const express = require('express');
 const withdrawalRoutes = require('./routes/withdrawal'); // Import the new withdrawal routes
 
 // ... other middleware and setup ...
