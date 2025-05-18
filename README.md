@@ -51,9 +51,10 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── walletController.js
 │   └── withdrawalController.js
 ├── middleware/
-│   ├──validators/│   ├── adminValidators.js
+│   ├── validators/
+│   │   ├── adminValidators.js
 │   ├── adminAuth.js
-│   ├── auditMiddleware,js
+│   ├── auditMiddleware.js
 │   ├── authMiddleware.js
 │   ├── localStorageAccess.js
 │   ├── requireVerifiedEmail.js
@@ -64,7 +65,7 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── AuditLog.js
 │   ├── Notification.js
 │   ├── PaymentProof.js 
-│   ├── Setttings.js
+│   ├── Settings.js
 │   ├── Transaction.js
 │   ├── User.js
 │   ├── Wallet.js
@@ -84,25 +85,25 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 ├── services/
 │   ├── auditService.js
 │   ├── notificationService.js
-│   └── payoutservice.js
+│   ├── payoutService.js
 │   ├── simulationService.js 
 ├── templates/
 │   ├── email/
 │   ├── investmentConfirmed.hbs
 │   ├── kycApproved.hbs
-│   ├── kycRejection.hbs
+│   ├── kycRejected.hbs
 │   ├── subscriptionSuccess.hbs
 │   ├── withdrawalProcessed.hbs
 │   └── withdrawalRejected.hbs
 ├── uploads/
 │   ├── kyc/
 ├── utils/
-│   ├── errors
-│   ├── emailservice.js
+│   ├── errors/
+│   ├── emailService.js
 │   ├── helpers.js
 │   ├── logger.js
-├──validators
-│   ├──subscriptionValidators.js
+├── validators/
+│   ├── subscriptionValidators.js
 ├── server.js
 ├── package.json
 └── package-lock.json
