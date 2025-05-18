@@ -174,7 +174,6 @@ const chartRoutes = require('./routes/charts');
 app.use('/api/charts', chartRoutes);
 
 // In server.js
-const subscriptionRoutes = require('./routes/subscription');
 app.use('/api/plans', subscriptionRoutes);
 
 // In your app.js or server.js
@@ -183,7 +182,6 @@ app.use('/api/exchange', exchangeRoutes);
 
 // In your app.js or server.js
 const express = require('express');
-const app = express();
 const withdrawalRoutes = require('./routes/withdrawal'); // Import the new withdrawal routes
 
 // ... other middleware and setup ...
