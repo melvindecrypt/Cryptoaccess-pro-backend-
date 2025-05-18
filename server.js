@@ -174,7 +174,6 @@ const chartRoutes = require('./routes/charts');
 app.use('/api/charts', chartRoutes);
 
 // In server.js
-const walletRoutes = require('./routes/wallets');
 app.use('/api/wallets', walletRoutes);
 
 // In server.js
