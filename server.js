@@ -187,7 +187,6 @@ app.use('/api/exchange', exchangeRoutes);
 // In your app.js or server.js
 const express = require('express');
 const app = express();
-const walletRoutes = require('./routes/wallet');
 const withdrawalRoutes = require('./routes/withdrawal'); // Import the new withdrawal routes
 
 // ... other middleware and setup ...
