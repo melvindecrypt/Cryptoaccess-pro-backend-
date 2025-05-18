@@ -174,9 +174,6 @@ const chartRoutes = require('./routes/charts');
 app.use('/api/charts', chartRoutes);
 
 // In server.js
-app.use('/api/wallets', walletRoutes);
-
-// In server.js
 const subscriptionRoutes = require('./routes/subscription');
 app.use('/api/plans', subscriptionRoutes);
 
@@ -191,7 +188,6 @@ const withdrawalRoutes = require('./routes/withdrawal'); // Import the new withd
 
 // ... other middleware and setup ...
 
-app.use('/api/wallets', walletRoutes);
 app.use('/api/wallets/withdraw', withdrawalRoutes); // Mount the withdrawal routes under the correct path
 
 // ... error handling and start the server ...
