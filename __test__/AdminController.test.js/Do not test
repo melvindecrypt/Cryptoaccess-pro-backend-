@@ -1,0 +1,30 @@
+AdminController.test.js Part 1
+ * adminLogin (assuming it's a standalone export or directly callable)
+ * handleAdminAction (the helper function)
+ * approveUser
+ * bypassPayment
+ * grantProPlus
+ * verifyKyc
+
+AdminController.test.js Part 2 
+ * updateBalance
+ * suspendUser
+ * logout
+ * sendFunds
+ * getUsers
+ * verifyEmail
+ * deleteUser
+ * adjustBalance
+ * processPayouts
+ * updateUser
+ * getUserWallet
+ * getKycDocs
+ * getPendingWithdrawals
+ * processWithdrawal
+ * getAdminWallets
+ * updateAdminWallets
+ * getAuditLogs
+ * getNotifications
+ * notificationService (the internal one, not the helper)
+ * getSettings
+ * updateSettings
