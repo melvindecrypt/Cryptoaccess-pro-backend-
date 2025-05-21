@@ -9,7 +9,7 @@ router.put('/wallets', adminAuth, AdminController.updateAdminWallets);
 router.get('/logs', adminAuth, AdminController.getAuditLogs);
 
 router.get('/notifications', adminAuth, AdminController.getNotifications);
-router.post('/notifications', adminAuth, AdminController.sendNotification);
+router.post('/notifications', adminAuth, AdminController.notificationService);
 
 router.get('/settings', adminAuth, AdminController.getSettings);
 router.put('/settings', adminAuth, AdminController.updateSettings);
