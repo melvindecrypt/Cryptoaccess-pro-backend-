@@ -1,5 +1,5 @@
-const User = require('../models/User');
-const Wallet = require('../models/Wallet');
+const User = require('../models/user');
+const Wallet = require('../models/wallet');
 
 // Unified response format
 const formatResponse = (success, message, data = null) => ({
@@ -102,10 +102,8 @@ exports.uploadKycDoc = async (req, res) => {
 };
 
 // In userController.js
-const User = require('../models/User');
-const Wallet = require('../models/Wallet');
-const Investment = require('../models/Investment'); // Assuming you have an Investment model
-const InvestmentPlan = require('../models/InvestmentPlan'); // Assuming you have an InvestmentPlan model
+const Investment = require('../models/investment');
+const InvestmentPlan = require('../models/investmentPlan');
 
 // Unified response format (assuming you have this defined)
 const formatResponse = (success, message, data = null) => ({
@@ -183,7 +181,6 @@ exports.getDashboardData = async (req, res) => {
   }
 };
 
-const User = require('../models/User');
 const { formatResponse } = require('../utils/helpers');
 const validator = require('validator'); // For email validation
 
