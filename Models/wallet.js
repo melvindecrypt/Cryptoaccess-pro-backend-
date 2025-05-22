@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { formatResponse } = require('../utils/helpers');
-const Transaction = require('./Transaction');
-const User = require('./User');
+const Transaction = require('./transaction');
+const User = require('./user');
 const Decimal = require('decimal.js');
 
 const MIN_BALANCE = 0;
