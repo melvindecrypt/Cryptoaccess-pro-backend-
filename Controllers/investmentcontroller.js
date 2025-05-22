@@ -3,6 +3,7 @@ const Investment = require('../models/investment');
 const InvestmentPlan = require('../models/investmentPlan');
 const Wallet = require('../models/wallet');
 const { formatResponse } = require('../utils/helpers');
+const { sendEmail } = require('../utils/emailService');
 const logger = require('../utils/logger');
 const Decimal = require('decimal.js');
 const mongoose = require('mongoose');
@@ -93,6 +94,16 @@ exports.invest = async (req, res) => {
             await session.commitTransaction();
             session.endSession();
 
+await sendEmail({
+  to: user.email,
+  subject: 'Investment Confirmed',
+  template: 'investmentConfirmed', // looks for templates/emails/investmentConfirmed.hbs
+  data: {
+    name: user.name,
+    amount: decimalAmount.toNumber(),
+    currency: investmentCurrency
+  }
+});
             res.status(201).json(formatResponse(true, 'Investment started successfully', {
                 investmentId: newInvestment._id.toString(),
                 plan: plan.name,
