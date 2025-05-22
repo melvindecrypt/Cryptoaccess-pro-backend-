@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const user = require('../models/User');
+const User = require('../models/User');
 const { authenticate, isAdmin } = require('../middlewares/authMiddleware');
 const logger = require('../utils/logger');
 const { formatResponse } = require('../utils/helpers');
-const adminController = require('../controllers/adminController');
-const auditLog = require('../middlewares/auditLog');
+const AdminController = require('../controllers/adminController');
+const AuditLog = require('../middlewares/auditLog');
 const secureLocalAccess = require('../middlewares/localStorageAccess');
 
 // ================== Rate Limiting ==================
