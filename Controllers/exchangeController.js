@@ -1,10 +1,10 @@
 // controllers/exchangeController.js
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
-const Wallet = require('../models/Wallet');
+const Wallet = require('../models/wallet');
 const Decimal = require('decimal.js');
-const Currency = require('../models/Currency');
-const Transaction = require('../models/Transaction'); // Make sure this path is correct
+const Currency = require('../models/currency');
+const Transaction = require('../models/transaction'); // Make sure this path is correct
 const Decimal = require('decimal.js');
 
 // Paste the validateCurrency function here:
@@ -689,14 +689,6 @@ exports.getMarketData = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Server error fetching market data'));
   }
 };
-
-// controllers/exchangeController.js
-const { formatResponse } = require('../utils/helpers');
-const logger = require('../utils/logger');
-const Wallet = require('../models/Wallet');
-const Decimal = require('decimal.js');
-
-// ... (rest of the existing code: AVAILABLE_TRADING_PAIRS, getOrderBook, sorting functions, getExchangePairs, placeOrder, matchOrders, executeTrade, getMarketData)
 
 exports.swap = async (req, res) => {
   const session = await Wallet.startSession();
