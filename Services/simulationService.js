@@ -1,6 +1,6 @@
-const User = require('../models/User');
-const Withdrawal = require('../models/Withdrawal');
-const Investment = require('../models/Investment');
+const User = require('../models/user');
+const Withdrawal = require('../models/withdrawal');
+const Investment = require('../models/investment');
 const { InsufficientBalanceError } = require('../utils/errors');
 const logger = require('../utils/logger');
 
