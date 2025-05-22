@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const User = require('../models/user');
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
 const AuditService = require('../services/auditService');
