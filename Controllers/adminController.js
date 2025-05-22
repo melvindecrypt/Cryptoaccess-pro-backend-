@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
-const User = require('../models/User');
-const Withdrawal = require('../models/Withdrawals');
-const ArchiveUser = require('../models/ArchiveUser');
-const Wallet = require('../models/Wallet');
-const Transaction = require('../models/Transaction');
+const User = require('../models/user');
+const Withdrawal = require('../models/withdrawals');
+const ArchiveUser = require('../models/archiveUser');
+const Wallet = require('../models/wallet');
+const Transaction = require('../models/transaction');
 const logger = require('../utils/logger');
 const { formatResponse } = require('../utils/helpers');
 const payoutService = require('../services/payoutService');
@@ -799,8 +799,8 @@ exports.processWithdrawal = async (req, res) => {
 
 // controllers/adminController.js
 
-const AuditLog = require('../models/AuditLog');
-const Notification = require('../models/Notification');
+const AuditLog = require('../models/auditLog');
+const Notification = require('../models/notification');
 
 exports.getAdminWallets = async (req, res) => {
   const wallets = await AdminWallet.findOne({});
