@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
-const Currency = require('../models/Currency'); // Adjust the path to your Currency model
+const Currency = require('../models/currency');
 const databaseUrl = 'mongodb+srv://admin:Uu11DEZlMe32tMCR@binancepro-db.xxhtgym.mongodb.net/cryptoaccesspro-db?retryWrites=true&w=majority&appName=Binancepro-DB
-'; // Replace with your actual MongoDB connection string
-
+';
 const currenciesToSeed = [
   { symbol: 'BTC', name: 'Bitcoin', isActive: true },
   { symbol: 'ETH', name: 'Ethereum', isActive: true },
