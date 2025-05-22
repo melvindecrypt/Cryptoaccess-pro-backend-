@@ -1,4 +1,4 @@
-const AuditLog = require('../models/AuditLog');
+const AuditLog = require('../models/auditLog');
 const logger = require('../utils/logger');
 
 class AuditService {
