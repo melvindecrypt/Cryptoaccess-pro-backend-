@@ -1,10 +1,10 @@
-// File: controllers/withdrawalController.js
-const Withdrawal = require('../models/Withdrawal');
-const User = require('../models/User');
+controllers/withdrawalController.js
+const Withdrawal = require('../models/withdrawal');
+const User = require('../models/user');
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
 const Decimal = require('decimal.js');
-const mongoose = require('mongoose'); // Make sure mongoose is imported
+const mongoose = require('mongoose');
 
 exports.createWithdrawal = async (req, res) => {
   const session = await mongoose.startSession();
