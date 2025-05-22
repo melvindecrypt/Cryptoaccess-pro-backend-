@@ -34,7 +34,6 @@ router.patch('/grant-pro-plus', adminController.grantProPlus);
 router.patch('/verify-kyc', adminController.verifyKyc);
 router.patch('/update-balance', adminController.updateBalance);
 router.patch('/suspend-user', adminController.suspendUser);
-router.post('/logout', adminController.logout);
 
 // ================== Session Management ==================
 router.post('/logout', adminController.logout);
