@@ -1,6 +1,6 @@
-const User = require('../models/User');
-const Transaction = require('../models/Transaction');
-const PaymentProof = require('../models/PaymentProof'); // Import the PaymentProof model
+const User = require('../models/user');
+const Transaction = require('../models/transaction');
+const PaymentProof = require('../models/paymentProof'); // Import the PaymentProof model
 const { ACCESS_FEE_USD } = require('../config/constants');
 const {
   BTC_WALLET_ADDRESS,
