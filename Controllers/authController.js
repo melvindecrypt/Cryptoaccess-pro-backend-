@@ -2,8 +2,8 @@ const { sendWelcomeEmail } = require('../utils/emailService');
 const { v4: uuidv4 } = require('uuid');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
-const Wallet = require('../models/Wallet');
+const User = require('../models/user');
+const Wallet = require('../models/wallet');
 
 exports.register = async (req, res) => {
   const session = await mongoose.startSession();
@@ -165,10 +165,8 @@ const token = jwt.sign(
   }
 );
 
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Admin = require('../models/User'); // Assuming Admins are Users with `isAdmin` flag set
-const { sendWelcomeEmail } = require('../utils/emailService');
+const Admin = require('../models/user'); // Assuming Admins are Users with `isAdmin` flag set
 
 exports.adminLogin = async (req, res) => {
   const { email, password } = req.body;
