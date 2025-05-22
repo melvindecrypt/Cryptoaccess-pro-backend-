@@ -7,5 +7,5 @@ module.exports = {
 };
 
 module.exports = {
-  PRO_PLUS_SUBSCRIPTION_DURATION_DAYS = Life time
+  PRO_PLUS_SUBSCRIPTION_DURATION_DAYS = life time
 };
