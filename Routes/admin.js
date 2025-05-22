@@ -89,7 +89,3 @@ router.get('/withdrawals/pending', adminController.getPendingWithdrawals);
 router.patch('/withdrawals/:id', adminController.processWithdrawal);
 
 module.exports = router;
-
-
-
-
