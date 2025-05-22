@@ -88,22 +88,6 @@ router.get('/withdrawals/pending', adminController.getPendingWithdrawals);
 // Process withdrawals
 router.patch('/withdrawals/:id', adminController.processWithdrawal);
 
-// In routes/admin.js (or your chosen route file)
-const express = require('express');
-const router = express.Router();
-const { authenticate } = require('../middleware/authMiddleware');
-const { getDashboardData, getProfile, updateSecurity, uploadKycDoc } = require('../controllers/userController');
-
-router.get('/dashboard', authenticate, getDashboardData);
-router.get('/users/profile', authenticate, getProfile); // Existing route
-router.patch('/users/security', authenticate, updateSecurity); // Existing route
-router.post('/users/kyc/upload', authenticate, uploadKycDoc);
-
-const { isAdmin } = require('../middlewares/authMiddleware'); // Assuming you have admin authentication middleware
-const kycController = require('../controllers/kycController');
-
-router.patch('/kyc/status', isAdmin, kycController.updateKYCStatus);
-
 module.exports = router;
 
 
