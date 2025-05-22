@@ -35,8 +35,6 @@ const withdrawalSchema = new mongoose.Schema({
   toJSON: { virtuals: true }
 });
 
-module.exports = mongoose.model('Withdrawal', withdrawalSchema);
-
 whitelistedAddress: {
      type: Boolean,
      default: false,
@@ -47,3 +45,5 @@ whitelistedAddress: {
        message: 'Only whitelisted addresses can be approved'
      }
    }
+
+module.exports = mongoose.model('Withdrawal', withdrawalSchema);
