@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const User = require('../models/User');
+const User = require('../models/user');
 const { authenticate, isAdmin } = require('../middlewares/authMiddleware');
 const logger = require('../utils/logger');
 const { formatResponse } = require('../utils/helpers');
