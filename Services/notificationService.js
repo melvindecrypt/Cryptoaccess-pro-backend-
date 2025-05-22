@@ -1,5 +1,5 @@
 // services/notificationService.js
-const Notification = require('../models/Notification');
+const Notification = require('../models/notification');
 const { sendEmail } = require('./emailService');
 const logger = require('../utils/logger');
 
