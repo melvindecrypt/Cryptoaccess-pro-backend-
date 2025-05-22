@@ -2,11 +2,15 @@
 const Notification = require('../models/notification');
 const { sendEmail } = require('./emailService');
 const logger = require('../utils/logger');
+// Optional queue system, if implemented
+const { NotificationQueue } = require('./queues');
+
+// Real-time socket tracking map (if you're managing connected users manually)
+const connectedUsers = new Map();
 
 class NotificationService {
   async create(userId, type, title, message, metadata = {}) {
     try {
-      // Save to database
       const notification = await Notification.create({
         user: userId,
         type,
@@ -15,47 +19,43 @@ class NotificationService {
         metadata
       });
 
-      // Real-time update via WebSocket
-      this.emitToUser(userId, notification);
+      this.emitToUser(userId, notification); // Send real-time if possible
 
       return notification;
     } catch (error) {
-      logger.error(`Notification failed: ${error.message}`);
+      logger.error(`Notification creation failed: ${error.message}`);
     }
   }
 
   emitToUser(userId, notification) {
-    // Implement your WebSocket logic here
-    // Example with Socket.IO:
-    // io.to(`user_${userId}`).emit('new_notification', notification);
+    // Real-time via queue system (if you have it)
+    if (NotificationQueue) {
+      NotificationQueue.add({
+        userId,
+        event: 'new_notification',
+        payload: notification
+      });
+    }
+
+    // Optional: direct real-time emit if managing sockets yourself
+    const userSocket = connectedUsers.get(userId);
+    if (userSocket) {
+      userSocket.emit("notification", { message: notification.message });
+    }
   }
 
   async sendEmailNotification(userEmail, subject, template, data) {
-    await sendEmail({
-      to: userEmail,
-      subject,
-      template,
-      data
-    });
+    try {
+      await sendEmail({
+        to: userEmail,
+        subject,
+        template,
+        data
+      });
+    } catch (err) {
+      logger.error(`Failed to send email to ${userEmail}: ${err.message}`);
+    }
   }
 }
 
 module.exports = new NotificationService();
-
-// Implement priority queue for high-volume notifications
-const { NotificationQueue } = require('./queues');
-emitToUser(userId, notification) {
-  NotificationQueue.add({
-    userId,
-    event: 'new_notification',
-    payload: notification
-  });
-}
-
-// services/notificationService.js
-   const sendRealTimeNotification = (userId, message) => {
-     const userSocket = connectedUsers.get(userId);
-     if (userSocket) {
-       userSocket.emit("notification", { message });
-     }
-   };
