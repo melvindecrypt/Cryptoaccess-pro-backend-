@@ -1,7 +1,7 @@
-const User = require('../models/User');
-const Investment = require('../models/Investment');
-const InvestmentPlan = require('../models/InvestmentPlan');
-const Wallet = require('../models/Wallet');
+const User = require('../models/user');
+const Investment = require('../models/investment');
+const InvestmentPlan = require('../models/investmentPlan');
+const Wallet = require('../models/wallet');
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
 const Decimal = require('decimal.js');
