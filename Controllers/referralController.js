@@ -1,7 +1,7 @@
-const User = require('../models/User');
+const User = require('../models/user');
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
-const emailService = require('../services/emailService'); // Assuming you have an email service
+const emailService = require('../services/emailService');
 
 const REFERRAL_REWARD_AMOUNT = 100; // Define the referral reward amount
 
