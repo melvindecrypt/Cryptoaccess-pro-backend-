@@ -1,8 +1,8 @@
 const { formatResponse } = require('../utils/helpers');
 const logger = require('../utils/logger');
-const User = require('../models/User');
-const Wallet = require('../models/Wallet');
-const Currency = require('../models/Currency'); // Import the Currency model
+const User = require('../models/user');
+const Wallet = require('../models/wallet');
+const Currency = require('../models/currency');
 const Decimal = require('decimal.js');
 
 // Supported currencies with real wallet addresses (for deposit/receive)
