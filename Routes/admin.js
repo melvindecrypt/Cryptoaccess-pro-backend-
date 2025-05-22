@@ -5,7 +5,7 @@ const User = require('../models/User');
 const { authenticate, isAdmin } = require('../middlewares/authMiddleware');
 const logger = require('../utils/logger');
 const { formatResponse } = require('../utils/helpers');
-const AdminController = require('../controllers/adminController');
+const adminController = require('../controllers/adminController');
 const auditLog = require('../middlewares/auditLog');
 const secureLocalAccess = require('../middlewares/localStorageAccess');
 
