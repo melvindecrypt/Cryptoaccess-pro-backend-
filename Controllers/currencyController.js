@@ -1,4 +1,4 @@
-const currency = require('../models/Currency');
+const currency = require('../models/currency');
 const { formatResponse } = require('../utils/helpers'); // Adjust the path if necessary
 
 exports.getAllCurrencies = async (req, res) => {
