@@ -3,15 +3,15 @@ const router = express.Router();
 const adminAuth = require('../middleware/adminAuth');
 const AdminController = require('../controllers/adminController');
 
-router.get('/wallets', adminAuth, AdminController.getAdminWallets);
-router.put('/wallets', adminAuth, AdminController.updateAdminWallets);
+router.get('/wallets', adminAuth, adminController.getAdminWallets);
+router.put('/wallets', adminAuth, adminController.updateAdminWallets);
 
-router.get('/logs', adminAuth, AdminController.getAuditLogs);
+router.get('/logs', adminAuth, adminController.getAuditLogs);
 
-router.get('/notifications', adminAuth, AdminController.getNotifications);
-router.post('/notifications', adminAuth, AdminController.notificationService);
+router.get('/notifications', adminAuth, adminController.getNotifications);
+router.post('/notifications', adminAuth, adminController.notificationService);
 
-router.get('/settings', adminAuth, AdminController.getSettings);
-router.put('/settings', adminAuth, AdminController.updateSettings);
+router.get('/settings', adminAuth, adminController.getSettings);
+router.put('/settings', adminAuth, adminController.updateSettings);
 
 module.exports = router;
