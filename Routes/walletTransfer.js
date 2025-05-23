@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+const ( authenticate ) = require('../middleware/authMiddleware');
 const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
 const Wallet = require('../models/Wallet');
 const { requireKYC } = require('../middleware/kycMiddleware'); // Or wherever your KYC middleware is
-const walletController = require('../controllers/walletController
+const walletController = require('../controllers/walletController');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 const { formatResponse } = require('../utils/helpers'); // Use consistent response format
@@ -17,7 +17,7 @@ router.post('/withdraw', authenticate, requireKYC, walletController.withdrawFund
 const SUPPORTED_CURRENCIES = ['BTC', 'ETH', 'USDT', 'BNB', 'SOL'];
 
 // Transfer funds between wallets
-router.post('/transfer', authMiddleware, async (req, res) => {
+router.post('/transfer', authenticate, requireKYC, async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
 
