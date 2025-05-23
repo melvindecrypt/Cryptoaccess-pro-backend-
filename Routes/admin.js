@@ -7,6 +7,7 @@ const { formatResponse } = require('../utils/helpers');
 const adminController = require('../controllers/adminController');
 const auditLog = require('../middlewares/auditLog');
 const secureLocalAccess = require('../middlewares/localStorageAccess');
+const { adminLogin } = require('../controllers/adminController');
 
 // ================== Rate Limiting ==================
 const adminLoginLimiter = rateLimit({
@@ -16,11 +17,8 @@ const adminLoginLimiter = rateLimit({
   skipSuccessfulRequests: true
 });
 
-// ================== Admin Login ==================
-router.post('/login', adminLoginLimiter, async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
+// ================== Admin Login Route ==================
+router.post('/login', adminLoginLimiter, adminLogin);
     
 // ================== Protected Routes ==================
 router.use(authenticate);
