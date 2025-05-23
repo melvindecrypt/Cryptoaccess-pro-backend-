@@ -1,7 +1,7 @@
 // routes/audit.js
 const express = require('express');
 const router = express.Router();
-const AuditLog = require('../models/AuditLog');
+const AuditLog = require('../models/auditLog');
 const { authenticate, isAdmin } = require('../middlewares/authMiddleware');
 
 router.get('/', authenticate, isAdmin, async (req, res) => {
