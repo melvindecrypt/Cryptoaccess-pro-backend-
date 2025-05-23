@@ -5,8 +5,8 @@ const User = require('../models/user');
 const { authenticate, isAdmin } = require('../middlewares/authMiddleware');
 const logger = require('../utils/logger');
 const { formatResponse } = require('../utils/helpers');
-const AdminController = require('../controllers/adminController');
-const AuditLog = require('../middlewares/auditLog');
+const adminController = require('../controllers/adminController');
+const auditLog = require('../middlewares/auditLog');
 const secureLocalAccess = require('../middlewares/localStorageAccess');
 
 // ================== Rate Limiting ==================
