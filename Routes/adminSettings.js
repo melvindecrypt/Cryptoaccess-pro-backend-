@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminAuth = require('../middleware/adminAuth');
-const AdminController = require('../controllers/adminController');
+const adminController = require('../controllers/adminController');
 
 router.get('/wallets', adminAuth, adminController.getAdminWallets);
 router.put('/wallets', adminAuth, adminController.updateAdminWallets);
