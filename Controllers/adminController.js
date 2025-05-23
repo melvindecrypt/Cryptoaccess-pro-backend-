@@ -25,7 +25,7 @@ const notificationService = require('../services/notificationService');
 
     // Security checks
     if (!user?.isAdmin) {
-      logger.warn('Admin login attempt failed: Invalid credentials', { email });
+      logger.warn('Admin login attempt failed: Icorrect email or password', { email });
       return res.status(403).json(formatResponse(false, 'Access denied'));
     }
 
