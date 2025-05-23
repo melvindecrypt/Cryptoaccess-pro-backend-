@@ -122,25 +122,6 @@ exports.updateProofStatus = async (req, res) => {
     }
 };
 
-const User = require('../models/User');
-const PaymentProof = require('../models/PaymentProof');
-const { PRO_PLUS_FEE_USD } = require('../config/constants');
-const {
-  BTC_WALLET_ADDRESS,
-  ETH_WALLET_ADDRESS,
-  SOL_WALLET_ADDRESS,
-  BNB_WALLET_ADDRESS,
-  USDT_ERC20_WALLET_ADDRESS,
-  USDC_ERC20_WALLET_ADDRESS,
-  DAI_WALLET_ADDRESS,
-  XRP_WALLET_ADDRESS,
-  DOGE_WALLET_ADDRESS,
-  TRX_WALLET_ADDRESS,
-  USDT_TRC20_WALLET_ADDRESS,
-  LTC_WALLET_ADDRESS,
-  MNT_WALLET_ADDRESS,
-} = require('../config/walletAddresses');
-
 // --- Pro+ Subscription Endpoints (New) ---
 exports.initiateProPlusPayment = async (req, res) => {
   try {
