@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/authMiddleware');
 const adminAuth = require('../middleware/adminAuth');
-const paymentProofController = require('../controllers/paymentProofController');
+const PaymentProofController = require('../controllers/paymentProofController');
 const multer = require('multer');
 const path = require('path');
 const { formatResponse } = require('../utils/helpers');
@@ -27,7 +27,6 @@ router.post('/access-fee/upload-proof', auth, upload.single('proof'), paymentPro
 router.get('/admin/payment-proofs', adminAuth, paymentProofController.getAllPaymentProofs);
 router.put('/admin/payment-proofs/:id', adminAuth, paymentProofController.updateProofStatus);
 
-module.exports = router;
 
 // Supported payment methods
 const SUPPORTED_METHODS = ['MoonPay', 'Transak'];
