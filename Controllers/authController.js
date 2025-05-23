@@ -165,62 +165,6 @@ const token = jwt.sign(
   }
 );
 
-const jwt = require('jsonwebtoken');
-const Admin = require('../models/user'); // Assuming Admins are Users with `isAdmin` flag set
-
-exports.adminLogin = async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    // Validation for email and password
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required',
-      });
-    }
-
-    // Find the admin by email
-    const admin = await Admin.findOne({ email, isAdmin: true });
-
-    if (!admin) {
-      return res.status(404).json({
-        success: false,
-        message: 'Admin not found',
-      });
-    }
-
-    // Compare the password
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials',
-      });
-    }
-
-    // Generate JWT token for admin
-    const token = jwt.sign(
-      { id: admin._id, email: admin.email, isAdmin: admin.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' } // You can adjust the expiration time as needed
-    );
-
-    // Respond with success and the token
-    res.status(200).json({
-      success: true,
-      message: 'Admin login successful',
-      token, // Return the token to the admin
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-    });
-  }
-};
-
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
