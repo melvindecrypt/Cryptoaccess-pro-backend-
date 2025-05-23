@@ -19,8 +19,7 @@ router.post(
 
 router.get('/status', authenticate, kycController.getKYCStatus);
 
-const { isAdmin } = require('../middlewares/authMiddleware'); // Assuming you have admin authentication middleware
-const kycController = require('../controllers/kycController');
+const { isAdmin } = require('../middlewares/authMiddleware');
 
 router.patch('/kyc/status', isAdmin, kycController.updateKYCStatus);
 
