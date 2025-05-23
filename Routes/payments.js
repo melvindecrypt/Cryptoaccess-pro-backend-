@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/authMiddleware');
 const adminAuth = require('../middleware/adminAuth');
 const paymentProofController = require('../controllers/paymentProofController');
 const multer = require('multer');
@@ -18,10 +18,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Route to initiate the access fee process and get wallet addresses
-router.get('/access-fee', auth, paymentProofController.initiateAccessFee);
+router.get('/access-fee', authenticate, paymentProofController.initiateAccessFee);
 
 // Route for users to upload payment proof
-router.post('/access-fee/upload-proof', auth, upload.single('proof'), paymentProofController.uploadPaymentProof);
+router.post('/access-fee/upload-proof', authenticate, upload.single('proof'), paymentProofController.uploadPaymentProof);
 
 // Admin routes to view and update payment proofs
 router.get('/admin/payment-proofs', adminAuth, paymentProofController.getAllPaymentProofs);
