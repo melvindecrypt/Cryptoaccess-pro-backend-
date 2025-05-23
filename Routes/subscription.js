@@ -1,27 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/subscriptionController');
+const subscriprionController = require('../controllers/subscriptionController');
 const { authenticate, isAdmin } = require('../middlewares/authMiddleware');
 
 // User routes
 router.post('/notify-payment',
   authenticate,
-  controller.notifyPaymentForProPlus
+subscriprionController.notifyPaymentForProPlus
 );
 
-router.get('/pro-plus', authenticate, controller.getProPlusPlan);
+router.get('/pro-plus', authenticate, 
+subscriprionController.getProPlusPlan);
 
 // Admin routes
 router.post('/confirm-payment',
   authenticate,
-  isAdmin,
-  controller.confirmPaymentForProPlus
+  isAdmin,       
+subscriprionCcontroller.confirmPaymentForProPlus
 );
 
 router.get('/pending-payments',
   authenticate,
   isAdmin,
-  controller.getPendingPayments
+  subscriprionController.getPendingPayments
 );
 
 module.exports = router;
