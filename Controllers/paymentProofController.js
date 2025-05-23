@@ -89,14 +89,48 @@ exports.uploadPaymentProof = async (req, res) => {
 
 exports.getAllPaymentProofs = async (req, res) => {
     try {
-        const paymentProofs = await PaymentProof.find().populate('userId', 'email'); // Populate user email
-        res.status(200).json({ success: true, paymentProofs });
+        const { paymentType, status, email, page = 1, limit = 20 } = req.query;
+        const query = {};
+
+        if (paymentType) query.paymentType = paymentType;
+        if (status) query.status = status;
+
+        // Step 1: Lookup users by email if provided
+        if (email) {
+            const users = await User.find({ email: { $regex: email, $options: 'i' } }, '_id');
+            query.userId = { $in: users.map(user => user._id) };
+        }
+
+        const skip = (page - 1) * limit;
+
+        const [paymentProofs, total] = await Promise.all([
+            PaymentProof.find(query)
+                .populate('userId', 'email')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(Number(limit)),
+            PaymentProof.countDocuments(query)
+        ]);
+
+        res.status(200).json({
+            success: true,
+            paymentProofs,
+            pagination: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                pages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         console.error('Error fetching payment proofs:', error);
-        res.status(500).json({ success: false, message: 'Failed to fetch payment proofs.', error: error.message });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch payment proofs.',
+            error: error.message
+        });
     }
 };
-
 exports.updateProofStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -192,17 +226,6 @@ exports.uploadProPlusPaymentProof = async (req, res) => {
     console.error('Upload Pro+ payment proof error:', error);
     res.status(500).json({ success: false, message: 'Server error.', error: error.message });
   }
-};
-
-// --- Admin Endpoints (Modified to filter by paymentType) ---
-exports.getAllPaymentProofs = async (req, res) => {
-    try {
-        const paymentProofs = await PaymentProof.find().populate('userId', 'email');
-        res.status(200).json({ success: true, paymentProofs });
-    } catch (error) {
-        console.error('Error fetching payment proofs:', error);
-        res.status(500).json({ success: false, message: 'Failed to fetch payment proofs.', error: error.message });
-    }
 };
 
 exports.getPendingProPlusPayments = async (req, res) => {
