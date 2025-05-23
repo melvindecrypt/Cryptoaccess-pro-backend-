@@ -4,7 +4,7 @@ const { authenticate } = require('../middleware/authMiddleware');
 const exchangeController = require('../controllers/exchangeController');
 
 // Get available trading pairs
-router.get('/pairs', authMiddleware, exchangeController.getAvailableTradingPairs);
+router.get('/pairs', authenticate, exchangeController.getAvailableTradingPairs);
 
 // Place a new order (buy or sell)
 router.post('/order', authenticate, exchangeController.placeOrder);
@@ -13,13 +13,13 @@ router.post('/order', authenticate, exchangeController.placeOrder);
 router.get('/market-data', authenticate, exchangeController.getMarketData);
 
 // Swap Currency 
-router.post('/swap', authMiddleware, exchangeController.swapCurrency);
+router.post('/swap', authenticate, exchangeController.swapCurrency);
 
 // Buy Currency 
-router.post('/buy', authMiddleware, exchangeController.buyCurrency);
+router.post('/buy', authenticate, exchangeController.buyCurrency);
 
 // Sell Currency 
-router.post('/sell', authMiddleware, exchangeController.sellCurrency);
+router.post('/sell', authenticate, exchangeController.sellCurrency);
 
 module.exports = router;
 
