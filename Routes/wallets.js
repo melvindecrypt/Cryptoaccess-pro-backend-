@@ -19,7 +19,7 @@ router.post('/withdraw', authenticate, requireKYC, walletController.createWithdr
 // Get withdrawal history
 router.get('/withdrawals', authenticate, walletController.getWithdrawalHistory);
 
-router.get('/deposit-address', authenticate, getDepositAddress);
+router.get('/deposit-address', authenticate, walletController.getDepositAddress);
 // Add other wallet routes here
 
 // In routes/wallets.js
