@@ -1,6 +1,3 @@
-router.get('/deposit-address', authenticate, walletController.getDepositAddress);
-router.post('/withdraw', authenticate, requireKYC, walletController.withdrawFunds);
-
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
@@ -12,6 +9,9 @@ const User = require('../models/User');
 const logger = require('../utils/logger');
 const { formatResponse } = require('../utils/helpers'); // Use consistent response format
 const Decimal = require('decimal.js');
+
+router.get('/deposit-address', authenticate, walletController.getDepositAddress);
+router.post('/withdraw', authenticate, requireKYC, walletController.withdrawFunds);
 
 // Supported currencies from your Wallet model
 const SUPPORTED_CURRENCIES = ['BTC', 'ETH', 'USDT', 'BNB', 'SOL'];
