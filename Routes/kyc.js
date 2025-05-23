@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { kycUpload } = require('../config/fileStorage');
-const Authenticate = require('../middlewares/authMiddleware');
+const { authenticate } = require('../middlewares/authMiddleware');
 const auditLog = require('../middlewares/auditLog');
 const kycController = require('../controllers/kycController');
 
 router.post(
   '/submit',
-  Authenticate,
+  authenticate,
   kycUpload.fields([
     { name: 'idFront', maxCount: 1 },
     { name: 'idBack', maxCount: 1 },
@@ -17,7 +17,7 @@ router.post(
   kycController.submitKYC
 );
 
-router.get('/status', Authenticate, kycController.getKYCStatus);
+router.get('/status', authenticate, kycController.getKYCStatus);
 
 const { isAdmin } = require('../middlewares/authMiddleware'); // Assuming you have admin authentication middleware
 const kycController = require('../controllers/kycController');
