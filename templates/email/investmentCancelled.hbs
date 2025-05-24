@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Investment Cancellation Confirmed</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { width: 80%; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
+        .header { background-color: #f44336; color: white; padding: 10px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 20px; }
+        .footer { text-align: center; padding: 10px; font-size: 0.8em; color: #777; border-top: 1px solid #eee; margin-top: 20px; }
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Investment Cancelled</h2>
+        </div>
+        <div class="content">
+            <p>Dear {{name}},</p>
+            <p>We confirm that your investment with ID <strong>{{investmentId}}</strong> has been successfully cancelled.</p>
+            <p>The amount of <strong>{{amountRefunded}} {{currency}}</strong> has been refunded to your wallet.</p>
+            <p>If you have any questions or concerns, please do not hesitate to contact our support team.</p>
+            <p>Thank you for choosing our platform.</p>
+            <p>Sincerely,</p>
+            <p>The [Crypto Access Pro] Team</p>
+            <p><a href="{{CryptoAccesspro@support.domain}}" class="button">Contact Support</a></p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{2025}} [Crypto Access]. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
