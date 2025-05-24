@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate }= require('../middlewares/AuthMiddleware);
 const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
-const requireKYC = require('../middlewares/requireKYC');
+const { requireKYC }= require('../middlewares/requireKYC');
 const walletController = require('../controllers/walletController'); // Assuming this file
 const { getDepositAddress } = require('../controllers/walletController');
 
@@ -24,6 +24,14 @@ router.get('/deposit-address', authenticate, walletController.getDepositAddress)
 
 // In routes/wallets.js
 router.get('/balances', authenticate, walletController.getUserBalances);
+
+// Route for sending funds internally to another user on the platform
+// POST /api/wallet/send-internal
+router.post('/send-internal',authenticate, requireKYC, walletController.sendInternalFunds);
+
+// Route for sending funds externally
+// POST /api/wallet/request-withdrawal
+router.post('/request-withdrawal',authenticate, requireKYC, walletController.requestWithdrawal);
 
 module.exports = router;
 
