@@ -6,6 +6,8 @@ const Decimal = require('decimal.js');
 const Currency = require('../models/currency');
 const Transaction = require('../models/transaction'); // Make sure this path is correct
 
+let AVAILABLE_TRADING_PAIRS = [];
+
 const validateCurrency = async (currency) => {
   const currencyData = await Currency.findOne({ symbol: currency.toUpperCase(), isActive: true });
   if (!currencyData) {
@@ -14,128 +16,9 @@ const validateCurrency = async (currency) => {
   return currencyData;
 };
 
-exports.buyCurrency = async (req, res) => {
-  const session = await Wallet.startSession();
-  session.startTransaction();
-
-  try {
-    const { baseCurrency, quoteCurrency, amount } = req.body; // Amount to spend in quoteCurrency
-    const userId = req.user._id;
-    const numericAmount = new Decimal(amount);
-
-    await validateCurrency(baseCurrency);
-    await validateCurrency(quoteCurrency);
-
-    if (numericAmount.lessThanOrEqualTo(0)) {
-      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
-    }
-
-    const wallet = await Wallet.findOne({ userId }).session(session);
-    if (!wallet) {
-      return res.status(404).json(formatResponse(false, 'Wallet not found'));
-    }
-
-    const quoteBalance = new Decimal(wallet.balances.get(quoteCurrency) || 0);
-    const currentPrice = await getSimulatedExchangeRate(baseCurrency, quoteCurrency); // Price of base in quote
-
-    const baseAmountToBuy = numericAmount.dividedBy(currentPrice);
-
-    if (quoteBalance.lessThan(numericAmount)) {
-      return res.status(400).json(formatResponse(false, `Insufficient ${quoteCurrency} balance`));
-    }
-
-    // Update balances
-    await wallet.updateBalance(quoteCurrency, numericAmount.negated(), 'decrement', session);
-    await wallet.updateBalance(baseCurrency, baseAmountToBuy.toNumber(), 'increment', session);
-
-    // Record transaction
-    await Transaction.create({
-      userId,
-      walletId: wallet._id,
-      type: 'buy',
-      baseCurrency,
-      quoteCurrency,
-      amount: baseAmountToBuy.toNumber(), // Amount of base currency bought
-      price: currentPrice.toNumber(),
-      totalCost: numericAmount.toNumber(),
-      status: 'COMPLETED',
-      timestamp: new Date()
-    }, { session });
-
-    await session.commitTransaction();
-    res.json(formatResponse(true, `Successfully bought ${baseAmountToBuy.toFixed(8)} ${baseCurrency}`, { receivedAmount: baseAmountToBuy.toNumber() }));
-
-  } catch (error) {
-    await session.abortTransaction();
-    logger.error(`Buy error: ${error.message}`);
-    res.status(400).json(formatResponse(false, error.message));
-  } finally {
-    session.endSession();
-  }
+exports.getAvailableTradingPairs = async (req, res) => {
+  res.json(formatResponse(true, 'Available trading pairs retrieved', AVAILABLE_TRADING_PAIRS));
 };
-
-exports.sellCurrency = async (req, res) => {
-  const session = await Wallet.startSession();
-  session.startTransaction();
-
-  try {
-    const { baseCurrency, quoteCurrency, amount } = req.body; // Amount of baseCurrency to sell
-    const userId = req.user._id;
-    const numericAmount = new Decimal(amount);
-
-    await validateCurrency(baseCurrency);
-    await validateCurrency(quoteCurrency);
-
-    if (numericAmount.lessThanOrEqualTo(0)) {
-      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
-    }
-
-    const wallet = await Wallet.findOne({ userId }).session(session);
-    if (!wallet) {
-      return res.status(404).json(formatResponse(false, 'Wallet not found'));
-    }
-
-    const baseBalance = new Decimal(wallet.balances.get(baseCurrency) || 0);
-    const currentPrice = await getSimulatedExchangeRate(baseCurrency, quoteCurrency); // Price of base in quote
-    const quoteAmountToReceive = numericAmount.multipliedBy(currentPrice);
-
-    if (baseBalance.lessThan(numericAmount)) {
-      return res.status(400).json(formatResponse(false, `Insufficient ${baseCurrency} balance`));
-    }
-
-    // Update balances
-    await wallet.updateBalance(baseCurrency, numericAmount.negated(), 'decrement', session);
-    await wallet.updateBalance(quoteCurrency, quoteAmountToReceive.toNumber(), 'increment', session);
-
-    // Record transaction
-    await Transaction.create({
-      userId,
-      walletId: wallet._id,
-      type: 'sell',
-      baseCurrency,
-      quoteCurrency,
-      amount: numericAmount.toNumber(), // Amount of base currency sold
-      price: currentPrice.toNumber(),
-      receivedAmount: quoteAmountToReceive.toNumber(),
-      status: 'COMPLETED',
-      timestamp: new Date()
-    }, { session });
-
-    await session.commitTransaction();
-    res.json(formatResponse(true, `Successfully sold ${numericAmount.toFixed(8)} ${baseCurrency}`, { receivedAmount: quoteAmountToReceive.toNumber() }));
-
-  } catch (error) {
-    await session.abortTransaction();
-    logger.error(`Sell error: ${error.message}`);
-    res.status(400).json(formatResponse(false, error.message));
-  } finally {
-    session.endSession();
-  }
-};
-
-// ... any other functions in your ExchangeController
-
-let AVAILABLE_TRADING_PAIRS = [];
 
 async function initializeTradingPairs() {
   try {
@@ -364,49 +247,132 @@ async function initializeTradingPairs() {
 // Call this function when your server starts 
 initializeTradingPairs();
 
-exports.getAvailableTradingPairs = async (req, res) => {
-  res.json(formatResponse(true, 'Available trading pairs retrieved', AVAILABLE_TRADING_PAIRS));
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
-    
+
     const rates = {
-        'BTC/ETH': new Decimal(20),
-        'ETH/BTC': new Decimal(0.05),
-        'BTC/USD': new Decimal(60000),
-        'USD/BTC': new Decimal(1).div(60000),
-        'ETH/USD': new Decimal(2000),
-        'USD/ETH': new Decimal(1).div(2000),
-        'UNI/ETH': new Decimal(2.261723),
-        'ETH/UNI': new Decimal(1).div(2.261723),
-        // Add more specific cross-pair rates as needed
-        'AVAX/BTC': new Decimal(0.0005), // Example
-        'SHIB/ETH': new Decimal(0.000000005), // Example
-        // ... any other specific rates from your AVAILABLE_TRADING_PAIRS
+        // Base currency pairs (e.g., against USD or USDT for stable value reference)
+        'BTC/USD': new Decimal(68000),
+        'USD/BTC': new Decimal(1).div(68000),
+        'ETH/USD': new Decimal(3500),
+        'USD/ETH': new Decimal(1).div(3500),
+        'USDT/USD': new Decimal(1), // Stablecoin peg
+        'USD/USDT': new Decimal(1),
+        'USDC/USD': new Decimal(1), // Stablecoin peg
+        'USD/USDC': new Decimal(1),
+
+        // Cross-pair rates (these are examples and would fluctuate in reality)
+        'AVAX/BTC': new Decimal(0.0006),
+        'SHIB/ETH': new Decimal(0.0000000045), // Very small value
+        'DOT/USDT': new Decimal(7.2),
+        'LINK/XRP': new Decimal(25),
+        'MATIC/BNB': new Decimal(0.002),
+        'LTC/SOL': new Decimal(0.02),
+        'BCH/USDC': new Decimal(450),
+        'NEAR/DOGE': new Decimal(60),
+        'UNI/ADA': new Decimal(8),
+        'ICP/TRX': new Decimal(150),
+        'APT/BTC': new Decimal(0.00015),
+        'XLM/ETH': new Decimal(0.000025),
+        'LDO/USDT': new Decimal(2.8),
+        'ARB/XRP': new Decimal(2.5),
+        'OP/BNB': new Decimal(0.005),
+        'XMR/SOL': new Decimal(0.015),
+        'RNDR/USDC': new Decimal(9.5),
+        'HBAR/DOGE': new Decimal(2.5),
+        'VET/ADA': new Decimal(0.5),
+        'IMX/TRX': new Decimal(10),
+        'MKR/BTC': new Decimal(0.004),
+        'INJ/ETH': new Decimal(0.008),
+        'GRT/USDT': new Decimal(0.25),
+        'AAVE/XRP': new Decimal(150),
+        'SUI/BNB': new Decimal(0.0018),
+        'ALGO/SOL': new Decimal(0.005),
+        'KAS/USDC': new Decimal(0.15),
+        'STX/DOGE': new Decimal(12),
+        'QNT/ADA': new Decimal(100),
+        'FTM/TRX': new Decimal(15),
+        'THETA/BTC': new Decimal(0.00008),
+        'FLOW/ETH': new Decimal(0.0004),
+        'XTZ/USDT': new Decimal(1.1),
+        'BSV/XRP': new Decimal(400),
+        'TIA/BNB': new Decimal(0.006),
+        'CRV/SOL': new Decimal(0.008),
+        'AXS/USDC': new Decimal(7.8),
+        'APE/DOGE': new Decimal(50),
+        'EOS/ADA': new Decimal(3),
+        'MANA/TRX': new Decimal(20),
+        'RPL/BTC': new Decimal(0.003),
+        'CAKE/ETH': new Decimal(0.0006),
+        'GALA/USDT': new Decimal(0.04),
+        'DYDX/XRP': new Decimal(5.5),
+        'MINA/BNB': new Decimal(0.0008),
+        'HNT/SOL': new Decimal(0.002),
+        'KAVA/USDC': new Decimal(0.6),
+        'WLD/DOGE': new Decimal(120),
+        'IOTA/ADA': new Decimal(0.8),
+        'ROSE/TRX': new Decimal(3),
+        'ZEC/BTC': new Decimal(0.002),
+        'OCEAN/ETH': new Decimal(0.0003),
+        'BLUR/USDT': new Decimal(0.4),
+        'NEO/XRP': new Decimal(15),
+        'ENJ/BNB': new Decimal(0.001),
+        'XRD/SOL': new Decimal(0.003),
+        'CKB/USDC': new Decimal(0.008),
+        'GMX/DOGE': new Decimal(150),
+        '1INCH/ADA': new Decimal(1.2),
+        'BAND/TRX': new Decimal(5),
+        'WOO/BTC': new Decimal(0.00005),
+        'ARKM/ETH': new Decimal(0.0002),
+        'ONT/USDT': new Decimal(0.3),
+        'CVP/XRP': new Decimal(10),
+        'METIS/BNB': new Decimal(0.008),
+        'SPELL/SOL': new Decimal(0.0000008),
+        'RSR/USDC': new Decimal(0.002),
+        'TWT/DOGE': new Decimal(5),
+        'XDC/ADA': new Decimal(0.005),
+        'ERG/TRX': new Decimal(8),
+        'TRAC/BTC': new Decimal(0.000005),
+        'SUPER/ETH': new Decimal(0.0001),
+        'GLMR/USDT': new Decimal(0.35),
+        'CELO/XRP': new Decimal(2),
+        'FIDA/BNB': new Decimal(0.0002),
+        'COTI/SOL': new Decimal(0.00005),
+        'XVS/USDC': new Decimal(6.5),
+        'EFI/DOGE': new Decimal(2),
+        'BTT/ADA': new Decimal(0.000000002),
+        'ALPHA/TRX': new Decimal(5),
+        'BADGER/BTC': new Decimal(0.0001),
+        'STRAX/ETH': new Decimal(0.00005),
+        'XPRT/USDT': new Decimal(0.4),
+        'ALCX/XRP': new Decimal(100),
+        'SNX/BNB': new Decimal(0.008),
+        'NYM/SOL': new Decimal(0.001),
+        'VIC/USDC': new Decimal(0.2),
+        'ASTR/DOGE': new Decimal(3),
+        'PUNDIX/ADA': new Decimal(0.5),
+        'TON/BTC': new Decimal(0.0001),
+        'LDO/ETH': new Decimal(0.0008),
+        'HBAR/USDT': new Decimal(0.12),
+        'VET/XRP': new Decimal(0.8),
+        'INJ/BNB': new Decimal(0.006),
+        'GRT/SOL': new Decimal(0.0001),
+        'SUI/USDC': new Decimal(1.2),
+        'KAS/DOGE': new Decimal(2),
+        // QNT/ADA, FTM/TRX, THETA/BTC are duplicated, but we'll include them if their rates might differ
+        'QNT/ADA': new Decimal(100), // Duplicated but harmless
+        'FTM/TRX': new Decimal(15),   // Duplicated but harmless
+        'THETA/BTC': new Decimal(0.00008), // Duplicated but harmless
+
+        // Reversed pairs (many of these are already implicitly handled by the inverse logic,
+        // but defining them explicitly can sometimes be clearer or override default inverse behavior if needed)
+        'BTC/AVAX': new Decimal(1).div(0.0006),
+        'ETH/SHIB': new Decimal(1).div(0.0000000045),
+        'USDT/DOT': new Decimal(1).div(7.2),
+        'XRP/LINK': new Decimal(1).div(25),
+        'BNB/MATIC': new Decimal(1).div(0.002),
+        // ... and so on for all inverse pairs.
+        // The current logic `new Decimal(1).div(inverseRate)` handles this automatically.
+        // So, explicitly listing all inverse pairs might be redundant unless their rates aren't simply inverse.
     };
 
     const directRate = rates[`${fromCurrency}/${toCurrency}`];
@@ -420,10 +386,27 @@ async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
         return new Decimal(1).div(inverseRate);
     }
 
-    logger.warn(`No specific simulated rate found for ${fromCurrency}/${toCurrency}. Using default 1.`);
-    return new Decimal(1); // Default to 1 if no specific rate is defined (adjust as per your needs)
-}
+    // Fallback: If rates are not directly defined, try to convert via a common base (e.g., USD/USDT/USDC if available)
+    // This is a more complex simulation and might not be accurate without real data or a more sophisticated pricing engine.
+    // For simplicity, if no direct or inverse rate is found, we'll try to find a path through USD.
+    // NOTE: This "pathing" logic is a simple illustration and might not cover all complex cross-chain conversions.
+    const stableCoins = ['USD', 'USDT', 'USDC'];
+    for (const stable of stableCoins) {
+        const fromStableRate = rates[`${fromCurrency}/${stable}`];
+        const toStableRate = rates[`${toCurrency}/${stable}`];
+        if (fromStableRate && toStableRate) {
+            // fromCurrency -> stable -> toCurrency
+            // Example: BTC -> USD -> ETH. Rate = (BTC/USD) * (USD/ETH)
+            logger.info(`Rates ${fromCurrency}/${toCurrency} via ${stable}`);
+            return fromStableRate.times(new Decimal(1).div(toStableRate));
+        }
+    }
 
+
+    // Final Fallback: Log a warning and return a default rate if no specific or inferred rate is found.
+    logger.warn(`No specific or inferred rate found for ${fromCurrency}/${toCurrency}. Returning a default of 1.0.`);
+    return new Decimal(1.0); // Default to 1:1 if no specific rate is defined (adjust as per your needs)
+}
 
 exports.swap = async (req, res) => {
     const session = await Wallet.startSession();
@@ -509,24 +492,124 @@ exports.swap = async (req, res) => {
     }
 };
 
-// 
+exports.buyCurrency = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
 
+  try {
+    const { baseCurrency, quoteCurrency, amount } = req.body; // Amount to spend in quoteCurrency
+    const userId = req.user._id;
+    const numericAmount = new Decimal(amount);
 
+    await validateCurrency(baseCurrency);
+    await validateCurrency(quoteCurrency);
 
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
+    }
 
+    const wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      return res.status(404).json(formatResponse(false, 'Wallet not found'));
+    }
 
+    const quoteBalance = new Decimal(wallet.balances.get(quoteCurrency) || 0);
+    const currentPrice = await getSimulatedExchangeRate(baseCurrency, quoteCurrency); // Price of base in quote
 
+    const baseAmountToBuy = numericAmount.dividedBy(currentPrice);
 
+    if (quoteBalance.lessThan(numericAmount)) {
+      return res.status(400).json(formatResponse(false, `Insufficient ${quoteCurrency} balance`));
+    }
 
+    // Update balances
+    await wallet.updateBalance(quoteCurrency, numericAmount.negated(), 'decrement', session);
+    await wallet.updateBalance(baseCurrency, baseAmountToBuy.toNumber(), 'increment', session);
 
+    // Record transaction
+    await Transaction.create({
+      userId,
+      walletId: wallet._id,
+      type: 'buy',
+      baseCurrency,
+      quoteCurrency,
+      amount: baseAmountToBuy.toNumber(), // Amount of base currency bought
+      price: currentPrice.toNumber(),
+      totalCost: numericAmount.toNumber(),
+      status: 'COMPLETED',
+      timestamp: new Date()
+    }, { session });
 
+    await session.commitTransaction();
+    res.json(formatResponse(true, `Successfully bought ${baseAmountToBuy.toFixed(8)} ${baseCurrency}`, { receivedAmount: baseAmountToBuy.toNumber() }));
 
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Buy error: ${error.message}`);
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+};
 
+exports.sellCurrency = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
 
+  try {
+    const { baseCurrency, quoteCurrency, amount } = req.body; // Amount of baseCurrency to sell
+    const userId = req.user._id;
+    const numericAmount = new Decimal(amount);
 
+    await validateCurrency(baseCurrency);
+    await validateCurrency(quoteCurrency);
 
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
+    }
 
+    const wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      return res.status(404).json(formatResponse(false, 'Wallet not found'));
+    }
 
+    const baseBalance = new Decimal(wallet.balances.get(baseCurrency) || 0);
+    const currentPrice = await getSimulatedExchangeRate(baseCurrency, quoteCurrency); // Price of base in quote
+    const quoteAmountToReceive = numericAmount.multipliedBy(currentPrice);
+
+    if (baseBalance.lessThan(numericAmount)) {
+      return res.status(400).json(formatResponse(false, `Insufficient ${baseCurrency} balance`));
+    }
+
+    // Update balances
+    await wallet.updateBalance(baseCurrency, numericAmount.negated(), 'decrement', session);
+    await wallet.updateBalance(quoteCurrency, quoteAmountToReceive.toNumber(), 'increment', session);
+
+    // Record transaction
+    await Transaction.create({
+      userId,
+      walletId: wallet._id,
+      type: 'sell',
+      baseCurrency,
+      quoteCurrency,
+      amount: numericAmount.toNumber(), // Amount of base currency sold
+      price: currentPrice.toNumber(),
+      receivedAmount: quoteAmountToReceive.toNumber(),
+      status: 'COMPLETED',
+      timestamp: new Date()
+    }, { session });
+
+    await session.commitTransaction();
+    res.json(formatResponse(true, `Successfully sold ${numericAmount.toFixed(8)} ${baseCurrency}`, { receivedAmount: quoteAmountToReceive.toNumber() }));
+
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Sell error: ${error.message}`);
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+};
 
 // In-memory order books (for simulation purposes)
 const orderBooks = {};
