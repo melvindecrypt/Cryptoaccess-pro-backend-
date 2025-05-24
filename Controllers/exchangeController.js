@@ -17,10 +17,6 @@ const validateCurrency = async (currency) => {
 
 initializeTradingPairs();
 
-exports.getAvailableTradingPairs = async (req, res) => {
-  res.json(formatResponse(true, 'Available trading pairs retrieved', AVAILABLE_TRADING_PAIRS));
-};
-
 exports.swapCurrency = async (req, res) => {
   // ... your swapCurrency function ...
 };
