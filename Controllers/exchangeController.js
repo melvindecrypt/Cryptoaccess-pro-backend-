@@ -392,14 +392,8 @@ exports.getAvailableTradingPairs = async (req, res) => {
 
 
 
-// Simple function to simulate exchange rates
-// Crucially, this function should return Decimal objects for consistent precision
 async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
-    // In a real application, you would fetch real-time rates from an external API.
-    // This simulation covers some common pairs and is extended from your examples.
-    // It's vital to handle both directions for each pair.
-
-    // Define a set of rates for direct lookup
+    
     const rates = {
         'BTC/ETH': new Decimal(20),
         'ETH/BTC': new Decimal(0.05),
@@ -515,70 +509,7 @@ exports.swap = async (req, res) => {
     }
 };
 
-// =========================================================
-// IMPORTANT: Place these outside exports.swap if they are global helpers
-// Ensure Currency, Wallet, Transaction models are defined and imported.
-// Example of how your Wallet model might look (simplified):
-/*
-const mongoose = require('mongoose');
-const { Decimal128 } = require('mongodb'); // To store high precision numbers
-
-const walletSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-        unique: true
-    },
-    balances: {
-        type: Map,
-        of: Decimal128, // Store balances as Decimal128 for precision
-        default: {}
-    },
-    // No embedded transactions array here if you use a separate Transaction model
-}, { timestamps: true });
-
-// Custom method for updating balances
-walletSchema.methods.updateBalance = async function(currency, amountDecimal, type, session) {
-    let currentBalance = new Decimal(this.balances.get(currency)?.toString() || '0'); // Convert Decimal128 to Decimal.js
-    let newBalance;
-
-    if (type === 'increment') {
-        newBalance = currentBalance.plus(amountDecimal);
-    } else if (type === 'decrement') {
-        newBalance = currentBalance.minus(amountDecimal.abs()); // Ensure decrement is always subtracting a positive amount
-    } else {
-        throw new Error('Invalid update balance type. Must be "increment" or "decrement".');
-    }
-
-    if (newBalance.lessThan(0)) {
-        throw new Error(`Negative balance not allowed for ${currency}. Attempted new balance: ${newBalance.toFixed(8)}`);
-    }
-
-    this.balances.set(currency, Decimal128.fromString(newBalance.toString())); // Convert Decimal.js back to Decimal128
-    await this.save({ session });
-};
-
-const Wallet = mongoose.model('Wallet', walletSchema);
-*/
-
-// Example of how your Transaction model might look (simplified):
-/*
-const transactionSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    walletId: { type: mongoose.Schema.Types.ObjectId, ref: 'Wallet', required: true },
-    type: { type: String, enum: ['deposit', 'withdrawal', 'swap'], required: true },
-    fromCurrency: { type: String, required: true },
-    toCurrency: { type: String, required: true },
-    amount: { type: Number, required: true }, // Store as Number, or consider Decimal128 if Mongoose supports it directly for non-Map fields
-    receivedAmount: { type: Number, required: true },
-    rate: { type: Number, required: true },
-    status: { type: String, enum: ['PENDING', 'COMPLETED', 'FAILED'], default: 'PENDING' },
-    timestamp: { type: Date, default: Date.now },
-}, { timestamps: true });
-
-const Transaction = mongoose.model('Transaction', transactionSchema);
-*/
+// 
 
 
 
@@ -594,93 +525,6 @@ const Transaction = mongoose.model('Transaction', transactionSchema);
 
 
 
-
-
-
-
-
-
-
-
-
-exports.swapCurrency = async (req, res) => {
-  const session = await Wallet.startSession();
-  session.startTransaction();
-
-  try {
-    const { baseCurrency, quoteCurrency, amount } = req.body;
-    const userId = req.user._id;
-    const numericAmount = new Decimal(amount);
-
-    // Validate currencies and amount
-    const baseCurrencyData = await validateCurrency(baseCurrency);
-    const quoteCurrencyData = await validateCurrency(quoteCurrency);
-    if (numericAmount.lessThanOrEqualTo(0)) {
-      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
-    }
-
-    // Check if the trading pair is available (optional, but recommended)
-    const isPairAvailable = AVAILABLE_TRADING_PAIRS.some(
-      pair => (pair.base === baseCurrency && pair.quote === quoteCurrency) || (pair.base === quoteCurrency && pair.quote === baseCurrency)
-    );
-    if (!isPairAvailable) {
-      return res.status(400).json(formatResponse(false, `Trading pair ${baseCurrency}/${quoteCurrency} is not available`));
-    }
-
-    const wallet = await Wallet.findOne({ userId }).session(session);
-    if (!wallet) {
-      return res.status(404).json(formatResponse(false, 'Wallet not found'));
-    }
-
-    const baseBalance = new Decimal(wallet.balances.get(baseCurrency) || 0);
-    if (baseBalance.lessThan(numericAmount)) {
-      return res.status(400).json(formatResponse(false, `Insufficient ${baseCurrency} balance`));
-    }
-
-    // Simulate the swap - for simplicity, let's use a fixed exchange rate (you'd likely fetch this from an API)
-    const exchangeRate = await getSimulatedExchangeRate(baseCurrency, quoteCurrency);
-    const receivedAmount = numericAmount.times(exchangeRate);
-
-    // Update balances
-    await wallet.updateBalance(baseCurrency, numericAmount.negated(), 'decrement', session); // Decrement base currency
-    await wallet.updateBalance(quoteCurrency, receivedAmount.toNumber(), 'increment', session); // Increment quote currency
-
-    // Record the transaction
-    await Transaction.create({
-      userId,
-      walletId: wallet._id,
-      type: 'swap',
-      baseCurrency,
-      quoteCurrency,
-      amount: numericAmount.toNumber(),
-      receivedAmount: receivedAmount.toNumber(),
-      rate: exchangeRate,
-      status: 'COMPLETED',
-      timestamp: new Date()
-    }, { session });
-
-    await session.commitTransaction();
-    res.json(formatResponse(true, 'Swap successful', { receivedAmount: receivedAmount.toNumber() }));
-
-  } catch (error) {
-    await session.abortTransaction();
-    logger.error(`Swap error: ${error.message}`);
-    res.status(400).json(formatResponse(false, error.message));
-  } finally {
-    session.endSession();
-  }
-};
-
-// Dummy function for getting a simulated exchange rate
-async function getSimulatedExchangeRate(base, quote) {
-  // In a real app, you'd fetch this from an exchange API
-  if ((base === 'BTC' && quote === 'USD') || (base === 'USD' && quote === 'BTC')) return 30000;
-  if ((base === 'ETH' && quote === 'USD') || (base === 'USD' && quote === 'ETH')) return 2000;
-  if (base === 'ETH' && quote === 'BTC') return 0.067;
-  if (base === 'BTC' && quote === 'ETH') return 1 / 0.067;
-  // Add more simulated rates as needed
-  return Math.random() * 100; // Default random rate for other pairs
-}
 
 
 
@@ -876,91 +720,3 @@ exports.getMarketData = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Server error fetching market data'));
   }
 };
-
-exports.swap = async (req, res) => {
-  const session = await Wallet.startSession();
-  session.startTransaction();
-
-  try {
-    const { fromCurrency, toCurrency, amount } = req.body;
-    const userId = req.user._id;
-
-    if (!fromCurrency || !toCurrency || !amount) {
-      throw new Error('Missing required swap parameters');
-    }
-
-    if (fromCurrency === toCurrency) {
-      throw new Error('Cannot swap between the same currency');
-    }
-
-    const numericAmount = new Decimal(amount);
-    if (numericAmount.lessThanOrEqualTo(0)) {
-      throw new Error('Amount must be positive');
-    }
-
-    const wallet = await Wallet.findOne({ userId }).session(session);
-    if (!wallet) {
-      throw new Error('Wallet not found');
-    }
-
-    const fromBalance = new Decimal(wallet.balances[fromCurrency] || 0);
-    if (fromBalance.lessThan(numericAmount)) {
-      throw new Error(`Insufficient ${fromCurrency} balance`);
-    }
-
-    // Simulate the exchange rate (this would be dynamic in a real system)
-    // For now, let's use a static or very basic simulated rate
-    const exchangeRate = await getSimulatedExchangeRate(fromCurrency, toCurrency);
-    const receivedAmount = numericAmount.mul(exchangeRate);
-
-    // Update balances
-    wallet.balances[fromCurrency] = fromBalance.minus(numericAmount).toNumber();
-    wallet.balances[toCurrency] = new Decimal(wallet.balances[toCurrency] || 0).plus(receivedAmount).toNumber();
-
-    wallet.transactions.push({
-      type: 'swap',
-      fromCurrency,
-      toCurrency,
-      amount: numericAmount.toNumber(),
-      received: receivedAmount.toNumber(),
-      rate: exchangeRate.toNumber(),
-      timestamp: new Date(),
-      status: 'COMPLETED'
-    });
-
-    await wallet.save({ session });
-    await session.commitTransaction();
-
-    res.json(formatResponse(true, 'Swap executed successfully', { receivedAmount: receivedAmount.toNumber() }));
-
-  } catch (error) {
-    await session.abortTransaction();
-    logger.error(`Swap error: ${error.message}`);
-    res.status(400).json(formatResponse(false, error.message));
-  } finally {
-    session.endSession();
-  }
-};
-
-// Simple function to simulate exchange rates (replace with more sophisticated logic if needed)
-async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
-  // This is a very basic simulation. In a real scenario, you might:
-  // - Have a predefined set of rates.
-  // - Simulate price movements.
-  // - Potentially charge a small fee.
-  if (fromCurrency === 'BTC' && toCurrency === 'ETH') {
-    return new Decimal(20); // Example: 1 BTC = 20 ETH
-  } else if (fromCurrency === 'ETH' && toCurrency === 'BTC') {
-    return new Decimal(0.05); // Example: 1 ETH = 0.05 BTC
-  } else if (fromCurrency === 'UNI' && toCurrency === 'ETH') {
-    return new Decimal(2.261723); // Example from your screenshot
-  } else if (fromCurrency === 'ETH' && toCurrency === 'UNI') {
-    return new Decimal(1).div(2.261723);
-  } else if (fromCurrency === 'BTC' && toCurrency === 'USD') {
-    return new Decimal(60000);
-  } else if (fromCurrency === 'USD' && toCurrency === 'BTC') {
-    return new Decimal(1).div(60000);
-  }
-  // Add more simulated rates as needed
-  return new Decimal(1); // Default to 1:1 if no specific rate is defined
-}
