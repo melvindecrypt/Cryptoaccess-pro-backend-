@@ -17,18 +17,6 @@ const validateCurrency = async (currency) => {
 
 initializeTradingPairs();
 
-exports.swapCurrency = async (req, res) => {
-  // ... your swapCurrency function ...
-};
-
-async function getSimulatedExchangeRate(base, quote) {
-  // ... your getSimulatedExchangeRate function ...
-}
-
-// ExchangeController.js
-
-// ... imports, validateCurrency, AVAILABLE_TRADING_PAIRS, initializeTradingPairs, getAvailableTradingPairs, swapCurrency, getSimulatedExchangeRate ...
-
 exports.buyCurrency = async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
