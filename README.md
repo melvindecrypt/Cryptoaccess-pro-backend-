@@ -89,6 +89,7 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── simulationService.js 
 ├── templates/
 │   ├── email/
+│   ├── investmentCancelled.hbs
 │   ├── investmentConfirmed.hbs
 │   ├── kycApproved.hbs
 │   ├── kycRejected.hbs
@@ -97,6 +98,7 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   └── withdrawalRejected.hbs
 ├── uploads/
 │   ├── kyc/
+│   ├── paymentProof/
 ├── utils/
 │   ├── errors/
 │   ├── emailService.js
