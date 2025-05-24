@@ -15,8 +15,6 @@ const validateCurrency = async (currency) => {
   return currencyData;
 };
 
-initializeTradingPairs();
-
 exports.buyCurrency = async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
@@ -370,6 +368,274 @@ initializeTradingPairs();
 exports.getAvailableTradingPairs = async (req, res) => {
   res.json(formatResponse(true, 'Available trading pairs retrieved', AVAILABLE_TRADING_PAIRS));
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Assuming Decimal and formatResponse, Currency, Wallet, Transaction, logger are imported/defined elsewhere
+// For example:
+// const Decimal = require('decimal.js');
+// const Currency = require('../models/Currency'); // Assuming your Currency model path
+// const Wallet = require('../models/Wallet');     // Assuming your Wallet model path
+// const Transaction = require('../models/Transaction'); // Assuming your Transaction model path
+// const logger = require('../utils/logger'); // Assuming your logger utility
+// const { formatResponse } = require('../utils/helpers'); // Assuming your helper functions
+
+// Make sure AVAILABLE_TRADING_PAIRS is initialized once at the top level of your exchangeController.js
+// as discussed in the previous response.
+// Example (simplified for this snippet):
+// let AVAILABLE_TRADING_PAIRS = [
+//   { symbol: 'AVAX/BTC', base: 'AVAX', quote: 'BTC' },
+//   { symbol: 'SHIB/ETH', base: 'SHIB', quote: 'ETH' },
+//   { symbol: 'BTC/USD', base: 'BTC', quote: 'USD' },
+//   { symbol: 'ETH/USD', base: 'ETH', quote: 'USD' },
+//   { symbol: 'UNI/ETH', base: 'UNI', quote: 'ETH' },
+//   // ... populate this array from your initializeTradingPairs function
+// ];
+
+// Helper function to validate if a currency is active
+async function validateCurrency(currencySymbol) {
+    // This function assumes 'Currency' model is available and has 'symbol' and 'isActive' fields.
+    const currency = await Currency.findOne({ symbol: currencySymbol, isActive: true }).lean();
+    if (!currency) {
+        throw new Error(`Currency ${currencySymbol} is not active or does not exist.`);
+    }
+    return currency; // Return currency data if needed elsewhere
+}
+
+// Simple function to simulate exchange rates
+// Crucially, this function should return Decimal objects for consistent precision
+async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
+    // In a real application, you would fetch real-time rates from an external API.
+    // This simulation covers some common pairs and is extended from your examples.
+    // It's vital to handle both directions for each pair.
+
+    // Define a set of rates for direct lookup
+    const rates = {
+        'BTC/ETH': new Decimal(20),
+        'ETH/BTC': new Decimal(0.05),
+        'BTC/USD': new Decimal(60000),
+        'USD/BTC': new Decimal(1).div(60000),
+        'ETH/USD': new Decimal(2000),
+        'USD/ETH': new Decimal(1).div(2000),
+        'UNI/ETH': new Decimal(2.261723),
+        'ETH/UNI': new Decimal(1).div(2.261723),
+        // Add more specific cross-pair rates as needed
+        'AVAX/BTC': new Decimal(0.0005), // Example
+        'SHIB/ETH': new Decimal(0.000000005), // Example
+        // ... any other specific rates from your AVAILABLE_TRADING_PAIRS
+    };
+
+    const directRate = rates[`${fromCurrency}/${toCurrency}`];
+    if (directRate) {
+        return directRate;
+    }
+
+    // Attempt to calculate inverse rate if direct is not found
+    const inverseRate = rates[`${toCurrency}/${fromCurrency}`];
+    if (inverseRate) {
+        return new Decimal(1).div(inverseRate);
+    }
+
+    // Fallback: If rates are not directly defined, try to convert via a common base like USD (if available)
+    // This is a more complex simulation and might not be accurate without real data.
+    // For simplicity in this example, if no direct or inverse rate is found, return a default.
+    logger.warn(`No specific simulated rate found for ${fromCurrency}/${toCurrency}. Using default 1.`);
+    return new Decimal(1); // Default to 1 if no specific rate is defined (adjust as per your needs)
+}
+
+
+exports.swap = async (req, res) => {
+    const session = await Wallet.startSession();
+    session.startTransaction();
+
+    try {
+        const { fromCurrency, toCurrency, amount } = req.body;
+        const userId = req.user._id;
+
+        // 1. Initial Validation (from Code 2, enhanced)
+        if (!fromCurrency || !toCurrency || !amount) {
+            throw new Error('Missing required swap parameters (fromCurrency, toCurrency, amount).');
+        }
+        if (fromCurrency === toCurrency) {
+            throw new Error('Cannot swap between the same currency.');
+        }
+
+        const numericAmount = new Decimal(amount);
+        if (numericAmount.lessThanOrEqualTo(0)) {
+            throw new Error('Amount must be positive.');
+        }
+
+        // 2. Currency Validation (from Code 1)
+        // This checks if the currencies exist and are active in your system.
+        await validateCurrency(fromCurrency);
+        await validateCurrency(toCurrency);
+
+        // 3. Trading Pair Availability Check (from Code 1)
+        const isPairAvailable = AVAILABLE_TRADING_PAIRS.some(
+            pair => (pair.base === fromCurrency && pair.quote === toCurrency) ||
+                    (pair.base === toCurrency && pair.quote === fromCurrency)
+        );
+        if (!isPairAvailable) {
+            throw new Error(`Trading pair ${fromCurrency}/${toCurrency} is not available.`);
+        }
+
+        const wallet = await Wallet.findOne({ userId }).session(session);
+        if (!wallet) {
+            throw new Error('Wallet not found for this user.');
+        }
+
+        const fromBalance = new Decimal(wallet.balances.get(fromCurrency) || 0); // Use .get() for Map type
+        if (fromBalance.lessThan(numericAmount)) {
+            throw new Error(`Insufficient ${fromCurrency} balance. Available: ${fromBalance.toFixed(8)}`);
+        }
+
+        // 4. Simulate Exchange Rate (enhanced to return Decimal, using combined logic)
+        const exchangeRate = await getSimulatedExchangeRate(fromCurrency, toCurrency);
+        const receivedAmount = numericAmount.times(exchangeRate); // Use times() for Decimal objects
+
+        // 5. Update Balances (using wallet.updateBalance from Code 1)
+        // This assumes your Wallet model has an updateBalance method.
+        // It's good practice to ensure `updateBalance` handles Decimal internally or converts to Number at the very end
+        // for Mongoose to save. For this example, passing Decimal and converting to Number at the point of saving.
+        await wallet.updateBalance(fromCurrency, numericAmount.negated(), 'decrement', session); // Decrement base currency
+        await wallet.updateBalance(toCurrency, receivedAmount, 'increment', session); // Increment quote currency
+
+        // 6. Record the Transaction (using Transaction model from Code 1)
+        await Transaction.create({
+            userId,
+            walletId: wallet._id,
+            type: 'swap',
+            fromCurrency,
+            toCurrency,
+            amount: numericAmount.toNumber(), // Store as number for schema
+            receivedAmount: receivedAmount.toNumber(), // Store as number for schema
+            rate: exchangeRate.toNumber(), // Store as number for schema
+            status: 'COMPLETED',
+            timestamp: new Date()
+        }, { session });
+
+        await session.commitTransaction();
+        res.json(formatResponse(true, 'Swap successful', { receivedAmount: receivedAmount.toNumber() }));
+
+    } catch (error) {
+        await session.abortTransaction();
+        // Log the detailed error for debugging purposes
+        logger.error(`Swap error for user ${req.user?._id}: ${error.message}`, error);
+        // Provide a generic error message to the client for security/simplicity
+        res.status(400).json(formatResponse(false, error.message || 'An unexpected error occurred during the swap.'));
+    } finally {
+        session.endSession();
+    }
+};
+
+// =========================================================
+// IMPORTANT: Place these outside exports.swap if they are global helpers
+// Ensure Currency, Wallet, Transaction models are defined and imported.
+// Example of how your Wallet model might look (simplified):
+/*
+const mongoose = require('mongoose');
+const { Decimal128 } = require('mongodb'); // To store high precision numbers
+
+const walletSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        unique: true
+    },
+    balances: {
+        type: Map,
+        of: Decimal128, // Store balances as Decimal128 for precision
+        default: {}
+    },
+    // No embedded transactions array here if you use a separate Transaction model
+}, { timestamps: true });
+
+// Custom method for updating balances
+walletSchema.methods.updateBalance = async function(currency, amountDecimal, type, session) {
+    let currentBalance = new Decimal(this.balances.get(currency)?.toString() || '0'); // Convert Decimal128 to Decimal.js
+    let newBalance;
+
+    if (type === 'increment') {
+        newBalance = currentBalance.plus(amountDecimal);
+    } else if (type === 'decrement') {
+        newBalance = currentBalance.minus(amountDecimal.abs()); // Ensure decrement is always subtracting a positive amount
+    } else {
+        throw new Error('Invalid update balance type. Must be "increment" or "decrement".');
+    }
+
+    if (newBalance.lessThan(0)) {
+        throw new Error(`Negative balance not allowed for ${currency}. Attempted new balance: ${newBalance.toFixed(8)}`);
+    }
+
+    this.balances.set(currency, Decimal128.fromString(newBalance.toString())); // Convert Decimal.js back to Decimal128
+    await this.save({ session });
+};
+
+const Wallet = mongoose.model('Wallet', walletSchema);
+*/
+
+// Example of how your Transaction model might look (simplified):
+/*
+const transactionSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    walletId: { type: mongoose.Schema.Types.ObjectId, ref: 'Wallet', required: true },
+    type: { type: String, enum: ['deposit', 'withdrawal', 'swap'], required: true },
+    fromCurrency: { type: String, required: true },
+    toCurrency: { type: String, required: true },
+    amount: { type: Number, required: true }, // Store as Number, or consider Decimal128 if Mongoose supports it directly for non-Map fields
+    receivedAmount: { type: Number, required: true },
+    rate: { type: Number, required: true },
+    status: { type: String, enum: ['PENDING', 'COMPLETED', 'FAILED'], default: 'PENDING' },
+    timestamp: { type: Date, default: Date.now },
+}, { timestamps: true });
+
+const Transaction = mongoose.model('Transaction', transactionSchema);
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 exports.swapCurrency = async (req, res) => {
   const session = await Wallet.startSession();
