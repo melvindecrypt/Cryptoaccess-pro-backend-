@@ -87,6 +87,8 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── notificationService.js
 │   ├── payoutService.js
 │   ├── simulationService.js 
+├── seed/
+│   ├──seedCurrencies.js 
 ├── templates/
 │   ├── email/
 │   ├── investmentCancelled.hbs
