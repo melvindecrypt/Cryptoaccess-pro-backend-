@@ -74,7 +74,7 @@ router.patch('/users/:id',
 router.get('/user-wallet/:userId', adminController.getUserWallet);
 
 // Get KYC Documents 
-router.get('/kyc-docs/:userId', adminController.getKycDocs);
+router.get('/kyc-docs/:userId',isAdmin, adminController.getKycDocs);
 
 //Get KYC Preview 
 router.get('/kyc-preview', secureLocalAccess, adminController.getKycPreview);
