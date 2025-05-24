@@ -43,6 +43,10 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 ├── controllers/
 │   ├── adminController.js
 │   ├── authController.js
+│   ├── chartController.js
+│   ├── currencyController.js
+│   ├── exchangeController.js
+│   ├── referralController.js
 │   ├── investmentController.js
 │   ├── kycController.js
 │   ├── paymentProofController.js 
@@ -63,6 +67,9 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── AdminWallet.js
 │   ├── ArchiveUser.js
 │   ├── AuditLog.js
+│   ├── currency.js
+│   ├── investment.js
+│   ├── investmentPlan.js
 │   ├── Notification.js
 │   ├── PaymentProof.js 
 │   ├── Settings.js
@@ -75,11 +82,18 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 │   ├── adminSettings.js 
 │   ├── audit.js
 │   ├── auth.js
+│   ├── charts.js
+│   ├── currency.js
+│   ├── exchange.js
 │   ├── investments.js
 │   ├── kyc.js
 │   ├── notifications.js
 │   ├── payments.js
+│   ├── propPlus.js
+│   ├── referrals.js
 │   ├── subscription.js
+│   ├── user.js
+│   ├── withdrawal.js
 │   ├── wallets.js
 │   └── walletTransfer.js
 ├── services/
