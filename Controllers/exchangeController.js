@@ -6,7 +6,6 @@ const Decimal = require('decimal.js');
 const Currency = require('../models/currency');
 const Transaction = require('../models/transaction'); // Make sure this path is correct
 
-// Paste the validateCurrency function here:
 const validateCurrency = async (currency) => {
   const currencyData = await Currency.findOne({ symbol: currency.toUpperCase(), isActive: true });
   if (!currencyData) {
@@ -392,36 +391,6 @@ exports.getAvailableTradingPairs = async (req, res) => {
 
 
 
-// Assuming Decimal and formatResponse, Currency, Wallet, Transaction, logger are imported/defined elsewhere
-// For example:
-// const Decimal = require('decimal.js');
-// const Currency = require('../models/Currency'); // Assuming your Currency model path
-// const Wallet = require('../models/Wallet');     // Assuming your Wallet model path
-// const Transaction = require('../models/Transaction'); // Assuming your Transaction model path
-// const logger = require('../utils/logger'); // Assuming your logger utility
-// const { formatResponse } = require('../utils/helpers'); // Assuming your helper functions
-
-// Make sure AVAILABLE_TRADING_PAIRS is initialized once at the top level of your exchangeController.js
-// as discussed in the previous response.
-// Example (simplified for this snippet):
-// let AVAILABLE_TRADING_PAIRS = [
-//   { symbol: 'AVAX/BTC', base: 'AVAX', quote: 'BTC' },
-//   { symbol: 'SHIB/ETH', base: 'SHIB', quote: 'ETH' },
-//   { symbol: 'BTC/USD', base: 'BTC', quote: 'USD' },
-//   { symbol: 'ETH/USD', base: 'ETH', quote: 'USD' },
-//   { symbol: 'UNI/ETH', base: 'UNI', quote: 'ETH' },
-//   // ... populate this array from your initializeTradingPairs function
-// ];
-
-// Helper function to validate if a currency is active
-async function validateCurrency(currencySymbol) {
-    // This function assumes 'Currency' model is available and has 'symbol' and 'isActive' fields.
-    const currency = await Currency.findOne({ symbol: currencySymbol, isActive: true }).lean();
-    if (!currency) {
-        throw new Error(`Currency ${currencySymbol} is not active or does not exist.`);
-    }
-    return currency; // Return currency data if needed elsewhere
-}
 
 // Simple function to simulate exchange rates
 // Crucially, this function should return Decimal objects for consistent precision
@@ -457,9 +426,6 @@ async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
         return new Decimal(1).div(inverseRate);
     }
 
-    // Fallback: If rates are not directly defined, try to convert via a common base like USD (if available)
-    // This is a more complex simulation and might not be accurate without real data.
-    // For simplicity in this example, if no direct or inverse rate is found, return a default.
     logger.warn(`No specific simulated rate found for ${fromCurrency}/${toCurrency}. Using default 1.`);
     return new Decimal(1); // Default to 1 if no specific rate is defined (adjust as per your needs)
 }
