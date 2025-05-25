@@ -41,9 +41,9 @@
     "supertest": "^6.3.4",
     "mongodb-memory-server": "^8.15.1"
   },
-  "jest": {                                  // <--- Add this block if it's not there
+  "jest": {                                 
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["./jest.setup.js"] // <--- Add this line
+    "setupFilesAfterEnv": ["./jest.setup.js"] 
   }
 }
 
