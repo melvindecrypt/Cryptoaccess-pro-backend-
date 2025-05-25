@@ -704,7 +704,10 @@ exports.getKycDocs = async (req, res) => {
       kycStatus: user.kycStatus,
       documents: user.kycDocuments.map(doc => ({
         docType: doc.docType,
-        fileUrl: `/api/admin/kyc-preview?path=${encodeURIComponent(doc.fileUrl)}`,
+        // *** THIS IS THE UPDATED LINE ***
+        // We now include req.params.userId in the path to match the new route structure
+        // and to allow the middleware to find the user's specific directory.
+        fileUrl: `/api/admin/kyc-preview/${req.params.userId}?path=${encodeURIComponent(doc.fileUrl)}`,
         status: doc.status,
         uploadedAt: doc.uploadedAt
       }))
@@ -716,7 +719,7 @@ exports.getKycDocs = async (req, res) => {
   }
 };
 
-// Get KYC Preview 
+// Get KYC Preview
 exports.getKycPreview = (req, res) => {
   res.sendFile(req.localFilePath);
 };
