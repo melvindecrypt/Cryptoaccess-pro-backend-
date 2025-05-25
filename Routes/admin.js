@@ -77,7 +77,7 @@ router.get('/user-wallet/:userId', adminController.getUserWallet);
 router.get('/kyc-docs/:userId',isAdmin, adminController.getKycDocs);
 
 //Get KYC Preview 
-router.get('/kyc-preview', secureLocalAccess, adminController.getKycPreview);
+router.get('/kyc-preview/userId', isAdmin, secureLocalAccess, adminController.getKycPreview);
 
 // Get pending withdrawals
 router.get('/withdrawals/pending', adminController.getPendingWithdrawals);
