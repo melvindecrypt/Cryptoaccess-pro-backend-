@@ -39,6 +39,6 @@
     "jest": "^29.7.0",
     "nodemon": "^3.1.0",
     "supertest": "^6.3.4",
-    "mongodb-memory-server": "^8.15.1"  // Add this line
+    "mongodb-memory-server": "^8.15.1"
   }
 }
