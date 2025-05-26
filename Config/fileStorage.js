@@ -1,7 +1,8 @@
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const logger = require('../utils/logger');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import logger from '../utils/logger.js';
+import { scanFile } from './virusScanner.js';
 
 const kycStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -17,7 +18,7 @@ const kycStorage = multer.diskStorage({
   }
 });
 
-const kycFileFilter = (req, file, cb) => {
+const kycFileFilter = async (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
   if (!allowedTypes.includes(file.mimetype)) {
     logger.warn(`Rejected invalid KYC file type: ${file.mimetype}`, {
@@ -29,20 +30,36 @@ const kycFileFilter = (req, file, cb) => {
     });
     return cb(new Error('Invalid file type. Only JPEG, PNG and PDF are allowed.'), false);
   }
-  cb(null, true);
+
+  // Virus scanning integration
+  try {
+    const isClean = await scanFile(file.path);
+    if (!isClean) {
+      logger.warn(`Rejected potentially malicious KYC file: ${file.originalname}`, {
+        userId: req.user?._id,
+        action: 'kyc_virus_scanning',
+        status: 'rejected',
+        filename: file.originalname
+      });
+      return cb(new Error('File rejected: potential threat'), false);
+    }
+    cb(null, true);
+  } catch (error) {
+    logger.error(`Virus scanning failed for file: ${file.originalname}`, {
+      userId: req.user?._id,
+      action: 'kyc_virus_scanning',
+      status: 'error',
+      filename: file.originalname,
+      error: error.message
+    });
+    cb(new Error('Error during virus scanning'), false);
+  }
 };
 
-exports.kycUpload = multer({
+export const kycUpload = multer({
   storage: kycStorage,
   fileFilter: kycFileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB
   }
 });
-
-// Add virus scanning integration
-const { scanFile } = require('./virusScanner');
-fileFilter: async (req, file, cb) => {
-  const isClean = await scanFile(file.path);
-  if (!isClean) return cb(new Error('File rejected: potential threat'));
-}
