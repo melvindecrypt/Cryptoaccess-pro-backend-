@@ -41,11 +41,16 @@ class AuditService {
       throw error;
     }
   }
+
+  // ✅ FIXED: Now bulkLog is inside the class and valid
+  async bulkLog(actions) {
+    try {
+      return await AuditLog.insertMany(actions);
+    } catch (error) {
+      logger.error(`Failed to bulk insert audit logs: ${error.message}`);
+      throw error;
+    }
+  }
 }
 
 module.exports = new AuditService();
-
-// Add bulk insert for high-volume operations
-async bulkLog(actions) {
-  return AuditLog.insertMany(actions);
-}
