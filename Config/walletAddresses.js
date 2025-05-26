@@ -1,4 +1,4 @@
-module.exports = {
+export const walletAddresses = {
   BTC_WALLET_ADDRESS: 'bc1qrhmqgnwml62udh5c5wnyukx65rdtqdsa58p54l',
   ETH_WALLET_ADDRESS: '0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767',
   SOL_WALLET_ADDRESS: 'ChbMRwr4xbH9hQSJA5Ei5MmRWAjn5MPUsVpNUMabsf5K',
