@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const logger = require('../utils/logger'); // Import the logger
+import mongoose from 'mongoose';
+import logger from '../utils/logger.js'; // Import the logger
 
 const connectDB = async () => {
   try {
@@ -7,7 +7,11 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       ssl: true, // Use SSL if needed
-      tlsAllowInvalidCertificates: false // Adjust based on your security requirements
+      tlsAllowInvalidCertificates: false, // Adjust based on your security requirements
+      maxPoolSize: 50,
+      minPoolSize: 10,
+      socketTimeoutMS: 30000,
+      serverSelectionTimeoutMS: 5000,
     });
     logger.info('MongoDB securely connected'); // Using logger for success message
   } catch (error) {
@@ -17,7 +21,7 @@ const connectDB = async () => {
 };
 
 // Export the connectDB function to be used elsewhere
-module.exports = connectDB;
+export default connectDB;
 
 // Graceful shutdown handling
 process.on('SIGINT', async () => {
@@ -30,12 +34,3 @@ process.on('SIGINT', async () => {
     process.exit(1); // Exit on disconnection failure
   }
 });
-
-// Add connection pooling
-const options = {
-  maxPoolSize: 50,
-  minPoolSize: 10,
-  socketTimeoutMS: 30000,
-  serverSelectionTimeoutMS: 5000
-};
-await mongoose.connect(process.env.MONGODB_URI, options);
