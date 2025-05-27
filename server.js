@@ -1,17 +1,16 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { body } = require('express-validator');
-const logger = require('./utils/logger');
-const { formatResponse } = require('./utils/helpers');
-const { Server } = require('socket.io');
-const jwt = require('jsonwebtoken'); // Assuming you use JWT for Socket.IO auth
-const auditService = require('./services/auditService'); // Assuming you have an audit service
-const multer = require('multer'); // Assuming you use multer for file uploads
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
+import auditService from './services/auditService.js'; // Assuming you have an audit service
+import multer from 'multer';
+import logger from './utils/logger.js';
+import { formatResponse } from './utils/helpers.js';
 
 // Load environment variables
 dotenv.config();
@@ -24,8 +23,8 @@ const server = require('http').createServer(app); // For Socket.IO
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL,
-    methods: ["GET", "POST"]
-  }
+    methods: ['GET', 'POST'],
+  },
 });
 
 io.on('connection', (socket) => {
@@ -43,23 +42,29 @@ io.on('connection', (socket) => {
 
 // ================== Middleware ==================
 // Security Middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https://*.stripe.com'],
-      connectSrc: ["'self'", 'https://api.stripe.com']
-    }
-  }
-}));
-app.use(cors({
-  origin: process.env.CLIENT_URL,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https://*.stripe.com'],
+        connectSrc: ["'self'", 'https://api.stripe.com '],
+      },
+    },
+  })
+);
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  })
+);
+
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -68,9 +73,9 @@ app.use((req, res, next) => {
 
 // Rate Limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: formatResponse(false, 'Too many requests from this IP')
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: formatResponse(false, 'Too many requests from this IP'),
 });
 app.use('/api/', limiter);
 
@@ -82,15 +87,15 @@ app.use(cookieParser());
 // Request Logging
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.originalUrl}`);
-  auditService.log('api_request', { // Assuming auditService is defined
+  auditService.log('api_request', {
     ip: req.ip,
     userAgent: req.get('User-Agent'),
     metadata: {
       method: req.method,
       path: req.path,
       params: req.params,
-      query: req.query
-    }
+      query: req.query,
+    },
   });
   next();
 });
@@ -99,17 +104,20 @@ app.use((req, res, next) => {
 app.use('/kyc', express.static('uploads/kyc'));
 
 // ================== Database Connection ==================
-require('./config/db')();
+import('./config/db.js')();
 
 // ================== Route Imports ==================
-const adminRoutes = require('./routes/admin');
-const authRoutes = require('./routes/auth');
-const paymentRoutes = require('./routes/payments');
-const walletRoutes = require('./routes/wallets'); // Corrected typo: wallets
-const transferRoutes = require('./routes/walletTransfer');
-const investmentRoutes = require('./routes/investments');
-const subscriptionRoutes = require('./routes/subscription');
-const adminSettingsRoutes = require('./routes/adminSettings'); // Assuming this path is correct
+const adminRoutes = require('./routes/admin.js');
+const authRoutes = require('./routes/auth.js');
+const paymentRoutes = require('./routes/payments.js');
+const walletRoutes = require('./routes/wallets.js'); // Corrected typo: wallets
+const transferRoutes = require('./routes/walletTransfer.js');
+const investmentRoutes = require('./routes/investments.js');
+const subscriptionRoutes = require('./routes/subscription.js');
+const adminSettingsRoutes = require('./routes/adminSettings.js'); // Assuming this path is correct
+const chartRoutes = require('./routes/charts.js');
+const exchangeRoutes = require('./routes/exchange.js');
+const withdrawalRoutes = require('./routes/withdrawal.js'); // Import the new withdrawal routes
 
 // ================== Route Definitions ==================
 app.use('/api/admin', adminRoutes);
@@ -120,6 +128,9 @@ app.use('/api/transfers', transferRoutes);
 app.use('/api/investments', investmentRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/admin/settings', adminSettingsRoutes); // Mount admin settings routes
+app.use('/api/charts', chartRoutes);
+app.use('/api/exchange', exchangeRoutes);
+app.use('/api/wallets/withdraw', withdrawalRoutes); // Mount the withdrawal routes under the correct path
 
 // ================== HTTPS Redirection ==================
 if (process.env.NODE_ENV === 'production') {
@@ -140,20 +151,22 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+// Handle 404 errors
 app.use((req, res) => {
   res.status(404).json(formatResponse(false, 'Endpoint not found'));
 });
 
+// Handle all other errors
 app.use((err, req, res, next) => {
   logger.error(`Server Error: ${err.stack}`);
-  res.status(err.statusCode || 500).json(formatResponse(false,
-    process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-  ));
+  res.status(err.statusCode || 500).json(
+    formatResponse(false, process.env.NODE_ENV === 'development' ? err.message : 'Internal server error')
+  );
 });
 
 // ================== Server Initialization ==================
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => { // Use the 'server' object for Socket.IO
+server.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
@@ -167,23 +180,4 @@ const gracefulShutdown = async () => {
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 
-module.exports = app;
-
-// In server.js
-const chartRoutes = require('./routes/charts');
-app.use('/api/charts', chartRoutes);
-
-app.use('/api/plans', subscriptionRoutes);
-
-// In your app.js or server.js
-const exchangeRoutes = require('./routes/exchange');
-app.use('/api/exchange', exchangeRoutes);
-
-const withdrawalRoutes = require('./routes/withdrawal'); // Import the new withdrawal routes
-
-// ... other middleware and setup ...
-
-app.use('/api/wallets/withdraw', withdrawalRoutes); // Mount the withdrawal routes under the correct path
-
-// ... error handling and start the server ...
-
+export default app;
