@@ -1,5 +1,5 @@
-const AuditLog = require('../models/auditLog');
-const logger = require('../utils/logger');
+import AuditLog from '../models/auditLog.js';
+import logger from '../utils/logger.js';
 
 class AuditService {
   async log(action, data) {
@@ -12,19 +12,19 @@ class AuditService {
         ipAddress: data.ip,
         userAgent: data.userAgent,
         metadata: data.metadata,
-        status: data.status || 'success'
+        status: data.status || 'success',
       });
 
       logger.info(`Audit log created for ${action} action`, {
         logId: logEntry._id,
-        ...data
+        ...data,
       });
 
       return logEntry;
     } catch (error) {
       logger.error(`Failed to create audit log: ${error.message}`, {
         action,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -53,4 +53,4 @@ class AuditService {
   }
 }
 
-module.exports = new AuditService();
+export default new AuditService();
