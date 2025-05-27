@@ -1,7 +1,9 @@
-const mongoose = require('mongoose');
-const Currency = require('../models/currency');
-const databaseUrl = 'mongodb+srv://admin:Uu11DEZlMe32tMCR@binancepro-db.xxhtgym.mongodb.net/cryptoaccesspro-db?retryWrites=true&w=majority&appName=Binancepro-DB
-';
+import mongoose from 'mongoose';
+import Currency from '../models/currency.js';
+
+const databaseUrl =
+  'mongodb+srv://admin:Uu11DEZlMe32tMCR@binancepro-db.xxhtgym.mongodb.net/cryptoaccesspro-db?retryWrites=true&w=majority&appName=Binancepro-DB';
+
 const currenciesToSeed = [
   { symbol: 'BTC', name: 'Bitcoin', isActive: true },
   { symbol: 'ETH', name: 'Ethereum', isActive: true },
@@ -117,7 +119,8 @@ async function seedDatabase() {
     const createdCurrencies = await Currency.insertMany(currenciesToSeed);
     console.log(`${createdCurrencies.length} currencies seeded successfully`);
 
-    mongoose.disconnect();
+    await mongoose.disconnect();
+    console.log('Disconnected from MongoDB');
   } catch (error) {
     console.error('Error seeding database:', error);
     process.exit(1);
