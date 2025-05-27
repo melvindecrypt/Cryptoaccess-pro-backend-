@@ -1,6 +1,9 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-const Currency = require('./models/Currency'); // Adjust path if needed
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+import Currency from './models/Currency.js'; // Adjust path if needed
+
+// Load environment variables
+dotenv.config();
 
 async function populateDatabase() {
   try {
@@ -14,7 +17,7 @@ async function populateDatabase() {
     await mongoose.connect(mongoUri);
     console.log('Connected to the database');
 
-    const yourCurrencyList = [
+    const currencyList = [
       { symbol: 'BTC', name: 'Bitcoin' },
       { symbol: 'ETH', name: 'Ethereum' },
       { symbol: 'USDT', name: 'Tether' },
@@ -118,14 +121,15 @@ async function populateDatabase() {
     ];
 
     // Insert the currencies into the database
-    const result = await Currency.insertMany(yourCurrencyList);
+    const result = await Currency.insertMany(currencyList);
     console.log(`${result.length} currencies inserted successfully`);
 
-    mongoose.disconnect();
+    await mongoose.disconnect();
     console.log('Disconnected from the database');
   } catch (error) {
-    console.error('Error populating database:', error);
-    mongoose.disconnect();
+    console.error('Error populating database:', error.message);
+    await mongoose.disconnect();
+    process.exit(1);
   }
 }
 
