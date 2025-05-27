@@ -1,7 +1,8 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const logger = require('../utils/logger');
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+import logger from '../utils/logger.js';
 
+// Admin Authentication Middleware
 const adminAuth = async (req, res, next) => {
   try {
     // Get token from cookies or Authorization header
@@ -45,7 +46,6 @@ const adminAuth = async (req, res, next) => {
     };
 
     next();
-
   } catch (error) {
     logger.error(`Admin auth failure: ${error.message}`);
     res.status(401).json({
@@ -56,4 +56,4 @@ const adminAuth = async (req, res, next) => {
   }
 };
 
-module.exports = adminAuth;
+export default adminAuth;
