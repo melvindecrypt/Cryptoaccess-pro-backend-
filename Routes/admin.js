@@ -161,25 +161,5 @@ router.get('/admin/pending-withdrawals', adminController.getPendingWithdrawals);
 // Process Withdrawal
 router.post('/admin/process-withdrawal/:id', adminController.processWithdrawal);
 
-// Get Admin Wallets
-router.get('/admin/wallets', adminController.getAdminWallets);
-
-// Update Admin Wallets
-router.put('/admin/wallets', adminController.updateAdminWallets);
-
-// Get Audit Logs
-router.get('/admin/audit-logs', adminController.getAuditLogs);
-
-// Get Notifications
-router.get('/admin/notifications', adminController.getNotifications);
-
-// Admin Notification Service
-router.post('/admin/send-notification', adminController.adminNotificationService);
-
-// Get Settings
-router.get('/admin/settings', adminController.getSettings);
-
-// Update Settings
-router.put('/admin/settings', adminController.updateSettings);
 
 export default router;
