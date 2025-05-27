@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { authenticate } from '../middleware/authMiddleware.js';
+import exchangeController from '../controllers/exchangeController.js';
+
 const router = express.Router();
-const { authenticate } = require('../middleware/authMiddleware');
-const exchangeController = require('../controllers/exchangeController');
 
 // Get available trading pairs
 router.get('/pairs', authenticate, exchangeController.getAvailableTradingPairs);
@@ -12,14 +13,13 @@ router.post('/order', authenticate, exchangeController.placeOrder);
 // Get market data (order book) for a specific pair
 router.get('/market-data', authenticate, exchangeController.getMarketData);
 
-// Swap Currency 
+// Swap Currency
 router.post('/swap', authenticate, exchangeController.swapCurrency);
 
-// Buy Currency 
+// Buy Currency
 router.post('/buy', authenticate, exchangeController.buyCurrency);
 
-// Sell Currency 
+// Sell Currency
 router.post('/sell', authenticate, exchangeController.sellCurrency);
 
-module.exports = router;
-
+export default router;
