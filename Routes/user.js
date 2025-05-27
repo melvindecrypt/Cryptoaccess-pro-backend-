@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { authenticate } from '../middleware/authMiddleware.js';
+import userController from '../controllers/userController.js';
+
 const router = express.Router();
-const { authenticate } = require('../middleware/authMiddleware');
-const userController = require('../controllers/userController');
 
 // Get user settings (for the /settings page)
 router.get('/settings', authenticate, userController.getSettings);
@@ -15,9 +16,10 @@ router.get('/profile/edit', authenticate, userController.getProfile);
 // Update profile information (name, surname, phone)
 router.patch('/profile/edit', authenticate, userController.updateSettings);
 
-const { getDashboardData, getProfile, updateSecurity, uploadKycDoc } = require('../controllers/userController');
+// Additional routes
+router.get('/dashboard', authenticate, userController.getDashboardData);
+router.get('/users/profile', authenticate, userController.getProfile); // Existing route
+router.patch('/users/security', authenticate, userController.updateSecurity); // Existing route
+router.post('/users/kyc/upload', authenticate, userController.uploadKycDoc); // Existing route
 
-router.get('/dashboard', authenticate, getDashboardData);
-router.get('/users/profile', authenticate, getProfile); // Existing route
-router.patch('/users/security', authenticate, updateSecurity); // Existing route
-router.post('/users/kyc/upload', authenticate, uploadKycDoc);
+export default router;
