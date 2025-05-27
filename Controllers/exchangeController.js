@@ -1,10 +1,10 @@
 // controllers/exchangeController.js
-const { formatResponse } = require('../utils/helpers');
-const logger = require('../utils/logger');
-const Wallet = require('../models/wallet');
-const Decimal = require('decimal.js');
-const Currency = require('../models/currency');
-const Transaction = require('../models/transaction');
+import { formatResponse } from '../utils/helpers.js';
+import logger from '../utils/logger.js';
+import Wallet from '../models/wallet.js';
+import Decimal from 'decimal.js';
+import Currency from '../models/currency.js';
+import Transaction from '../models/transaction.js';
 
 // 1. Global variable to store available trading pairs
 let AVAILABLE_TRADING_PAIRS = [];
@@ -26,7 +26,6 @@ async function initializeTradingPairs() {
   try {
     const activeCurrencies = await Currency.find({ isActive: true }).select('symbol').lean();
     const baseCurrency = 'USD'; // Your primary base currency, e.g., 'USD', 'USDT'
-
     // Generate base pairs (e.g., BTC/USD, ETH/USD)
     const basePairs = activeCurrencies
       .filter(currency => currency.symbol !== baseCurrency)
@@ -35,7 +34,6 @@ async function initializeTradingPairs() {
         base: currency.symbol,
         quote: baseCurrency
       }));
-
     // Manually defined cross-pairs (ensure consistency in symbol naming)
     const crossPairs = [
       { symbol: "AVAX/BTC", base: "AVAX", quote: "BTC" },
@@ -240,9 +238,7 @@ async function initializeTradingPairs() {
       { symbol: "RPL/BTC", base: "RPL", quote: "BTC" },
       { symbol: "MANA/ETH", base: "MANA", quote: "ETH" }
     ];
-
     AVAILABLE_TRADING_PAIRS = [...basePairs, ...crossPairs];
-
     logger.info('Available Trading Pairs initialized:', AVAILABLE_TRADING_PAIRS.length, 'pairs.');
   } catch (error) {
     logger.error('Error initializing trading pairs:', error);
@@ -254,18 +250,17 @@ initializeTradingPairs();
 
 // 4. Helper function for simulated exchange rates
 async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
-    const rates = {
-        // Base currency pairs (e.g., against USD or USDT for stable value reference)
-        'BTC/USD': new Decimal(68000), 'USD/BTC': new Decimal(1).div(68000),
-        'ETH/USD': new Decimal(3500), 'USD/ETH': new Decimal(1).div(3500),
-        'USDT/USD': new Decimal(1), 'USD/USDT': new Decimal(1), // Stablecoin peg
-        'USDC/USD': new Decimal(1), 'USD/USDC': new Decimal(1), // Stablecoin peg
-
-        // Cross-pair rates (these are examples and would fluctuate in reality)
-        'AVAX/BTC': new Decimal(0.0006), 'BTC/AVAX': new Decimal(1).div(0.0006),
-        'SHIB/ETH': new Decimal(0.0000000045), 'ETH/SHIB': new Decimal(1).div(0.0000000045),
-        'DOT/USDT': new Decimal(7.2), 'USDT/DOT': new Decimal(1).div(7.2),
-        'LINK/XRP': new Decimal(25), 'XRP/LINK': new Decimal(1).div(25),
+  const rates = {
+    // Base currency pairs (e.g., against USD or USDT for stable value reference)
+    'BTC/USD': new Decimal(68000), 'USD/BTC': new Decimal(1).div(68000),
+    'ETH/USD': new Decimal(3500), 'USD/ETH': new Decimal(1).div(3500),
+    'USDT/USD': new Decimal(1), 'USD/USDT': new Decimal(1), // Stablecoin peg
+    'USDC/USD': new Decimal(1), 'USD/USDC': new Decimal(1), // Stablecoin peg
+    // Cross-pair rates (these are examples and would fluctuate in reality)
+    'AVAX/BTC': new Decimal(0.0006), 'BTC/AVAX': new Decimal(1).div(0.0006),
+    'SHIB/ETH': new Decimal(0.0000000045), 'ETH/SHIB': new Decimal(1).div(0.0000000045),
+    'DOT/USDT': new Decimal(7.2), 'USDT/DOT': new Decimal(1).div(7.2),
+    'LINK/XRP': new Decimal(25), 'XRP/LINK': new Decimal(1).div(25),
         'MATIC/BNB': new Decimal(0.002), 'BNB/MATIC': new Decimal(1).div(0.002),
         'LTC/SOL': new Decimal(0.02), 'SOL/LTC': new Decimal(1).div(0.02),
         'BCH/USDC': new Decimal(450), 'USDC/BCH': new Decimal(1).div(450),
@@ -409,148 +404,120 @@ async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
         'GALA/DOGE': new Decimal(0.8), 'DOGE/GALA': new Decimal(1).div(0.8),
         'CAKE/TRX': new Decimal(15), 'TRX/CAKE': new Decimal(1).div(15),
         'RPL/BTC': new Decimal(0.003), 'BTC/RPL': new Decimal(1).div(0.003),
-        'MANA/ETH': new Decimal(0.0002), 'ETH/MANA': new Decimal(1).div(0.0002)
-    };
-
-    const directRate = rates[`${fromCurrency}/${toCurrency}`];
-    if (directRate) {
-        return directRate;
+    'MANA/ETH': new Decimal(0.0002), 'ETH/MANA': new Decimal(1).div(0.0002)
+  };
+  const directRate = rates[`${fromCurrency}/${toCurrency}`];
+  if (directRate) {
+    return directRate;
+  }
+  const inverseRate = rates[`${toCurrency}/${fromCurrency}`];
+  if (inverseRate) {
+    return new Decimal(1).div(inverseRate);
+  }
+  const stableCoins = ['USD', 'USDT', 'USDC'];
+  for (const stable of stableCoins) {
+    const fromStableRate = rates[`${fromCurrency}/${stable}`];
+    const toStableRate = rates[`${toCurrency}/${stable}`];
+    if (fromStableRate && toStableRate) {
+      logger.info(`Simulating ${fromCurrency}/${toCurrency} via ${stable}`);
+      return fromStableRate.times(new Decimal(1).div(toStableRate));
     }
-
-    const inverseRate = rates[`${toCurrency}/${fromCurrency}`];
-    if (inverseRate) {
-        return new Decimal(1).div(inverseRate);
-    }
-
-    const stableCoins = ['USD', 'USDT', 'USDC'];
-    for (const stable of stableCoins) {
-        const fromStableRate = rates[`${fromCurrency}/${stable}`];
-        const toStableRate = rates[`${toCurrency}/${stable}`];
-        if (fromStableRate && toStableRate) {
-            logger.info(`Simulating ${fromCurrency}/${toCurrency} via ${stable}`);
-            return fromStableRate.times(new Decimal(1).div(toStableRate));
-        }
-    }
-
-    logger.warn(`No specific or inferred simulated rate found for ${fromCurrency}/${toCurrency}. Returning a default of 1.0.`);
-    return new Decimal(1.0);
+  }
+  logger.warn(`No specific or inferred simulated rate found for ${fromCurrency}/${toCurrency}. Returning a default of 1.0.`);
+  return new Decimal(1.0);
 }
 
 // 5. Exported controller functions
-
-exports.swap = async (req, res) => {
-    const session = await Wallet.startSession();
-    session.startTransaction();
-
-    try {
-        const { fromCurrency, toCurrency, amount } = req.body;
-        const userId = req.user._id;
-
-        if (!fromCurrency || !toCurrency || !amount) {
-            throw new Error('Missing required swap parameters (fromCurrency, toCurrency, amount).');
-        }
-        // Ensure input currencies are consistently uppercase for comparison and lookup
-        const fromCurrencyUpper = fromCurrency.toUpperCase();
-        const toCurrencyUpper = toCurrency.toUpperCase();
-
-        if (fromCurrencyUpper === toCurrencyUpper) {
-            throw new Error('Cannot swap between the same currency.');
-        }
-
-        const numericAmount = new Decimal(amount);
-        if (numericAmount.lessThanOrEqualTo(0)) {
-            throw new Error('Amount must be positive.');
-        }
-
-        await validateCurrency(fromCurrencyUpper); // Pass uppercase symbol
-        await validateCurrency(toCurrencyUpper);   // Pass uppercase symbol
-
-        const isPairAvailable = AVAILABLE_TRADING_PAIRS.some(
-            pair => (pair.base === fromCurrencyUpper && pair.quote === toCurrencyUpper) ||
-                    (pair.base === toCurrencyUpper && pair.quote === fromCurrencyUpper)
-        );
-        if (!isPairAvailable) {
-            throw new Error(`Trading pair ${fromCurrencyUpper}/${toCurrencyUpper} is not available.`);
-        }
-
-        const wallet = await Wallet.findOne({ userId }).session(session);
-        if (!wallet) {
-            throw new Error('Wallet not found for this user.');
-        }
-
-        const fromBalance = new Decimal(wallet.balances.get(fromCurrencyUpper) || 0);
-        if (fromBalance.lessThan(numericAmount)) {
-            throw new Error(`Insufficient ${fromCurrencyUpper} balance. Available: ${fromBalance.toFixed(8)}`);
-        }
-
-        const exchangeRate = await getSimulatedExchangeRate(fromCurrencyUpper, toCurrencyUpper);
-        const receivedAmount = numericAmount.times(exchangeRate);
-
-        await wallet.updateBalance(fromCurrencyUpper, numericAmount.negated(), 'decrement', session);
-        await wallet.updateBalance(toCurrencyUpper, receivedAmount, 'increment', session);
-
-        await Transaction.create({
-            userId,
-            walletId: wallet._id,
-            type: 'swap',
-            fromCurrency: fromCurrencyUpper,
-            toCurrency: toCurrencyUpper,
-            amount: numericAmount.toNumber(),
-            receivedAmount: receivedAmount.toNumber(),
-            rate: exchangeRate.toNumber(),
-            status: 'COMPLETED',
-            timestamp: new Date()
-        }, { session });
-
-        await session.commitTransaction();
-        res.json(formatResponse(true, 'Swap successful', { receivedAmount: receivedAmount.toNumber() }));
-
-    } catch (error) {
-        await session.abortTransaction();
-        logger.error(`Swap error for user ${req.user?._id}: ${error.message}`, error);
-        res.status(400).json(formatResponse(false, error.message || 'An unexpected error occurred during the swap.'));
-    } finally {
-        session.endSession();
-    }
-};
-
-exports.buyCurrency = async (req, res) => {
+export const swap = async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
+  try {
+    const { fromCurrency, toCurrency, amount } = req.body;
+    const userId = req.user._id;
+    if (!fromCurrency || !toCurrency || !amount) {
+      throw new Error('Missing required swap parameters (fromCurrency, toCurrency, amount).');
+    }
+    // Ensure input currencies are consistently uppercase for comparison and lookup
+    const fromCurrencyUpper = fromCurrency.toUpperCase();
+    const toCurrencyUpper = toCurrency.toUpperCase();
+    if (fromCurrencyUpper === toCurrencyUpper) {
+      throw new Error('Cannot swap between the same currency.');
+    }
+    const numericAmount = new Decimal(amount);
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      throw new Error('Amount must be positive.');
+    }
+    await validateCurrency(fromCurrencyUpper); // Pass uppercase symbol
+    await validateCurrency(toCurrencyUpper);   // Pass uppercase symbol
+    const isPairAvailable = AVAILABLE_TRADING_PAIRS.some(
+      pair => (pair.base === fromCurrencyUpper && pair.quote === toCurrencyUpper) ||
+              (pair.base === toCurrencyUpper && pair.quote === fromCurrencyUpper)
+    );
+    if (!isPairAvailable) {
+      throw new Error(`Trading pair ${fromCurrencyUpper}/${toCurrencyUpper} is not available.`);
+    }
+    const wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      throw new Error('Wallet not found for this user.');
+    }
+    const fromBalance = new Decimal(wallet.balances.get(fromCurrencyUpper) || 0);
+    if (fromBalance.lessThan(numericAmount)) {
+      throw new Error(`Insufficient ${fromCurrencyUpper} balance. Available: ${fromBalance.toFixed(8)}`);
+    }
+    const exchangeRate = await getSimulatedExchangeRate(fromCurrencyUpper, toCurrencyUpper);
+    const receivedAmount = numericAmount.times(exchangeRate);
+    await wallet.updateBalance(fromCurrencyUpper, numericAmount.negated(), 'decrement', session);
+    await wallet.updateBalance(toCurrencyUpper, receivedAmount, 'increment', session);
+    await Transaction.create({
+      userId,
+      walletId: wallet._id,
+      type: 'swap',
+      fromCurrency: fromCurrencyUpper,
+      toCurrency: toCurrencyUpper,
+      amount: numericAmount.toNumber(),
+      receivedAmount: receivedAmount.toNumber(),
+      rate: exchangeRate.toNumber(),
+      status: 'COMPLETED',
+      timestamp: new Date()
+    }, { session });
+    await session.commitTransaction();
+    res.json(formatResponse(true, 'Swap successful', { receivedAmount: receivedAmount.toNumber() }));
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Swap error for user ${req.user?._id}: ${error.message}`, error);
+    res.status(400).json(formatResponse(false, error.message || 'An unexpected error occurred during the swap.'));
+  } finally {
+    session.endSession();
+  }
+};
 
+export const buyCurrency = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
   try {
     const { baseCurrency, quoteCurrency, amount } = req.body; // Amount to spend in quoteCurrency
     const userId = req.user._id;
     const numericAmount = new Decimal(amount);
-
     const baseCurrencyUpper = baseCurrency.toUpperCase();
     const quoteCurrencyUpper = quoteCurrency.toUpperCase();
-
     await validateCurrency(baseCurrencyUpper);
     await validateCurrency(quoteCurrencyUpper);
-
     if (numericAmount.lessThanOrEqualTo(0)) {
       throw new Error('Amount must be positive'); // Changed to throw Error for consistency
     }
-
     const wallet = await Wallet.findOne({ userId }).session(session);
     if (!wallet) {
       throw new Error('Wallet not found'); // Changed to throw Error for consistency
     }
-
     const quoteBalance = new Decimal(wallet.balances.get(quoteCurrencyUpper) || 0); // Use .get()
     const currentPrice = await getSimulatedExchangeRate(baseCurrencyUpper, quoteCurrencyUpper); // Price of base in quote
-
     const baseAmountToBuy = numericAmount.dividedBy(currentPrice);
-
     if (quoteBalance.lessThan(numericAmount)) {
       throw new Error(`Insufficient ${quoteCurrencyUpper} balance`); // Changed to throw Error for consistency
     }
-
     // Update balances
     await wallet.updateBalance(quoteCurrencyUpper, numericAmount.negated(), 'decrement', session);
     await wallet.updateBalance(baseCurrencyUpper, baseAmountToBuy, 'increment', session); // Pass Decimal object
-
     // Record transaction
     await Transaction.create({
       userId,
@@ -564,10 +531,8 @@ exports.buyCurrency = async (req, res) => {
       status: 'COMPLETED',
       timestamp: new Date()
     }, { session });
-
     await session.commitTransaction();
     res.json(formatResponse(true, `Successfully bought ${baseAmountToBuy.toFixed(8)} ${baseCurrencyUpper}`, { receivedAmount: baseAmountToBuy.toNumber() }));
-
   } catch (error) {
     await session.abortTransaction();
     logger.error(`Buy error: ${error.message}`, error); // Added error object to logger
@@ -577,42 +542,33 @@ exports.buyCurrency = async (req, res) => {
   }
 };
 
-exports.sellCurrency = async (req, res) => {
+export const sellCurrency = async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
-
   try {
     const { baseCurrency, quoteCurrency, amount } = req.body; // Amount of baseCurrency to sell
     const userId = req.user._id;
     const numericAmount = new Decimal(amount);
-
     const baseCurrencyUpper = baseCurrency.toUpperCase();
     const quoteCurrencyUpper = quoteCurrency.toUpperCase();
-
     await validateCurrency(baseCurrencyUpper);
     await validateCurrency(quoteCurrencyUpper);
-
     if (numericAmount.lessThanOrEqualTo(0)) {
       throw new Error('Amount must be positive'); // Changed to throw Error
     }
-
     const wallet = await Wallet.findOne({ userId }).session(session);
     if (!wallet) {
       throw new Error('Wallet not found'); // Changed to throw Error
     }
-
     const baseBalance = new Decimal(wallet.balances.get(baseCurrencyUpper) || 0); // Use .get()
     const currentPrice = await getSimulatedExchangeRate(baseCurrencyUpper, quoteCurrencyUpper); // Price of base in quote
     const quoteAmountToReceive = numericAmount.multipliedBy(currentPrice);
-
     if (baseBalance.lessThan(numericAmount)) {
       throw new Error(`Insufficient ${baseCurrencyUpper} balance`); // Changed to throw Error
     }
-
     // Update balances
     await wallet.updateBalance(baseCurrencyUpper, numericAmount.negated(), 'decrement', session);
     await wallet.updateBalance(quoteCurrencyUpper, quoteAmountToReceive, 'increment', session); // Pass Decimal object
-
     // Record transaction
     await Transaction.create({
       userId,
@@ -626,10 +582,8 @@ exports.sellCurrency = async (req, res) => {
       status: 'COMPLETED',
       timestamp: new Date()
     }, { session });
-
     await session.commitTransaction();
     res.json(formatResponse(true, `Successfully sold ${numericAmount.toFixed(8)} ${baseCurrencyUpper}`, { receivedAmount: quoteAmountToReceive.toNumber() }));
-
   } catch (error) {
     await session.abortTransaction();
     logger.error(`Sell error: ${error.message}`, error); // Added error object to logger
@@ -641,7 +595,6 @@ exports.sellCurrency = async (req, res) => {
 
 // In-memory order books (for simulation purposes)
 const orderBooks = {};
-
 const getOrderBook = (pair) => {
   if (!orderBooks[pair]) {
     orderBooks[pair] = {
@@ -658,7 +611,7 @@ const sortBuyOrders = (a, b) => new Decimal(b.price).minus(a.price).toNumber();
 // Function to sort sell orders by price (lowest first)
 const sortSellOrders = (a, b) => new Decimal(a.price).minus(b.price).toNumber();
 
-exports.getExchangePairs = async (req, res) => {
+export const getExchangePairs = async (req, res) => {
   try {
     res.json(formatResponse(true, 'Available trading pairs retrieved successfully', AVAILABLE_TRADING_PAIRS));
   } catch (error) {
@@ -667,37 +620,29 @@ exports.getExchangePairs = async (req, res) => {
   }
 };
 
-exports.placeOrder = async (req, res) => {
+export const placeOrder = async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
-
   try {
     const { pair, type, amount, price } = req.body;
     const userId = req.user._id;
-
     if (!pair || !type || !amount || !price) {
       throw new Error('Missing required order parameters');
     }
-
     const pairUpper = pair.toUpperCase(); // Ensure pair is uppercase
     if (!AVAILABLE_TRADING_PAIRS.some(p => p.symbol === pairUpper)) {
       throw new Error(`Invalid trading pair: ${pair}`);
     }
-
     const numericAmount = new Decimal(amount);
     const numericPrice = new Decimal(price);
-
     if (numericAmount.lessThanOrEqualTo(0) || numericPrice.lessThanOrEqualTo(0)) {
       throw new Error('Amount and price must be positive');
     }
-
     const wallet = await Wallet.findOne({ userId }).session(session);
     if (!wallet) {
       throw new Error('Wallet not found');
     }
-
     const [baseCurrency, quoteCurrency] = pairUpper.split('/'); // Use pairUpper
-
     // Check for sufficient balance and reserve funds
     if (type.toUpperCase() === 'BUY') {
       const cost = numericAmount.mul(numericPrice);
@@ -716,10 +661,8 @@ exports.placeOrder = async (req, res) => {
     } else {
       throw new Error('Invalid order type');
     }
-
     const orderBook = getOrderBook(pairUpper); // Use pairUpper
     const order = { userId, price: numericPrice.toNumber(), amount: numericAmount.toNumber(), type: type.toUpperCase(), baseCurrency, quoteCurrency }; // Add type and currencies to order for easier lookup
-
     if (type.toUpperCase() === 'BUY') {
       orderBook.buyOrders.push(order);
       orderBook.buyOrders.sort(sortBuyOrders);
@@ -727,14 +670,11 @@ exports.placeOrder = async (req, res) => {
       orderBook.sellOrders.push(order);
       orderBook.sellOrders.sort(sortSellOrders);
     }
-
     // Basic matching logic (immediate execution if possible)
     // Pass original pair to matchOrders to get correct order book
     await matchOrders(pairUpper, session);
-
     await session.commitTransaction();
     res.json(formatResponse(true, `Order placed successfully (${type} ${amount} at ${price} ${pair})`));
-
   } catch (error) {
     await session.abortTransaction();
     logger.error(`Error placing order: ${error.message}`, error);
@@ -748,21 +688,16 @@ async function matchOrders(pair, session) {
   const orderBook = getOrderBook(pair);
   const buyOrders = orderBook.buyOrders;
   const sellOrders = orderBook.sellOrders;
-
   while (buyOrders.length > 0 && sellOrders.length > 0 && new Decimal(buyOrders[0].price).gte(sellOrders[0].price)) {
     const bestBuyOrder = buyOrders[0];
     const bestSellOrder = sellOrders[0];
-
     const tradeAmount = Math.min(bestBuyOrder.amount, bestSellOrder.amount);
     const tradePrice = bestSellOrder.price; // Use the best sell price for the match
-
     // Execute trade
     await executeTrade(pair, bestBuyOrder.userId, bestSellOrder.userId, tradeAmount, tradePrice, session);
-
     // Update order amounts
     bestBuyOrder.amount -= tradeAmount;
     bestSellOrder.amount -= tradeAmount;
-
     // Remove fully filled orders
     if (bestBuyOrder.amount === 0) {
       buyOrders.shift();
@@ -779,24 +714,19 @@ async function executeTrade(pair, buyerId, sellerId, amount, price, session) {
   const numericPrice = new Decimal(price);
   const cost = numericAmount.mul(numericPrice); // Amount of quote currency buyer pays
   const receivedQuote = numericAmount.mul(numericPrice); // Amount of quote currency seller receives
-
   const buyerWallet = await Wallet.findOne({ userId: buyerId }).session(session);
   const sellerWallet = await Wallet.findOne({ userId: sellerId }).session(session);
-
   if (!buyerWallet || !sellerWallet) {
     logger.error(`Error: Could not find buyer or seller wallet during trade execution. Buyer: ${buyerId}, Seller: ${sellerId}`);
     // Potentially throw an error here to abort transaction
     throw new Error('Wallets not found for trade execution.');
   }
-
   // Buyer: Decrement quote, increment base
   await buyerWallet.updateBalance(quoteCurrency, cost.negated(), 'decrement', session);
   await buyerWallet.updateBalance(baseCurrency, numericAmount, 'increment', session);
-
   // Seller: Decrement base, increment quote
   await sellerWallet.updateBalance(baseCurrency, numericAmount.negated(), 'decrement', session);
   await sellerWallet.updateBalance(quoteCurrency, receivedQuote, 'increment', session);
-
   // Record buyer's trade transaction
   await Transaction.create({
     userId: buyerId,
@@ -812,7 +742,6 @@ async function executeTrade(pair, buyerId, sellerId, amount, price, session) {
     counterParty: sellerId,
     tradeType: 'BUY'
   }, { session });
-
   // Record seller's trade transaction
   await Transaction.create({
     userId: sellerId,
@@ -830,11 +759,10 @@ async function executeTrade(pair, buyerId, sellerId, amount, price, session) {
   }, { session });
 }
 
-exports.getMarketData = async (req, res) => {
+export const getMarketData = async (req, res) => {
   try {
     const { pair } = req.query;
     const pairUpper = pair.toUpperCase(); // Ensure pair is uppercase for lookup
-
     if (!pairUpper || !AVAILABLE_TRADING_PAIRS.some(p => p.symbol === pairUpper)) {
       return res.status(400).json(formatResponse(false, 'Invalid trading pair'));
     }
