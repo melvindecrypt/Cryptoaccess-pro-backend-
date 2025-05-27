@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Backend for CryptoAccess Pro - A cryptocurrency investment platform.",
   "main": "server.js",
-  "type": "module", // Enable ESM (ECMAScript Modules)
+  "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
@@ -52,8 +52,8 @@
     "setupFilesAfterEnv": ["./jest.setup.js"]
   },
   "engines": {
-    "node": ">=18.0.0", // Specify minimum Node.js version
-    "npm": ">=9.0.0"    // Specify minimum npm version
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"   
   },
   "keywords": [
     "crypto",
