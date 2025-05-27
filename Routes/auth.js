@@ -1,21 +1,29 @@
-const express = require('express');
-const router = express.Router();
-const authController = require('../controllers/authController');
-const { authenticate } = require('../middleware/authMiddleware'); // Import authenticate
+import express from 'express';
+import authController from '../controllers/authController.js';
+import { authenticate } from '../middleware/authMiddleware.js'; // Import authenticate
+import auditLog from '../middlewares/auditLog.js';
 
-// routes/auth.js
+const router = express.Router();
+
+// Register Route
 router.post('/register', authController.register);
 
-router.post('/login',authController.login,
+// Login Route
+router.post(
+  '/login',
+  authController.login,
   auditLog('login', {
     metadataFields: ['email'],
-    status: req => req.authSuccessful ? 'success' : 'failed'
-  }));
+    status: (req) => (req.authSuccessful ? 'success' : 'failed'),
+  })
+);
 
-router.post('/logout',
+// Logout Route
+router.post(
+  '/logout',
   authenticate, // Corrected middleware name
   auditLog('logout'),
   authController.logout // Ensure this function is implemented
 );
 
-module.exports = router;
+export default router;
