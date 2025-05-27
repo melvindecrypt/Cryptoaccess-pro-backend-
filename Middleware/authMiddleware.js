@@ -1,16 +1,16 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/user');
+import jwt from 'jsonwebtoken';
+import User from '../models/user.js';
 
+// Authenticate Middleware
 const authenticate = async (req, res, next) => {
   try {
-    const token = req.cookies.token ||
-                 req.header('Authorization')?.replace('Bearer ', '');
+    const token = req.cookies.token || req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return res.status(401).json({
         success: false,
         error: 'Authentication required',
-        message: 'No token provided'
+        message: 'No token provided',
       });
     }
 
@@ -22,7 +22,7 @@ const authenticate = async (req, res, next) => {
         return res.status(401).json({
           success: false,
           error: 'Invalid token',
-          message: 'User not found'
+          message: 'User not found',
         });
       }
 
@@ -33,14 +33,14 @@ const authenticate = async (req, res, next) => {
         return res.status(401).json({
           success: false,
           error: 'Token expired',
-          message: 'Token has expired. Please log in again.'
+          message: 'Token has expired. Please log in again.',
         });
       }
       console.error('JWT Verification Error:', error); // Consider more robust logging
       return res.status(401).json({
         success: false,
         error: 'Authentication failed',
-        message: 'Invalid token.' // More generic message for production
+        message: 'Invalid token.', // More generic message for production
       });
     }
   } catch (error) {
@@ -48,28 +48,30 @@ const authenticate = async (req, res, next) => {
     res.status(401).json({
       success: false,
       error: 'Authentication failed',
-      message: 'An error occurred during authentication.'
+      message: 'An error occurred during authentication.',
     });
   }
 };
 
+// Admin Privileges Middleware
 const isAdmin = (req, res, next) => {
   if (!req.user?.isAdmin) {
     return res.status(403).json({
       success: false,
       error: 'Forbidden',
-      message: 'Admin privileges required'
+      message: 'Admin privileges required',
     });
   }
   next();
 };
 
+// Check Deletion Status Middleware
 const checkDeletionStatus = async (req, res, next) => {
   try {
     if (req.user?.isDeleted) {
       return res.status(410).json({
         success: false,
-        message: 'Account no longer exists'
+        message: 'Account no longer exists',
       });
     }
     next();
@@ -78,4 +80,4 @@ const checkDeletionStatus = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticate, isAdmin, checkDeletionStatus };
+export { authenticate, isAdmin, checkDeletionStatus };
