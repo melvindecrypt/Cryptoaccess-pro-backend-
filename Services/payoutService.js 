@@ -1,36 +1,42 @@
-// File: services/payoutService.js
-const User = require('../models/user');
-const Decimal = require('decimal.js');
-const logger = require('../utils/logger');
+import User from '../models/user.js';
+import Decimal from 'decimal.js';
+import logger from '../utils/logger.js';
 
 class PayoutService {
   async processROIPayouts() {
-    const users = await User.find({
-      'subscription.isProPlus': true,
-      'investments.status': 'ACTIVE'
-    });
+    try {
+      const users = await User.find({
+        'subscription.isProPlus': true,
+        'investments.status': 'ACTIVE',
+      });
 
-    for (const user of users) {
-      for (const investment of user.investments) {
-        if (investment.status === 'ACTIVE') {
-          const roi = new Decimal(investment.amount)
-            .times(investment.roiPercentage)
-            .dividedBy(100);
+      for (const user of users) {
+        for (const investment of user.investments) {
+          if (investment.status === 'ACTIVE') {
+            const roi = new Decimal(investment.amount)
+              .times(investment.roiPercentage)
+              .dividedBy(100);
 
-          user.virtualBalances[investment.currency] = 
-            new Decimal(user.virtualBalances[investment.currency] || 0)
-            .plus(roi)
-            .toNumber();
+            user.virtualBalances[investment.currency] =
+              new Decimal(user.virtualBalances[investment.currency] || 0)
+                .plus(roi)
+                .toNumber();
 
-          investment.payouts.push({
-            amount: roi.toNumber(),
-            payoutDate: new Date()
-          });
+            investment.payouts.push({
+              amount: roi.toNumber(),
+              payoutDate: new Date(),
+            });
+          }
         }
+        await user.save();
       }
-      await user.save();
+
+      logger.info('ROI payouts processed successfully');
+    } catch (error) {
+      logger.error(`Failed to process ROI payouts: ${error.message}`);
+      throw error; // Ensure the error propagates to the caller
     }
   }
 }
 
-module.exports = new PayoutService();
+export default new PayoutService();
