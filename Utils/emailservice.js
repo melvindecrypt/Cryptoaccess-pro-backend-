@@ -1,26 +1,29 @@
-const nodemailer = require('nodemailer');
-const hbs = require('nodemailer-express-handlebars');
-const path = require('path');
-const logger = require('../utils/logger');
+import nodemailer from 'nodemailer';
+import hbs from 'nodemailer-express-handlebars';
+import path from 'path';
+import logger from '../utils/logger.js';
 
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
+    pass: process.env.EMAIL_PASSWORD,
+  },
 });
 
 // Enable handlebars for dynamic templates
-transporter.use('compile', hbs({
-  viewEngine: {
-    extname: '.hbs',
-    partialsDir: path.resolve('./templates/emails'),
-    defaultLayout: false
-  },
-  viewPath: path.resolve('./templates/emails'),
-  extName: '.hbs'
-}));
+transporter.use(
+  'compile',
+  hbs({
+    viewEngine: {
+      extname: '.hbs',
+      partialsDir: path.resolve('./templates/emails'),
+      defaultLayout: false,
+    },
+    viewPath: path.resolve('./templates/emails'),
+    extName: '.hbs',
+  })
+);
 
 // Send .hbs templated email
 const sendEmail = async ({ to, subject, template, data }) => {
@@ -29,8 +32,8 @@ const sendEmail = async ({ to, subject, template, data }) => {
       from: `"CryptoAccess Pro" <${process.env.EMAIL_USER}>`,
       to,
       subject,
-      template, // matches the .hbs file name
-      context: data
+      template, // Matches the .hbs file name
+      context: data,
     });
   } catch (error) {
     logger.error('Templated email error:', error.message);
@@ -50,7 +53,7 @@ const sendWelcomeEmail = async (email, walletId) => {
         <p>Your wallet ID: <strong>${walletId}</strong></p>
         <p>Start trading after admin approval and KYC verification.</p>
         <p>Need help? Contact support at: ${process.env.SUPPORT_EMAIL}</p>
-      `
+      `,
     });
   } catch (error) {
     logger.error('Welcome email error:', error.message);
@@ -73,15 +76,11 @@ const sendKYCNotification = async ({ userEmail, userId, adminEmail }) => {
         <a href="${process.env.ADMIN_URL}/kyc-review/${userId}">
           Review KYC Submission
         </a>
-      `
+      `,
     });
   } catch (error) {
     logger.error(`KYC notification email failed: ${error.message}`);
   }
 };
 
-module.exports = {
-  sendEmail,
-  sendWelcomeEmail,
-  sendKYCNotification
-};
+export { sendEmail, sendWelcomeEmail, sendKYCNotification };
