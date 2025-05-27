@@ -1,41 +1,38 @@
-const { sendWelcomeEmail } = require('../utils/emailService');
-const { v4: uuidv4 } = require('uuid');
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const User = require('../models/user');
-const Wallet = require('../models/wallet');
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
+import User from '../models/user.js';
+import Wallet from '../models/wallet.js';
+import logger from '../utils/logger.js';
+import { sendWelcomeEmail } from '../utils/emailService.js';
 
-exports.register = async (req, res) => {
+// Registration
+export const register = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { email, password, referralCode: refcode } = req.body;
+    const { email, password, referralCode: refCode } = req.body;
 
     // Validation
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation Error',
-        message: 'Email and password are required'
-      });
+      await session.abortTransaction();
+      return res.status(400).json({ success: false, error: 'Email and password are required' });
     }
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation Error',
-        message: 'Invalid email format'
-      });
+      await session.abortTransaction();
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
     }
 
     // Validate password strength
     if (password.length < 12 || !/\d/.test(password) || !/[A-Z]/.test(password)) {
+      await session.abortTransaction();
       return res.status(400).json({
         success: false,
-        error: 'Validation Error',
-        message: 'Password must be at least 12 characters with a number and uppercase letter'
+        error: 'Password must be at least 12 characters with a number and uppercase letter',
       });
     }
 
@@ -43,11 +40,7 @@ exports.register = async (req, res) => {
     const existingUser = await User.findOne({ email }).session(session);
     if (existingUser) {
       await session.abortTransaction();
-      return res.status(409).json({
-        success: false,
-        error: 'Conflict',
-        message: 'Email already registered'
-      });
+      return res.status(409).json({ success: false, error: 'Email already registered' });
     }
 
     // Hash password
@@ -63,10 +56,8 @@ exports.register = async (req, res) => {
       walletId: `WALLET-${uuidv4().replace(/-/g, '').substring(0, 16)}`,
       referredBy: null,
       kycStatus: 'pending', // Auto trigger KYC status
-      referralCode: newReferralCode // generate their own referral code
+      referralCode: newReferralCode, // Generate their own referral code
     });
-
-    await user.save({ session });
 
     // Handle referral tracking if a referral code was provided during registration
     if (refCode) {
@@ -76,27 +67,16 @@ exports.register = async (req, res) => {
         referrer.referredUsers.push(user._id); // Add the new user's _id to the referrer's 'referredUsers'
         await referrer.save({ session }); // Save the referrer
       } else {
-        console.log(`Referrer with code ${refCode} not found.`);
-        // You might want to handle this case (e.g., log it, inform the user - though not typically done during signup)
+        logger.warn(`Referrer with code ${refCode} not found.`);
       }
     }
-
-    await user.save({ session });
-    await session.commitTransaction();
-    res.status(201).json({ success: true, message: 'User registered successfully', userId: user._id });
-
-  } catch (error) {
-    await session.abortTransaction();
-    console.error('Registration error:', error);
-    res.status(500).json({ success: false, error: 'Server Error', message: error.message });
-  } finally {
-    session.endSession();
-  }
-};
 
     // Create wallet for the new user
     const wallet = new Wallet({ userId: user._id });
     await wallet.save({ session });
+
+    // Save user
+    await user.save({ session });
 
     // Send welcome email
     await sendWelcomeEmail(user.email, user.walletId);
@@ -109,7 +89,7 @@ exports.register = async (req, res) => {
       {
         id: user._id,
         email: user.email,
-        walletId: user.walletId
+        walletId: user.walletId,
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h', algorithm: 'HS256' }
@@ -119,92 +99,50 @@ exports.register = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Registration successful. Check your email to verify.',
-      token: jwt.sign(
-        { id: user._id, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      ),
+      token,
       user: {
         id: user._id,
         email: user.email,
         walletId: user.walletId,
         referralCode: newReferralCode,
-        kycStatus: 'pending'
+        kycStatus: 'pending',
+        referralUsed: !!user.referredBy,
       },
-      referralUsed: !!referredBy
     });
-
   } catch (error) {
     await session.abortTransaction();
-    res.status(500).json({
-      success: false,
-      error: 'Registration Failed',
-      message: error.message
-    });
+    logger.error(`Registration failed: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Registration failed', message: error.message });
   } finally {
     session.endSession();
   }
 };
 
-// Add JWT secret check
-if (!process.env.JWT_SECRET) {
-  throw new Error('Missing JWT_SECRET in environment');
-}
-
-// In register():
-const token = jwt.sign(
-  { 
-    id: user._id, 
-    email: user.email,
-    walletId: user.walletId // Include for frontend
-  },
-  process.env.JWT_SECRET,
-  { 
-    expiresIn: '24h', // Extended from 1h
-    algorithm: 'HS256' // Explicitly set
-  }
-);
-
-exports.login = async (req, res) => {
+// Login
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     // Validation
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation Error',
-        message: 'Email and password are required',
-      });
+      return res.status(400).json({ success: false, error: 'Email and password are required' });
     }
 
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Authentication Failed',
-        message: 'Invalid credentials',
-      });
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        error: 'Authentication Failed',
-        message: 'Invalid credentials',
-      });
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
-    // Check if account is suspended (you might have a `isSuspended` field in your User model)
+    // Check if account is suspended
     if (user.isSuspended) {
-      return res.status(403).json({
-        success: false,
-        error: 'Forbidden',
-        message: 'Account suspended',
-      });
+      return res.status(403).json({ success: false, error: 'Account suspended' });
     }
 
     // Generate JWT token
@@ -216,7 +154,7 @@ exports.login = async (req, res) => {
         kycStatus: user.kycStatus,
       },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' } // Adjust expiration as needed
+      { expiresIn: '24h', algorithm: 'HS256' }
     );
 
     // Respond with success and token
@@ -232,36 +170,21 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Server Error',
-      message: error.message,
-    });
+    logger.error(`Login failed: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Login failed', message: error.message });
   }
 };
 
-// In AuthController.js
-
-exports.logout = async (req, res) => {
+// Logout
+export const logout = async (req, res) => {
   try {
     // Log the logout action on the server (optional but good for audit trails)
-    console.log(`User ${req.user?.id} logged out.`);
+    logger.info(`User ${req.user?.id} logged out.`);
 
     // Respond with a success message
-    res.status(200).json({
-      success: true,
-      message: 'Logged out successfully.'
-    });
-
-    // The frontend will handle deleting the token and redirecting.
-
+    res.status(200).json({ success: true, message: 'Logged out successfully.' });
   } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Server Error',
-      message: error.message
-    });
+    logger.error(`Logout failed: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Server Error', message: error.message });
   }
 };
