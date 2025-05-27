@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import referralController from '../controllers/referralController.js';
+import { authenticate } from '../middleware/authMiddleware.js';
+import { body, validationResult } from 'express-validator';
+
 const router = express.Router();
-const referralController = require('../controllers/referralController');
-const { authenticate } = require('../middleware/authMiddleware');
-const { body, validationResult } = require('express-validator');
 
 // GET /api/referrals
 router.get('/', authenticate, referralController.getReferralInfo);
@@ -21,4 +22,4 @@ router.post(
   referralController.shareReferralLink
 );
 
-module.exports = router;
+export default router;
