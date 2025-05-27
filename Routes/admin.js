@@ -1,31 +1,30 @@
-const express = require('express');
+import express from 'express';
+import rateLimit from 'express-rate-limit';
+import { authenticate, isAdmin } from '../middlewares/authMiddleware.js';
+import logger from '../utils/logger.js';
+import { formatResponse } from '../utils/helpers.js';
+import adminController from '../controllers/adminController.js';
+import auditLog from '../middlewares/auditLog.js';
+import secureLocalAccess from '../middlewares/localStorageAccess.js';
+
 const router = express.Router();
-const rateLimit = require('express-rate-limit');
-const { authenticate, isAdmin } = require('../middlewares/authMiddleware');
-const logger = require('../utils/logger');
-const { formatResponse } = require('../utils/helpers');
-const adminController = require('../controllers/adminController');
-const auditLog = require('../middlewares/auditLog');
-const secureLocalAccess = require('../middlewares/localStorageAccess');
-const { adminLogin } = require('../controllers/adminController');
 
 // ================== Rate Limiting ==================
 const adminLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Max 5 attempts per windowMs
   message: formatResponse(false, 'Too many login attempts, try again later'),
-  skipSuccessfulRequests: true
+  skipSuccessfulRequests: true,
 });
 
 // ================== Admin Login Route ==================
-router.post('/login', adminLoginLimiter, adminLogin);
-    
+router.post('/login', adminLoginLimiter, adminController.adminLogin);
+
 // ================== Protected Routes ==================
 router.use(authenticate);
 router.use(isAdmin);
 
 // ================== User Management Endpoints ==================
-
 router.patch('/approve-user', adminController.approveUser);
 router.patch('/bypass-access-fee', adminController.bypassPayment);
 router.patch('/grant-pro-plus', adminController.grantProPlus);
@@ -36,21 +35,10 @@ router.patch('/suspend-user', adminController.suspendUser);
 // ================== Session Management ==================
 router.post('/logout', adminController.logout);
 
-// Error Handling 
-router.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  logger.error(`Admin route error: ${err.message}`, {
-    path: req.path,
-    userId: req.user?.userId,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-  });
-  res.status(statusCode).json(formatResponse(false, err.message));
-});
-
 // Admin Sends Virtual Funds to a User (/send-funds)
-   router.post('/send-funds', adminController.sendFunds);
+router.post('/send-funds', adminController.sendFunds);
 
-// Get Users 
+// Get Users
 router.get('/users', adminController.getUsers);
 
 // Verify Email
@@ -62,104 +50,36 @@ router.delete('/users/:id', adminController.deleteUser);
 // Adjust Balance
 router.patch('/adjust-balance', adminController.adjustBalance);
 
-// Process Payouts 
+// Process Payouts
 router.post('/process-payouts', adminController.processPayouts);
 
 // Update User
-router.patch('/users/:id',
-  adminController.updateUser
-);
+router.patch('/users/:id', adminController.updateUser);
 
 // Get User Wallet
 router.get('/user-wallet/:userId', adminController.getUserWallet);
 
-// Get KYC Documents 
-router.get('/kyc-docs/:userId',isAdmin, adminController.getKycDocs);
-
-//Get KYC Preview 
-router.get('/kyc-preview/userId', isAdmin, secureLocalAccess, adminController.getKycPreview);
-
-// Get pending withdrawals
-router.get('/withdrawals/pending', adminController.getPendingWithdrawals);
-
-// Process withdrawals
-router.patch('/withdrawals/:id', adminController.processWithdrawal);
-
-module.exports = router;
-
-
-
-
-
-
-
-
-
-
-import express from 'express';
-import * as adminController from './controllers/adminController.js';
-
-const router = express.Router();
-
-// Admin Login
-router.post('/admin/login', adminController.adminLogin);
-
-// Admin Logout
-router.post('/admin/logout', adminController.logout);
-
-// Approve User
-router.post('/admin/approve-user', adminController.approveUser);
-
-// Bypass Payment
-router.post('/admin/bypass-payment', adminController.bypassPayment);
-
-// Grant Pro+
-router.post('/admin/grant-pro-plus', adminController.grantProPlus);
-
-// Verify KYC
-router.post('/admin/verify-kyc', adminController.verifyKyc);
-
-// Update Balance
-router.post('/admin/update-balance', adminController.updateBalance);
-
-// Suspend/Unsuspend User
-router.post('/admin/suspend-user', adminController.suspendUser);
-
-// Send Funds
-router.post('/admin/send-funds', adminController.sendFunds);
-
-// Get Users
-router.get('/admin/users', adminController.getUsers);
-
-// Verify Email
-router.post('/admin/verify-email', adminController.verifyEmail);
-
-// Delete User
-router.delete('/admin/delete-user/:id', adminController.deleteUser);
-
-// Adjust Balance
-router.post('/admin/adjust-balance', adminController.adjustBalance);
-
-// Process Payouts
-router.post('/admin/process-payouts', adminController.processPayouts);
-
-// Update User
-router.put('/admin/update-user/:id', adminController.updateUser);
-
-// Get User Wallet
-router.get('/admin/user-wallet/:userId', adminController.getUserWallet);
-
 // Get KYC Documents
-router.get('/admin/kyc-docs/:userId', adminController.getKycDocs);
+router.get('/kyc-docs/:userId', isAdmin, adminController.getKycDocs);
 
 // Get KYC Preview
-router.get('/admin/kyc-preview/:userId', adminController.getKycPreview);
+router.get('/kyc-preview/:userId', isAdmin, secureLocalAccess, adminController.getKycPreview);
 
 // Get Pending Withdrawals
-router.get('/admin/pending-withdrawals', adminController.getPendingWithdrawals);
+router.get('/withdrawals/pending', adminController.getPendingWithdrawals);
 
-// Process Withdrawal
-router.post('/admin/process-withdrawal/:id', adminController.processWithdrawal);
+// Process Withdrawals
+router.patch('/withdrawals/:id', adminController.processWithdrawal);
 
+// Error Handling Middleware
+router.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  logger.error(`Admin route error: ${err.message}`, {
+    path: req.path,
+    userId: req.user?.userId,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  });
+  res.status(statusCode).json(formatResponse(false, err.message));
+});
 
 export default router;
