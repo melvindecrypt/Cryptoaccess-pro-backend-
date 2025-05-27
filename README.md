@@ -38,8 +38,10 @@ This is the backend for **CryptoAccess Pro**, a simulation platform that mimics 
 .  
 
 ├── config/
+│   ├── constants.js
 │   ├── db.js
 │   ├── fileStorage.js
+│   ├── walletAddresses.js 
 ├── controllers/
 │   ├── adminController.js
 │   ├── authController.js
