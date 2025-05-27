@@ -1,11 +1,12 @@
-const User = require('../models/user');
-const { formatResponse } = require('../utils/helpers');
-const logger = require('../utils/logger');
-const emailService = require('../services/emailService');
+import User from '../models/user.js';
+import { formatResponse } from '../utils/helpers.js';
+import logger from '../utils/logger.js';
+import emailService from '../services/emailService.js';
 
 const REFERRAL_REWARD_AMOUNT = 100; // Define the referral reward amount
 
-exports.getReferralInfo = async (req, res) => {
+// Get Referral Info
+export const getReferralInfo = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate({
       path: 'referredUsers',
@@ -21,7 +22,7 @@ exports.getReferralInfo = async (req, res) => {
     let pendingReferralsCount = 0;
     let approvedReferralsCount = 0;
 
-    const referredUsersData = user.referredUsers.map((referredUser) => { // Corrected to referredUsers
+    const referredUsersData = user.referredUsers.map((referredUser) => {
       let referralStatus = 'signed up';
       let earnedAmount = 0;
 
@@ -49,7 +50,7 @@ exports.getReferralInfo = async (req, res) => {
       formatResponse(true, 'Referral information retrieved successfully', {
         referral_code: user.referralCode,
         referralLink: referralLink,
-        total_referrals: user.referredUsers.length, // Corrected to referredUsers
+        total_referrals: user.referredUsers.length,
         total_earned: totalEarned,
         pending_referrals_count: pendingReferralsCount,
         approved_referrals_count: approvedReferralsCount,
@@ -59,11 +60,12 @@ exports.getReferralInfo = async (req, res) => {
     );
   } catch (error) {
     logger.error(`Error fetching referral info for user ${req.user._id}: ${error.message}`);
-    res.status(500).json(formatResponse(false, 'Failed to retrieve referral information', { error: error.message })); // Added error message in response
+    res.status(500).json(formatResponse(false, 'Failed to retrieve referral information', { error: error.message }));
   }
 };
 
-exports.shareReferralLink = async (req, res) => {
+// Share Referral Link
+export const shareReferralLink = async (req, res) => {
   try {
     const { recipient_email } = req.body;
     const user = await User.findById(req.user._id);
@@ -77,19 +79,16 @@ exports.shareReferralLink = async (req, res) => {
     if (recipient_email) {
       try {
         await emailService.sendReferralEmail(recipient_email, referralLink, user.email);
-        return res.json(
-          formatResponse(true, 'Referral link shared successfully')
-        );
+        return res.json(formatResponse(true, 'Referral link shared successfully'));
       } catch (emailError) {
         logger.error(`Error sending referral email for user ${req.user._id} to ${recipient_email}: ${emailError.message}`);
-        return res.status(500).json(formatResponse(false, 'Failed to send referral email', { error: emailError.message })); // Added specific error response for email
+        return res.status(500).json(formatResponse(false, 'Failed to send referral email', { error: emailError.message }));
       }
     }
 
     res.json(formatResponse(true, 'Referral link generated', { referralLink }));
-
   } catch (error) {
     logger.error(`Error sharing referral link for user ${req.user._id}: ${error.message}`);
-    res.status(500).json(formatResponse(false, 'Failed to share referral link', { error: error.message })); // Added error message in response
+    res.status(500).json(formatResponse(false, 'Failed to share referral link', { error: error.message }));
   }
 };
