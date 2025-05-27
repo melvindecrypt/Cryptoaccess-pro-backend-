@@ -1,7 +1,7 @@
-const User = require('../models/user');
-const { formatResponse } = require('../utils/helpers');
-const logger = require('../utils/logger');
-const { validateProPlusPayment } = require('../validators/subscriptionValidators');
+import User from '../models/user.js';
+import { formatResponse } from '../utils/helpers.js';
+import logger from '../utils/logger.js';
+import { validateProPlusPayment } from '../validators/subscriptionValidators.js';
 
 // Define your wallet addresses here (or fetch from config/walletAddresses)
 const proPlusPaymentDetails = {
@@ -22,18 +22,28 @@ const proPlusPaymentDetails = {
     LTC: 'ltc1qp36qqd669xnvtmehyst3ht9suu8z73qasgnxps',
     MNT: '0xEe19FeE35ef7257c5Bcd8a1206dB6b1fCdf8e767',
   },
-  features: ['Advanced charting tools','Unlimited account balance', 'LNF', 'Faster execution speed of up to 15ms', 'Higher trading limits', Access to our top end Trading Bots', 'secure transactions with wallet tracking', 'Dedicated support'],
-  paymentInstructions: 'Please send a one-time payment of $299.99 (or equivalent in your chosen cryptocurrency) to one of the wallets below. After making the payment, upload your proof of payment (transaction ID and/or screenshot) to notify for review.'
+  features: [
+    'Advanced charting tools',
+    'Unlimited account balance',
+    'LNF',
+    'Faster execution speed of up to 15ms',
+    'Higher trading limits',
+    'Access to our top-end Trading Bots',
+    'Secure transactions with wallet tracking',
+    'Dedicated support',
+  ],
+  paymentInstructions:
+    'Please send a one-time payment of $299.99 (or equivalent in your chosen cryptocurrency) to one of the wallets below. After making the payment, upload your proof of payment (transaction ID and/or screenshot) to notify for review.',
 };
 
 // Admin endpoints
-exports.confirmPaymentForProPlus = async (req, res) => {
+export const confirmPaymentForProPlus = async (req, res) => {
   const session = await User.startSession();
   session.startTransaction();
-  
+
   try {
     const { userId, transactionId } = req.body;
-    
+
     // Validate admin privileges
     if (!req.user.isAdmin) {
       return res.status(403).json(formatResponse(false, 'Admin privileges required'));
@@ -44,7 +54,7 @@ exports.confirmPaymentForProPlus = async (req, res) => {
     if (error) return res.status(400).json(formatResponse(false, error.details[0].message));
 
     const user = await User.findById(userId).session(session);
-    
+
     // Check user existence
     if (!user) {
       await session.abortTransaction();
@@ -63,7 +73,7 @@ exports.confirmPaymentForProPlus = async (req, res) => {
       subscribedAt: new Date(),
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       paymentStatus: 'verified',
-      paymentEvidence: user.subscription.paymentEvidence
+      paymentEvidence: user.subscription.paymentEvidence,
     };
 
     // Add to history
@@ -71,7 +81,7 @@ exports.confirmPaymentForProPlus = async (req, res) => {
       startDate: user.subscription.subscribedAt,
       endDate: user.subscription.expiresAt,
       verifiedBy: req.user._id,
-      paymentEvidence: user.subscription.paymentEvidence
+      paymentEvidence: user.subscription.paymentEvidence,
     });
 
     await user.save({ session });
@@ -80,14 +90,15 @@ exports.confirmPaymentForProPlus = async (req, res) => {
     logger.info(`Pro+ payment confirmed`, {
       adminId: req.user._id,
       userId: user._id,
-      transactionId
+      transactionId,
     });
 
-    res.json(formatResponse(true, 'Pro+ subscription activated', {
-      user: user._id,
-      expiresAt: user.subscription.expiresAt
-    }));
-
+    res.json(
+      formatResponse(true, 'Pro+ subscription activated', {
+        user: user._id,
+        expiresAt: user.subscription.expiresAt,
+      })
+    );
   } catch (error) {
     await session.abortTransaction();
     logger.error(`Payment confirmation failed: ${error.message}`);
@@ -98,20 +109,20 @@ exports.confirmPaymentForProPlus = async (req, res) => {
 };
 
 // User endpoints
-exports.notifyPaymentForProPlus = async (req, res) => {
+export const notifyPaymentForProPlus = async (req, res) => {
   const session = await User.startSession();
   session.startTransaction();
 
   try {
     const { transactionId, screenshotUrl } = req.body;
-    
+
     // Validate input
     if (!transactionId || !screenshotUrl) {
       return res.status(400).json(formatResponse(false, 'Transaction ID and proof required'));
     }
 
     const user = await User.findById(req.user._id).session(session);
-    
+
     // Check existing status
     if (user.subscription.isProPlus) {
       return res.status(409).json(formatResponse(false, 'Pro+ subscription already active'));
@@ -122,7 +133,7 @@ exports.notifyPaymentForProPlus = async (req, res) => {
     user.subscription.paymentEvidence = {
       transactionId,
       screenshot: screenshotUrl,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     await user.save({ session });
@@ -130,14 +141,15 @@ exports.notifyPaymentForProPlus = async (req, res) => {
 
     logger.info(`Payment notification received`, {
       userId: user._id,
-      transactionId
+      transactionId,
     });
 
-    res.json(formatResponse(true, 'Payment details submitted for review', {
-      nextSteps: 'Will be reviewed within 24 hours',
-      contact: 'support@Melvindecrypt@gmail.com'
-    }));
-
+    res.json(
+      formatResponse(true, 'Payment details submitted for review', {
+        nextSteps: 'Will be reviewed within 24 hours',
+        contact: 'support@Melvindecrypt@gmail.com',
+      })
+    );
   } catch (error) {
     await session.abortTransaction();
     logger.error(`Payment notification failed: ${error.message}`);
@@ -148,14 +160,14 @@ exports.notifyPaymentForProPlus = async (req, res) => {
 };
 
 // Admin endpoints
-exports.getPendingPayments = async (req, res) => {
+export const getPendingPayments = async (req, res) => {
   try {
     if (!req.user.isAdmin) {
       return res.status(403).json(formatResponse(false, 'Admin access required'));
     }
 
     const pendingUsers = await User.find({
-      'subscription.paymentStatus': 'pending'
+      'subscription.paymentStatus': 'pending',
     }).select('email subscription.paymentEvidence');
 
     res.json(formatResponse(true, 'Pending payments retrieved', pendingUsers));
@@ -166,8 +178,7 @@ exports.getPendingPayments = async (req, res) => {
 };
 
 // In controllers/subscriptionController.js
-
-exports.getProPlusPlan = async (req, res) => {
+export const getProPlusPlan = async (req, res) => {
   try {
     const proPlusPlanDetailsToSend = {
       name: 'Pro+',
@@ -179,9 +190,8 @@ exports.getProPlusPlan = async (req, res) => {
     };
 
     res.json(formatResponse(true, 'Pro+ plan details retrieved successfully', proPlusPlanDetailsToSend));
-
   } catch (error) {
     console.error('Error fetching Pro+ plan details:', error);
     res.status(500).json(formatResponse(false, 'Server error fetching Pro+ plan details', { error: error.message }));
   }
-};    
+};
