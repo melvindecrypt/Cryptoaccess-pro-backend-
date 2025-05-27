@@ -1,19 +1,20 @@
-const express = require('express');
+import express from 'express';
+import { authenticate } from '../middleware/authMiddleware.js';
+import adminAuth from '../middleware/adminAuth.js';
+import paymentProofController from '../controllers/paymentProofController.js';
+import multer from 'multer';
+import path from 'path';
+import { formatResponse } from '../utils/helpers.js';
+
 const router = express.Router();
-const { authenticate } = require('../middleware/authMiddleware');
-const adminAuth = require('../middleware/adminAuth');
-const paymentProofController = require('../controllers/paymentProofController');
-const multer = require('multer');
-const path = require('path');
-const { formatResponse } = require('../utils/helpers');
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/paymentProofs'),
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+  },
 });
 const upload = multer({ storage });
 
@@ -21,12 +22,16 @@ const upload = multer({ storage });
 router.get('/access-fee', authenticate, paymentProofController.initiateAccessFee);
 
 // Route for users to upload payment proof
-router.post('/access-fee/upload-proof', authenticate, upload.single('proof'), paymentProofController.uploadPaymentProof);
+router.post(
+  '/access-fee/upload-proof',
+  authenticate,
+  upload.single('proof'),
+  paymentProofController.uploadPaymentProof
+);
 
 // Admin routes to view and update payment proofs
 router.get('/admin/payment-proofs', adminAuth, paymentProofController.getAllPaymentProofs);
 router.put('/admin/payment-proofs/:id', adminAuth, paymentProofController.updateProofStatus);
-
 
 // Supported payment methods
 const SUPPORTED_METHODS = ['MoonPay', 'Transak'];
@@ -45,15 +50,16 @@ router.post('/payment-method', async (req, res) => {
     // Simulate unavailable payment methods
     if (SUPPORTED_METHODS.includes(paymentMethod)) {
       return res.status(503).json(
-        formatResponse(false, 
-    'Currently unavailable. Contact support',
-    { supportEmail: process.env.SUPPORT_EMAIL })
-       
+        formatResponse(false, 'Currently unavailable. Contact support', {
+          supportEmail: process.env.SUPPORT_EMAIL,
+        })
+      );
+    }
+
     // Handle unknown payment methods
     return res.status(400).json(
       formatResponse(false, 'Invalid payment method')
     );
-
   } catch (error) {
     console.error('Payment method error:', error);
     return res.status(500).json(
@@ -62,6 +68,4 @@ router.post('/payment-method', async (req, res) => {
   }
 });
 
-module.exports = router;
-
-
+export default router;
