@@ -822,25 +822,13 @@ exports.getNotifications = async (req, res) => {
 
 exports.adminNotificationService = async (req, res) => {
   const { title, message, target, userId } = req.body;
+
   if (target === 'all') {
-    // Logic to send to all users...
-    // You'll need to implement this logic, e.g., fetching all users and sending notifications.
-    // For example:
-    // const users = await User.find({});
-    // for (const user of users) {
-    //   await notificationService.create(user._id, 'admin_broadcast', title, message);
-    //   await notificationService.sendEmailNotification(user.email, title, 'genericNotification', { messageContent: message });
-    // }
+    // Implement logic to send to all users here.
   } else if (target === 'specific' && userId) {
-    // Assuming 'notificationService' here refers to an imported service, not the controller function itself.
-    // Ensure this line correctly calls your actual notification service (e.g., notificationService.create, notificationService.sendEmailNotification).
-    await notificationService.create(userId, 'admin_direct', title, message); // Example: create internal notification
-    // If you also want to send an email:
-    // const user = await User.findById(userId).select('email firstName');
-    // if (user) {
-    //   await notificationService.sendEmailNotification(user.email, title, 'genericNotification', { name: user.firstName, messageContent: message });
-    // }
+    await notificationService.create(userId, 'admin_direct', title, message);
   }
+
   res.json({ success: true, message: 'Notification sent' });
 };
 
