@@ -1,14 +1,15 @@
-const express = require('express');
+import express from 'express';
+import { authenticate } from '../middlewares/authMiddleware.js';
+import requireVerifiedEmail from '../middlewares/requireVerifiedEmail.js';
+import investmentController from '../controllers/investmentController.js';
+
 const router = express.Router();
-const { authenticate } = require('../middlewares/authMiddleware');
-const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
-const investmentController = require('../controllers/investmentController');
 
 // View available investment plans
 router.get('/plans', authenticate, investmentController.viewPlans);
 
 // Start a new investment
-router.post('/invest', authenticate, investmentController.invest);
+router.post('/invest', authenticate, requireVerifiedEmail, investmentController.invest);
 
 // Track user's current investments
 router.get('/my-investments', authenticate, investmentController.trackInvestment);
@@ -19,4 +20,4 @@ router.get('/:id', authenticate, investmentController.getInvestmentDetails);
 // Cancel a specific investment
 router.post('/:id/cancel', authenticate, investmentController.cancelInvestment);
 
-module.exports = router;
+export default router;
