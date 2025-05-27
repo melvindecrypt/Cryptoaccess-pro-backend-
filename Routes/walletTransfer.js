@@ -1,16 +1,19 @@
-const express = require('express');
-const router = express.Router();
-const ( authenticate ) = require('../middleware/authMiddleware');
-const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
-const Wallet = require('../models/Wallet');
-const { requireKYC } = require('../middleware/kycMiddleware'); // Or wherever your KYC middleware is
-const walletController = require('../controllers/walletController');
-const User = require('../models/User');
-const logger = require('../utils/logger');
-const { formatResponse } = require('../utils/helpers'); // Use consistent response format
-const Decimal = require('decimal.js');
+import express from 'express';
+import { authenticate } from '../middleware/authMiddleware.js';
+import requireKYC from '../middlewares/kycMiddleware.js'; // Or wherever your KYC middleware is
+import Wallet from '../models/Wallet.js';
+import User from '../models/User.js';
+import walletController from '../controllers/walletController.js';
+import logger from '../utils/logger.js';
+import { formatResponse } from '../utils/helpers.js'; // Use consistent response format
+import Decimal from 'decimal.js';
 
+const router = express.Router();
+
+// Get deposit address
 router.get('/deposit-address', authenticate, walletController.getDepositAddress);
+
+// Withdraw funds
 router.post('/withdraw', authenticate, requireKYC, walletController.withdrawFunds);
 
 // Supported currencies from your Wallet model
@@ -46,7 +49,7 @@ router.post('/transfer', authenticate, requireKYC, async (req, res) => {
 
     // Find and validate sender wallet
     const senderWallet = await Wallet.findOne({ userId: senderUserId }).session(session);
-    if (!senderWallet || senderWallet.balances[currency] < amount) {
+    if (!senderWallet || new Decimal(senderWallet.balances[currency] || 0).lessThan(amount)) {
       return res.status(400).json(formatResponse(false, 'Insufficient funds or invalid currency'));
     }
 
@@ -58,19 +61,18 @@ router.post('/transfer', authenticate, requireKYC, async (req, res) => {
 
     // Prevent self-transfer
     if (senderWallet._id.equals(recipientWallet._id)) {
-      return res.status(400).json(formatResponse(false, 'Cannot transfer to same wallet'));
+      return res.status(400).json(formatResponse(false, 'Cannot transfer to the same wallet'));
     }
 
     // Create transaction ID for audit tracking
     const transactionId = `TX-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Perform the transfer using Decimal for precision
-    const senderBalance = new Decimal(senderWallet.balances[currency]);
-    const recipientBalance = new Decimal(recipientWallet.balances[currency]);
+    const senderBalance = new Decimal(senderWallet.balances[currency] || 0);
+    const recipientBalance = new Decimal(recipientWallet.balances[currency] || 0);
 
     senderWallet.balances[currency] = senderBalance.minus(amount).toFixed(8);
     recipientWallet.balances[currency] = recipientBalance.plus(amount).toFixed(8);
-
 
     // Record transactions
     const transactionData = {
@@ -79,13 +81,13 @@ router.post('/transfer', authenticate, requireKYC, async (req, res) => {
       currency,
       timestamp: new Date(),
       transactionId,
-      counterparty: senderUserId // For recipient's record
+      counterparty: senderUserId, // For recipient's record
     };
 
     senderWallet.transactions.push({
       ...transactionData,
       amount: -amount,
-      counterparty: recipientWallet.userId
+      counterparty: recipientWallet.userId,
     });
 
     recipientWallet.transactions.push(transactionData);
@@ -93,27 +95,30 @@ router.post('/transfer', authenticate, requireKYC, async (req, res) => {
     // Save changes
     await Promise.all([
       senderWallet.save({ session }),
-      recipientWallet.save({ session })
+      recipientWallet.save({ session }),
     ]);
 
     await session.commitTransaction();
     logger.info(`Transfer successful: ${transactionId}`);
 
-    res.json(formatResponse(true, 'Transfer successful', {
-      transactionId,
-      newBalance: senderWallet.balances[currency],
-      currency
-    }));
-
+    res.json(
+      formatResponse(true, 'Transfer successful', {
+        transactionId,
+        newBalance: senderWallet.balances[currency],
+        currency,
+      })
+    );
   } catch (error) {
     await session.abortTransaction();
     logger.error(`Transfer failed: ${error.message}`);
-    res.status(500).json(formatResponse(false, 'Transfer failed', { 
-      error: process.env.NODE_ENV === 'development' ? error.message : null 
-    }));
+    res.status(500).json(
+      formatResponse(false, 'Transfer failed', {
+        error: process.env.NODE_ENV === 'development' ? error.message : null,
+      })
+    );
   } finally {
     session.endSession();
   }
 });
 
-module.exports = router;
+export default router;
