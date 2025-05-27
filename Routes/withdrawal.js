@@ -1,10 +1,10 @@
-// File: routes/withdrawal.js
-const express = require('express');
+import express from 'express';
+import { authenticate } from '../middleware/authMiddleware.js';
+import withdrawalController from '../controllers/withdrawalController.js';
+
 const router = express.Router();
-const { authenticate } = require('../middleware/authMiddleware');
-const withdrawalController = require('../controllers/withdrawalController');
 
 // Withdraw funds (Requires Pro+ and KYC approval)
 router.post('/', authenticate, withdrawalController.createWithdrawal);
 
-module.exports = router;
+export default router;
