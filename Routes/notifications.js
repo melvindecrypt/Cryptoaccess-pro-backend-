@@ -1,9 +1,10 @@
-// routes/notifications.js
-const express = require('express');
-const router = express.Router();
-const notification = require('../models/notification');
-const { authenticate } = require('../middlewares/authMiddleware');
+import express from 'express';
+import notification from '../models/notification.js';
+import { authenticate } from '../middlewares/authMiddleware.js';
 
+const router = express.Router();
+
+// Get User Notifications
 router.get('/', authenticate, async (req, res) => {
   try {
     const notifications = await notification.find({ 
@@ -12,16 +13,17 @@ router.get('/', authenticate, async (req, res) => {
 
     res.json({
       status: true,
-      data: notifications
+      data: notifications,
     });
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: error.message
+      message: error.message,
     });
   }
 });
 
+// Mark Notification as Read
 router.patch('/:id/mark-read', authenticate, async (req, res) => {
   try {
     await notification.findByIdAndUpdate(
@@ -32,7 +34,9 @@ router.patch('/:id/mark-read', authenticate, async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: error.message
+      message: error.message,
     });
   }
 });
+
+export default router;
