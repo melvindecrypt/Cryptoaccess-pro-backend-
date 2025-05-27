@@ -1,7 +1,7 @@
-const currency = require('../models/currency');
-const { formatResponse } = require('../utils/helpers'); // Adjust the path if necessary
+import Currency from '../models/currency.js';
+import { formatResponse } from '../utils/helpers.js';
 
-exports.getAllCurrencies = async (req, res) => {
+export const getAllCurrencies = async (req, res) => {
   try {
     const currencies = await Currency.find({ isActive: true })
       .select('symbol name logoUrl')
