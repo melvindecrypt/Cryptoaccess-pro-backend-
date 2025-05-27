@@ -1,12 +1,13 @@
-const express = require('express');
+import express from 'express';
+import { authenticate } from '../middlewares/AuthMiddleware.js';
+import requireVerifiedEmail from '../middlewares/requireVerifiedEmail.js';
+import { requireKYC } from '../middlewares/requireKYC.js';
+import walletController from '../controllers/walletController.js';
+
 const router = express.Router();
-const { authenticate }= require('../middlewares/AuthMiddleware);
-const requireVerifiedEmail = require('../middlewares/requireVerifiedEmail');
-const { requireKYC }= require('../middlewares/requireKYC');
-const walletController = require('../controllers/walletController'); // Assuming this file
-const { getDepositAddress } = require('../controllers/walletController');
 
 // Routes
+
 // Get the user's wallet details (View wallet)
 router.get('/', authenticate, walletController.getWallet);
 
@@ -19,19 +20,18 @@ router.post('/withdraw', authenticate, requireKYC, walletController.createWithdr
 // Get withdrawal history
 router.get('/withdrawals', authenticate, walletController.getWithdrawalHistory);
 
+// Get deposit address
 router.get('/deposit-address', authenticate, walletController.getDepositAddress);
-// Add other wallet routes here
 
-// In routes/wallets.js
+// Get user balances
 router.get('/balances', authenticate, walletController.getUserBalances);
 
 // Route for sending funds internally to another user on the platform
 // POST /api/wallet/send-internal
-router.post('/send-internal',authenticate, requireKYC, walletController.sendInternalFunds);
+router.post('/send-internal', authenticate, requireKYC, walletController.sendInternalFunds);
 
-// Route for sending funds externally
+// Route for requesting external withdrawal
 // POST /api/wallet/request-withdrawal
-router.post('/request-withdrawal',authenticate, requireKYC, walletController.requestWithdrawal);
+router.post('/request-withdrawal', authenticate, requireKYC, walletController.requestWithdrawal);
 
-module.exports = router;
-
+export default router;
