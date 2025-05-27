@@ -86,3 +86,100 @@ router.get('/withdrawals/pending', adminController.getPendingWithdrawals);
 router.patch('/withdrawals/:id', adminController.processWithdrawal);
 
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
+import express from 'express';
+import * as adminController from './controllers/adminController.js';
+
+const router = express.Router();
+
+// Admin Login
+router.post('/admin/login', adminController.adminLogin);
+
+// Admin Logout
+router.post('/admin/logout', adminController.logout);
+
+// Approve User
+router.post('/admin/approve-user', adminController.approveUser);
+
+// Bypass Payment
+router.post('/admin/bypass-payment', adminController.bypassPayment);
+
+// Grant Pro+
+router.post('/admin/grant-pro-plus', adminController.grantProPlus);
+
+// Verify KYC
+router.post('/admin/verify-kyc', adminController.verifyKyc);
+
+// Update Balance
+router.post('/admin/update-balance', adminController.updateBalance);
+
+// Suspend/Unsuspend User
+router.post('/admin/suspend-user', adminController.suspendUser);
+
+// Send Funds
+router.post('/admin/send-funds', adminController.sendFunds);
+
+// Get Users
+router.get('/admin/users', adminController.getUsers);
+
+// Verify Email
+router.post('/admin/verify-email', adminController.verifyEmail);
+
+// Delete User
+router.delete('/admin/delete-user/:id', adminController.deleteUser);
+
+// Adjust Balance
+router.post('/admin/adjust-balance', adminController.adjustBalance);
+
+// Process Payouts
+router.post('/admin/process-payouts', adminController.processPayouts);
+
+// Update User
+router.put('/admin/update-user/:id', adminController.updateUser);
+
+// Get User Wallet
+router.get('/admin/user-wallet/:userId', adminController.getUserWallet);
+
+// Get KYC Documents
+router.get('/admin/kyc-docs/:userId', adminController.getKycDocs);
+
+// Get KYC Preview
+router.get('/admin/kyc-preview/:userId', adminController.getKycPreview);
+
+// Get Pending Withdrawals
+router.get('/admin/pending-withdrawals', adminController.getPendingWithdrawals);
+
+// Process Withdrawal
+router.post('/admin/process-withdrawal/:id', adminController.processWithdrawal);
+
+// Get Admin Wallets
+router.get('/admin/wallets', adminController.getAdminWallets);
+
+// Update Admin Wallets
+router.put('/admin/wallets', adminController.updateAdminWallets);
+
+// Get Audit Logs
+router.get('/admin/audit-logs', adminController.getAuditLogs);
+
+// Get Notifications
+router.get('/admin/notifications', adminController.getNotifications);
+
+// Admin Notification Service
+router.post('/admin/send-notification', adminController.adminNotificationService);
+
+// Get Settings
+router.get('/admin/settings', adminController.getSettings);
+
+// Update Settings
+router.put('/admin/settings', adminController.updateSettings);
+
+export default router;
