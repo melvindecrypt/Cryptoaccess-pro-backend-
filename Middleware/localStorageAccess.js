@@ -1,10 +1,10 @@
-// middleware/localStorageAccess.js
-const path = require('path');
-const fs = require('fs');
-const { formatResponse } = require('../utils/helpers');
-const User = require('../models/user'); // You'll need this to get the user-specific directory
+import path from 'path';
+import fs from 'fs';
+import { formatResponse } from '../utils/helpers.js';
+import User from '../models/user.js'; // You'll need this to get the user-specific directory
 
-module.exports = async (req, res, next) => { // Make it async
+// Middleware for Local Storage Access
+export default async (req, res, next) => {
   try {
     const requestedFilename = req.query.path; // e.g., "1678889900-selfie.jpg"
 
@@ -14,25 +14,26 @@ module.exports = async (req, res, next) => { // Make it async
     const targetUserId = req.params.userId;
 
     if (!requestedFilename || !targetUserId) {
-        return res.status(400).json(formatResponse(false, 'Missing file path or user ID.'));
+      return res.status(400).json(formatResponse(false, 'Missing file path or user ID.'));
     }
 
     // Fetch user to verify the filename actually belongs to them
     const user = await User.findById(targetUserId).select('kycDocuments');
     if (!user) {
-        return res.status(404).json(formatResponse(false, 'User not found.'));
+      return res.status(404).json(formatResponse(false, 'User not found.'));
     }
 
     // Verify that the requestedFilename actually exists in the user's stored documents
-    const documentExists = user.kycDocuments.some(doc =>
+    const documentExists = user.kycDocuments.some(
+      (doc) =>
         doc.frontFileUrl === requestedFilename ||
         doc.backFileUrl === requestedFilename ||
         doc.selfieFileUrl === requestedFilename
     );
 
     if (!documentExists) {
-        // This prevents an admin from requesting arbitrary filenames even within a user's directory
-        return res.status(404).json(formatResponse(false, 'Document not found for this user.'));
+      // This prevents an admin from requesting arbitrary filenames even within a user's directory
+      return res.status(404).json(formatResponse(false, 'Document not found for this user.'));
     }
 
     // Correct base directory for where files are actually stored
