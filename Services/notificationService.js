@@ -1,9 +1,8 @@
-// services/notificationService.js
-const Notification = require('../models/notification');
-const { sendEmail } = require('./emailService');
-const logger = require('../utils/logger');
+import Notification from '../models/notification.js';
+import { sendEmail } from './emailService.js';
+import logger from '../utils/logger.js';
 // Optional queue system, if implemented
-const { NotificationQueue } = require('./queues');
+import { NotificationQueue } from './queues.js';
 
 // Real-time socket tracking map (if you're managing connected users manually)
 const connectedUsers = new Map();
@@ -16,7 +15,7 @@ class NotificationService {
         type,
         title,
         message,
-        metadata
+        metadata,
       });
 
       this.emitToUser(userId, notification); // Send real-time if possible
@@ -24,6 +23,7 @@ class NotificationService {
       return notification;
     } catch (error) {
       logger.error(`Notification creation failed: ${error.message}`);
+      throw error; // Ensure the error propagates to the caller
     }
   }
 
@@ -33,14 +33,14 @@ class NotificationService {
       NotificationQueue.add({
         userId,
         event: 'new_notification',
-        payload: notification
+        payload: notification,
       });
     }
 
     // Optional: direct real-time emit if managing sockets yourself
     const userSocket = connectedUsers.get(userId);
     if (userSocket) {
-      userSocket.emit("notification", { message: notification.message });
+      userSocket.emit('notification', { message: notification.message });
     }
   }
 
@@ -50,12 +50,13 @@ class NotificationService {
         to: userEmail,
         subject,
         template,
-        data
+        data,
       });
     } catch (err) {
       logger.error(`Failed to send email to ${userEmail}: ${err.message}`);
+      throw err; // Ensure the error propagates to the caller
     }
   }
 }
 
-module.exports = new NotificationService();
+export default new NotificationService();
