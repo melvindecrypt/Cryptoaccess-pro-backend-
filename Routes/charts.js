@@ -1,8 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const { authenticate } = require('../middleware/authMiddleware');
-const { getChartData } = require('../controllers/chartController');
+import express from 'express';
+import { authenticate } from '../middleware/authMiddleware.js';
+import { getChartData } from '../controllers/chartController.js';
 
+const router = express.Router();
+
+// Chart Data Route
 router.get('/', authenticate, getChartData);
 
-module.exports = router;
+export default router;
