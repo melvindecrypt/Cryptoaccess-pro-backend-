@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const adminWalletSchema = new mongoose.Schema({
   accessWallet: { type: String },
   proPlusWallet: { type: String },
-  withdrawalWallet: { type: String }
+  withdrawalWallet: { type: String },
 });
 
-module.exports = mongoose.model('AdminWallet', adminWalletSchema);
+export default mongoose.model('AdminWallet', adminWalletSchema);
