@@ -102,7 +102,6 @@ const handleAdminAction = async (actionName, req, operation) => {
 
 // ================== User Management Endpoints ==================
 
-async function handleAdminAction(actionName, req, operation)
 // Approve user account
 exports.approveUser = async (req, res) => {
   try {
