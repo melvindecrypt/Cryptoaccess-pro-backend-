@@ -1,12 +1,12 @@
-controllers/withdrawalController.js
-const Withdrawal = require('../models/withdrawal');
-const User = require('../models/user');
-const { formatResponse } = require('../utils/helpers');
-const logger = require('../utils/logger');
-const Decimal = require('decimal.js');
-const mongoose = require('mongoose');
+import Withdrawal from '../models/withdrawal.js';
+import User from '../models/user.js';
+import { formatResponse } from '../utils/helpers.js';
+import logger from '../utils/logger.js';
+import Decimal from 'decimal.js';
+import mongoose from 'mongoose';
 
-exports.createWithdrawal = async (req, res) => {
+// Create Withdrawal
+export const createWithdrawal = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -33,12 +33,17 @@ exports.createWithdrawal = async (req, res) => {
     }
 
     // Create withdrawal request
-    const withdrawal = await Withdrawal.create([{
-      user: user._id,
-      currency,
-      amount: numericAmount.toNumber(),
-      destinationAddress
-    }], { session });
+    const withdrawal = await Withdrawal.create(
+      [
+        {
+          user: user._id,
+          currency,
+          amount: numericAmount.toNumber(),
+          destinationAddress,
+        },
+      ],
+      { session }
+    );
 
     // Lock funds (deduct from available balance)
     user.virtualBalances[currency] = balance.minus(numericAmount).toNumber();
@@ -47,11 +52,12 @@ exports.createWithdrawal = async (req, res) => {
     await session.commitTransaction();
     logger.info(`Withdrawal requested: ${withdrawal[0]._id}`);
 
-    res.json(formatResponse(true, 'Withdrawal request successful', {
-      withdrawalId: withdrawal[0]._id,
-      status: 'success'
-    }));
-
+    res.json(
+      formatResponse(true, 'Withdrawal request successful', {
+        withdrawalId: withdrawal[0]._id,
+        status: 'success',
+      })
+    );
   } catch (error) {
     await session.abortTransaction();
     logger.error(`Error creating withdrawal request: ${error.message}`);
@@ -61,21 +67,26 @@ exports.createWithdrawal = async (req, res) => {
   }
 };
 
-// In admin withdrawal handler
-await notificationService.create(
-  withdrawal.user,
-  'withdrawal',
-  `Withdrawal ${action}`,
-  `Your ${withdrawal.currency} withdrawal has been ${action}`,
-  { 
-    amount: withdrawal.amount,
-    status: action 
+// Admin Notification for Withdrawal
+export const notifyWithdrawalStatus = async (withdrawal, action) => {
+  try {
+    await notificationService.create(
+      withdrawal.user,
+      'withdrawal',
+      `Withdrawal ${action}`,
+      `Your ${withdrawal.currency} withdrawal has been ${action}`,
+      {
+        amount: withdrawal.amount,
+        status: action,
+      }
+    );
+  } catch (error) {
+    logger.error(`Error sending withdrawal notification: ${error.message}`);
   }
-);
+};
 
-// In controllers/walletController.js
-
-exports.getUserBalances = async (req, res) => {
+// Get User Balances
+export const getUserBalances = async (req, res) => {
   try {
     const wallet = await Wallet.findOne({ userId: req.user._id })
       .select('balances')
