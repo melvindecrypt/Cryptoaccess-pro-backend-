@@ -1,6 +1,6 @@
-// middlewares/auditMiddleware.js
-const auditService = require('../services/auditService');
+import auditService from '../services/auditService.js';
 
+// Audit Middleware
 const auditLog = (action, options = {}) => {
   return async (req, res, next) => {
     try {
@@ -8,7 +8,7 @@ const auditLog = (action, options = {}) => {
         userId: req.user?._id,
         ip: req.ip,
         userAgent: req.get('User-Agent'),
-        ...options
+        ...options,
       });
     } catch (error) {
       console.error('Audit middleware error:', error);
@@ -17,4 +17,4 @@ const auditLog = (action, options = {}) => {
   };
 };
 
-module.exports = auditLog;
+export default auditLog;
