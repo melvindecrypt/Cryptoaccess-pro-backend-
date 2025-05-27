@@ -1,10 +1,10 @@
-// In your routes/apiRoutes.js
-const express = require('express');
-const router = express.Router();
-const currencyController = require('../controllers/currencyController');
-const { authenticate } = require('../middleware/authMiddleware');
+import express from 'express';
+import currencyController from '../controllers/currencyController.js';
+import { authenticate } from '../middleware/authMiddleware.js';
 
-// Example with authentication:
+const router = express.Router();
+
+// Get All Currencies Route
 router.get('/currencies', authenticate, currencyController.getAllCurrencies);
 
-module.exports = router;
+export default router;
