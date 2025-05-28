@@ -336,12 +336,6 @@ export const viewPaymentProofFile = async (req, res) => {
     const { filename } = req.params;
     const filePath = path.join(process.cwd(), 'uploads', 'proPlusProofs', filename);
 
-    // Optional: You might want to check if the proof exists in your DB
-    // const paymentProof = await PaymentProof.findOne({ proofUrl: `/uploads/proPlusProofs/${filename}` });
-    // if (!paymentProof) {
-    //   return res.status(404).json({ success: false, message: 'Payment proof entry not found in database.' });
-    // }
-
     if (fs.existsSync(filePath)) {
       // Set appropriate content type based on file extension (optional but good practice)
       const ext = path.extname(filename).toLowerCase();
