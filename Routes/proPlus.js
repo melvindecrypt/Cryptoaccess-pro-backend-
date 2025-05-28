@@ -34,4 +34,7 @@ router.get('/admin/pro-plus/pending', adminAuth, paymentProofController.getPendi
 // Admin route to update Pro+ payment proof status (approval grants Pro+ access)
 router.put('/admin/pro-plus/proofs/:id', adminAuth, paymentProofController.updateProofStatus);
 
+// NEW: Admin route to view a specific Pro+ payment proof file
+router.get('/admin/pro-plus/proofs/view/:filename', adminAuth, paymentProofController.viewPaymentProofFile);
+
 export default router;
