@@ -1,4 +1,6 @@
 import User from '../models/User.js';
+import path from 'path';
+import fs from 'fs';
 import Transaction from '../models/Transaction.js';
 import PaymentProof from '../models/PaymentProof.js'; // Import the PaymentProof model
 import { ACCESS_FEE_USD, PRO_PLUS_FEE_USD, PRO_PLUS_SUBSCRIPTION_DURATION_DAYS } from '../config/constants.js';
@@ -325,5 +327,37 @@ export const updateProofStatus = async (req, res) => {
       message: 'Failed to update payment proof status.',
       error: error.message,
     });
+  }
+};
+
+// View Payment Proof File (Admin Only)
+export const viewPaymentProofFile = async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(process.cwd(), 'uploads', 'proPlusProofs', filename);
+
+    // Optional: You might want to check if the proof exists in your DB
+    // const paymentProof = await PaymentProof.findOne({ proofUrl: `/uploads/proPlusProofs/${filename}` });
+    // if (!paymentProof) {
+    //   return res.status(404).json({ success: false, message: 'Payment proof entry not found in database.' });
+    // }
+
+    if (fs.existsSync(filePath)) {
+      // Set appropriate content type based on file extension (optional but good practice)
+      const ext = path.extname(filename).toLowerCase();
+      let contentType = 'application/octet-stream'; // Default to generic
+      if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+      else if (ext === '.pdf') contentType = 'application/pdf';
+      // Add more as needed
+
+      res.setHeader('Content-Type', contentType);
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ success: false, message: 'File not found on server.' });
+    }
+  } catch (error) {
+    console.error('Error viewing payment proof file:', error);
+    res.status(500).json({ success: false, message: 'Failed to retrieve file.', error: error.message });
   }
 };
