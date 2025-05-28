@@ -184,9 +184,15 @@ export default app;
 
 
 
+const currencyRoutes = require('./routes/currency.js');
+const kycRoutes = require('./routes/kyc.js');
+const notificationRoutes = require('./routes/notifications.js');
+const propPlusRoutes = require('./routes/propPlus.js');
+const referralRoutes = require('./routes/referrals.js');
+const userRoutes = require('./routes/user.js');
 
 import fs from 'fs';
-import path from 'path';
+import path from 'path'; // Make sure path is imported if not already
 
 // ... other imports ...
 
@@ -204,4 +210,15 @@ uploadDirs.forEach(dir => {
 
 // Initialize Express app
 const app = express();
-// ... rest of your server.js
+
+app.use('/api', currencies);
+app.use('/api/kyc', kycRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api', propPlusRoutes);
+app.use('/api/referrals', referralRoutes);
+app.use('/api/user', userRoutes); 
+
+
+
+
+
