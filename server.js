@@ -181,3 +181,27 @@ process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 
 export default app;
+
+
+
+
+import fs from 'fs';
+import path from 'path';
+
+// ... other imports ...
+
+// Load environment variables
+dotenv.config();
+
+// Ensure upload directories exist
+const uploadDirs = ['./uploads/kyc', './uploads/proPlusProofs'];
+uploadDirs.forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    logger.info(`Created upload directory: ${dir}`);
+  }
+});
+
+// Initialize Express app
+const app = express();
+// ... rest of your server.js
