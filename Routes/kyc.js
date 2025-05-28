@@ -23,6 +23,6 @@ router.post(
 router.get('/status', authenticate, kycController.getKYCStatus);
 
 // Update KYC Status (Admin Only)
-router.patch('/kyc/status', isAdmin, kycController.updateKYCStatus);
+router.patch('/status', isAdmin, kycController.updateKYCStatus);
 
 export default router;
