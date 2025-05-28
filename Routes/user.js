@@ -18,8 +18,8 @@ router.patch('/profile/edit', authenticate, userController.updateSettings);
 
 // Additional routes
 router.get('/dashboard', authenticate, userController.getDashboardData);
-router.get('/users/profile', authenticate, userController.getProfile); // Existing route
-router.patch('/users/security', authenticate, userController.updateSecurity); // Existing route
-router.post('/users/kyc/upload', authenticate, userController.uploadKycDoc); // Existing route
+router.get('/profile', authenticate, userController.getProfile);
+router.patch('/security', authenticate, userController.updateSecurity);
+router.post('/kyc/upload', authenticate, userController.uploadKycDoc);
 
 export default router;
