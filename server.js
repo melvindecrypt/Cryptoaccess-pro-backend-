@@ -11,9 +11,20 @@ import auditService from './services/auditService.js'; // Assuming you have an a
 import multer from 'multer';
 import logger from './utils/logger.js';
 import { formatResponse } from './utils/helpers.js';
+import fs from 'fs';
+import path from 'path';
 
 // Load environment variables
 dotenv.config();
+
+// Ensure upload directories exist
+const uploadDirs = ['./uploads/kyc', './uploads/proPlusProofs'];
+uploadDirs.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    logger.info(`Created upload directory: ${dir}`);
+  }
+});
 
 // Initialize Express app
 const app = express();
@@ -107,30 +118,42 @@ app.use('/kyc', express.static('uploads/kyc'));
 import('./config/db.js')();
 
 // ================== Route Imports ==================
-const adminRoutes = require('./routes/admin.js');
-const authRoutes = require('./routes/auth.js');
-const paymentRoutes = require('./routes/payments.js');
-const walletRoutes = require('./routes/wallets.js'); // Corrected typo: wallets
-const transferRoutes = require('./routes/walletTransfer.js');
-const investmentRoutes = require('./routes/investments.js');
-const subscriptionRoutes = require('./routes/subscription.js');
-const adminSettingsRoutes = require('./routes/adminSettings.js'); // Assuming this path is correct
-const chartRoutes = require('./routes/charts.js');
-const exchangeRoutes = require('./routes/exchange.js');
-const withdrawalRoutes = require('./routes/withdrawal.js'); // Import the new withdrawal routes
+const adminRoutes = await import('./routes/admin.js');
+const authRoutes = await import('./routes/auth.js');
+const paymentRoutes = await import('./routes/payments.js');
+const walletRoutes = await import('./routes/wallets.js'); // Corrected typo: wallets
+const transferRoutes = await import('./routes/walletTransfer.js');
+const investmentRoutes = await import('./routes/investments.js');
+const subscriptionRoutes = await import('./routes/subscription.js');
+const adminSettingsRoutes = await import('./routes/adminSettings.js'); // Assuming this path is correct
+const chartRoutes = await import('./routes/charts.js');
+const exchangeRoutes = await import('./routes/exchange.js');
+const withdrawalRoutes = await import('./routes/withdrawal.js'); // Import the new withdrawal routes
+const currencyRoutes = await import('./routes/currency.js');
+const kycRoutes = await import('./routes/kyc.js');
+const notificationRoutes = await import('./routes/notifications.js');
+const propPlusRoutes = await import('./routes/propPlus.js');
+const referralRoutes = await import('./routes/referrals.js');
+const userRoutes = await import('./routes/user.js');
 
 // ================== Route Definitions ==================
-app.use('/api/admin', adminRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/wallets', walletRoutes);
-app.use('/api/transfers', transferRoutes);
-app.use('/api/investments', investmentRoutes);
-app.use('/api/subscriptions', subscriptionRoutes);
-app.use('/api/admin/settings', adminSettingsRoutes); // Mount admin settings routes
-app.use('/api/charts', chartRoutes);
-app.use('/api/exchange', exchangeRoutes);
-app.use('/api/wallets/withdraw', withdrawalRoutes); // Mount the withdrawal routes under the correct path
+app.use('/api/admin', adminRoutes.default);
+app.use('/api/auth', authRoutes.default);
+app.use('/api/payments', paymentRoutes.default);
+app.use('/api/wallets', walletRoutes.default);
+app.use('/api/transfers', transferRoutes.default);
+app.use('/api/investments', investmentRoutes.default);
+app.use('/api/subscriptions', subscriptionRoutes.default);
+app.use('/api/admin/settings', adminSettingsRoutes.default); // Mount admin settings routes
+app.use('/api/charts', chartRoutes.default);
+app.use('/api/exchange', exchangeRoutes.default);
+app.use('/api/wallets/withdraw', withdrawalRoutes.default); // Mount the withdrawal routes under the correct path
+app.use('/api', currencyRoutes.default);
+app.use('/api/kyc', kycRoutes.default);
+app.use('/api/notifications', notificationRoutes.default);
+app.use('/api', propPlusRoutes.default);
+app.use('/api/referrals', referralRoutes.default);
+app.use('/api/user', userRoutes.default);
 
 // ================== HTTPS Redirection ==================
 if (process.env.NODE_ENV === 'production') {
@@ -181,44 +204,3 @@ process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 
 export default app;
-
-
-
-const currencyRoutes = require('./routes/currency.js');
-const kycRoutes = require('./routes/kyc.js');
-const notificationRoutes = require('./routes/notifications.js');
-const propPlusRoutes = require('./routes/propPlus.js');
-const referralRoutes = require('./routes/referrals.js');
-const userRoutes = require('./routes/user.js');
-
-import fs from 'fs';
-import path from 'path'; // Make sure path is imported if not already
-
-// ... other imports ...
-
-// Load environment variables
-dotenv.config();
-
-// Ensure upload directories exist
-const uploadDirs = ['./uploads/kyc', './uploads/proPlusProofs'];
-uploadDirs.forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-    logger.info(`Created upload directory: ${dir}`);
-  }
-});
-
-// Initialize Express app
-const app = express();
-
-app.use('/api', currencies);
-app.use('/api/kyc', kycRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api', propPlusRoutes);
-app.use('/api/referrals', referralRoutes);
-app.use('/api/user', userRoutes); 
-
-
-
-
-
