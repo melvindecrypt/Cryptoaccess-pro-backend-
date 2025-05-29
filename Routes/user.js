@@ -20,6 +20,5 @@ router.patch('/profile/edit', authenticate, userController.updateSettings);
 router.get('/dashboard', authenticate, userController.getDashboardData);
 router.get('/profile', authenticate, userController.getProfile);
 router.patch('/security', authenticate, userController.updateSecurity);
-router.post('/kyc/upload', authenticate, userController.uploadKycDoc);
 
 export default router;
