@@ -19,9 +19,6 @@ router.post(
   kycController.submitKYC
 );
 
-// Check KYC Status
-router.get('/status', authenticate, kycController.getKYCStatus);
-
 // Update KYC Status (Admin Only)
 router.patch('/status', isAdmin, kycController.updateKYCStatus);
 
