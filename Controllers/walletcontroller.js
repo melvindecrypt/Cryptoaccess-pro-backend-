@@ -116,92 +116,118 @@ export const getDepositAddress = async (req, res) => {
   }
 };
 
-// Send Internal Funds
+// Enhanced Function: sendInternalFunds
 export const sendInternalFunds = async (req, res) => {
-  const session = await Wallet.startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const { currency, amount, recipientIdentifier } = req.body;
     const senderUserId = req.user._id;
     const numericAmount = new Decimal(amount);
-    const validatedCurrency = await validateCurrency(currency);
 
+    // 1. Validate Input
     if (!recipientIdentifier) {
-      throw new Error('Recipient identifier (username or email) is required');
+      return res.status(400).json(formatResponse(false, 'Recipient identifier (username or email) is required'));
     }
     if (numericAmount.lessThanOrEqualTo(0)) {
-      throw new Error('Amount must be positive');
+      return res.status(400).json(formatResponse(false, 'Amount must be positive'));
     }
 
+    const validatedCurrencySymbol = await validateCurrency(currency);
+
+    // 2. Find Sender User and Wallet
     const senderUser = await User.findById(senderUserId).session(session);
     if (!senderUser) {
-      throw new Error('Sender user not found');
+      return res.status(404).json(formatResponse(false, 'Sender user not found.'));
     }
+    // Sender KYC and Pro+ status checks are handled by `requireKYC` middleware at the route level.
 
     const senderWallet = await Wallet.findOne({ userId: senderUserId }).session(session);
     if (!senderWallet) {
-      throw new Error('Sender wallet not found');
+      return res.status(404).json(formatResponse(false, 'Sender wallet not found.'));
     }
 
-    const currentSenderBalance = new Decimal(senderWallet.balances.get(validatedCurrency) || 0);
+    // 3. Check Sender Balance
+    const currentSenderBalance = new Decimal(senderWallet.balances.get(validatedCurrencySymbol) || 0);
     if (currentSenderBalance.lessThan(numericAmount)) {
-      throw new Error(`Insufficient ${validatedCurrency} balance`);
+      return res.status(402).json(formatResponse(false, `Insufficient ${validatedCurrencySymbol} balance.`));
     }
 
-    // Identify the recipient user
-    const recipientUser = await User.findOne({ $or: [{ username: recipientIdentifier }, { email: recipientIdentifier }] }).session(session);
+    // 4. Identify Recipient User and Wallet
+    const recipientUser = await User.findOne({
+      $or: [{ username: recipientIdentifier }, { email: recipientIdentifier }],
+    }).session(session);
+
     if (!recipientUser) {
-      throw new Error('Recipient user not found with provided identifier');
+      return res.status(404).json(formatResponse(false, 'Recipient user not found with provided identifier.'));
     }
     if (recipientUser._id.equals(senderUserId)) {
-      throw new Error('Cannot send funds to yourself');
+      return res.status(400).json(formatResponse(false, 'Cannot send funds to yourself.'));
     }
+
+    // --- UPDATED: Recipient KYC Check Message ---
+    if (recipientUser.kycStatus !== 'verified' && recipientUser.kycStatus !== 'approved') {
+      return res.status(403).json(formatResponse(false, 'User cannot receive funds, due to KYC Compliances.'));
+    }
+    // --- END UPDATED ---
 
     const recipientWallet = await Wallet.findOne({ userId: recipientUser._id }).session(session);
     if (!recipientWallet) {
-      throw new Error('Recipient wallet not found');
+      return res.status(404).json(formatResponse(false, 'Recipient wallet not found.'));
     }
 
-    // Update sender's balance
-    senderWallet.balances.set(validatedCurrency, currentSenderBalance.minus(numericAmount).toNumber());
-    await senderWallet.save({ session });
+    // 5. Perform Balance Updates (Atomic)
+    senderWallet.balances.set(validatedCurrencySymbol, currentSenderBalance.minus(numericAmount).toNumber());
+    recipientWallet.balances.set(
+      validatedCurrencySymbol,
+      new Decimal(recipientWallet.balances.get(validatedCurrencySymbol) || 0).plus(numericAmount).toNumber()
+    );
 
-    // Update recipient's balance
-    const currentRecipientBalance = new Decimal(recipientWallet.balances.get(validatedCurrency) || 0);
-    recipientWallet.balances.set(validatedCurrency, currentRecipientBalance.plus(numericAmount).toNumber());
-    await recipientWallet.save({ session });
+    // Save updated wallets within the transaction
+    await Promise.all([
+      senderWallet.save({ session }),
+      recipientWallet.save({ session }),
+    ]);
 
-    // Record transactions for both sender and receiver
+    // 6. Record Transactions in a separate Transaction model
+    const transactionId = `INT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
     await Transaction.create(
       [
         {
           userId: senderUserId,
           walletId: senderWallet._id,
           type: 'send',
-          currency: validatedCurrency,
+          currency: validatedCurrencySymbol,
           amount: numericAmount.toNumber(),
-          recipientUserId: recipientUser._id,
-          recipientIdentifier: recipientIdentifier,
+          transactionId: transactionId,
+          counterpartyUserId: recipientUser._id,
+          counterpartyIdentifier: recipientIdentifier,
           status: 'COMPLETED',
+          notes: `Sent to ${recipientIdentifier}`,
         },
         {
           userId: recipientUser._id,
           walletId: recipientWallet._id,
           type: 'receive',
-          currency: validatedCurrency,
+          currency: validatedCurrencySymbol,
           amount: numericAmount.toNumber(),
-          senderUserId,
-          senderIdentifier: senderUser.username || senderUser.email,
+          transactionId: transactionId,
+          counterpartyUserId: senderUserId,
+          counterpartyIdentifier: senderUser.username || senderUser.email,
           status: 'COMPLETED',
+          notes: `Received from ${senderUser.username || senderUser.email}`,
         },
       ],
       { session }
     );
 
+    // 7. Commit Transaction
     await session.commitTransaction();
+    logger.info(`Internal fund transfer successful: ${transactionId} from ${senderUser.email} to ${recipientUser.email}`);
 
-    // Optional: Send email notifications
+    // 8. Send Email Notifications
     try {
       await sendEmail({
         to: senderUser.email,
@@ -210,8 +236,9 @@ export const sendInternalFunds = async (req, res) => {
         data: {
           name: senderUser.name,
           amount: numericAmount.toFixed(2),
-          currency: validatedCurrency,
+          currency: validatedCurrencySymbol,
           recipient: recipientIdentifier,
+          transactionId: transactionId,
         },
       });
 
@@ -222,18 +249,27 @@ export const sendInternalFunds = async (req, res) => {
         data: {
           name: recipientUser.name,
           amount: numericAmount.toFixed(2),
-          currency: validatedCurrency,
+          currency: validatedCurrencySymbol,
           sender: senderUser.username || senderUser.email,
+          transactionId: transactionId,
         },
       });
     } catch (emailError) {
-      logger.error(`Error sending fund transfer emails: ${emailError.message}`);
+      logger.error(`Error sending internal fund transfer emails: ${emailError.message}`);
     }
 
-    res.status(200).json(formatResponse(true, 'Funds sent successfully to recipient.'));
+    // 9. Send Success Response
+    res.status(200).json(
+      formatResponse(true, 'Funds sent successfully to recipient.', {
+        transactionId: transactionId,
+        senderNewBalance: senderWallet.balances.get(validatedCurrencySymbol).toFixed(8),
+        currency: validatedCurrencySymbol,
+        recipient: recipientIdentifier,
+      })
+    );
   } catch (error) {
     await session.abortTransaction();
-    logger.error(`Internal fund transfer error for user ${req.user._id}: ${error.message}`, error);
+    logger.error(`Internal fund transfer failed for user ${req.user._id}: ${error.message}`, error);
 
     if (res.headersSent) {
       return;
@@ -244,4 +280,3 @@ export const sendInternalFunds = async (req, res) => {
     session.endSession();
   }
 };
-
