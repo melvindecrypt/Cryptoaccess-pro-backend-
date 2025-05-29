@@ -636,8 +636,35 @@ export const updateAdminWallets = async (req, res) => {
 };
 
 export const getAuditLogs = async (req, res) => {
-  const logs = await AuditLog.find({}).sort({ timestamp: -1 });
-  res.json({ success: true, logs });
+  try {
+    const { page = 1, limit = 50, userId, action } = req.query;
+
+    if (userId && !userId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ status: false, message: 'Invalid userId format' });
+    }
+
+    const filter = {};
+    if (userId) filter.userId = userId;
+    if (action) filter.action = action;
+
+    const logs = await AuditLog.find(filter)
+      .populate('userId', 'email')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit, 10));
+
+    res.json({
+      status: true,
+      data: logs,
+    });
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    res.status(500).json({
+      status: false,
+      message: 'Failed to retrieve audit logs.',
+      error: error.message
+    });
+  }
 };
 
 export const getNotifications = async (req, res) => {
