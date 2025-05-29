@@ -147,7 +147,7 @@ app.use('/api/subscriptions', subscriptionRoutes.default);
 app.use('/api/admin/settings', adminSettingsRoutes.default); // Mount admin settings routes
 app.use('/api/charts', chartRoutes.default);
 app.use('/api/exchange', exchangeRoutes.default);
-app.use('/api/withdrawal', withdrawalRoutes.default);
+app.use('/api/withdraw', withdrawalRoutes.default);
 app.use('/api', currencyRoutes.default);
 app.use('/api/kyc', kycRoutes.default);
 app.use('/api/notifications', notificationRoutes.default);
