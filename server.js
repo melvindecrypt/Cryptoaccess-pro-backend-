@@ -120,6 +120,7 @@ import('./config/db.js')();
 // ================== Route Imports ==================
 const adminRoutes = await import('./routes/admin.js');
 const authRoutes = await import('./routes/auth.js');
+const auditRoutes = await import('./routes/audit.js');
 const paymentRoutes = await import('./routes/payments.js');
 const walletRoutes = await import('./routes/wallets.js'); // Corrected typo: wallets
 const transferRoutes = await import('./routes/walletTransfer.js');
@@ -139,6 +140,7 @@ const userRoutes = await import('./routes/user.js');
 // ================== Route Definitions ==================
 app.use('/api/admin', adminRoutes.default);
 app.use('/api/auth', authRoutes.default);
+app.use('/api/audit', auditRoutes.default);
 app.use('/api/payments', paymentRoutes.default);
 app.use('/api/wallets', walletRoutes.default);
 app.use('/api/transfers', transferRoutes.default);
