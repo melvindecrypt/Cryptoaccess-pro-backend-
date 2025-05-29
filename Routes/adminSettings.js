@@ -8,9 +8,6 @@ const router = express.Router();
 router.get('/wallets', adminAuth, adminController.getAdminWallets);
 router.put('/wallets', adminAuth, adminController.updateAdminWallets);
 
-// Audit Logs
-router.get('/logs', adminAuth, adminController.getAuditLogs);
-
 // Notifications
 router.get('/notifications', adminAuth, adminController.getNotifications);
 router.post('/notifications', adminAuth, adminController.notificationService);
