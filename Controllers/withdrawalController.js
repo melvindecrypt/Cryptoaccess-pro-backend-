@@ -107,3 +107,149 @@ export const getUserBalances = async (req, res) => {
     res.status(500).json(formatResponse(false, 'Server error while fetching user balances'));
   }
 };
+
+// Request Withdrawal
+export const requestWithdrawal = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
+
+  try {
+    const { currency, amount, recipientAddress, withdrawalMethod } = req.body;
+    const userId = req.user._id;
+    const numericAmount = new Decimal(amount);
+    const validatedCurrency = await validateCurrency(currency);
+
+    if (!recipientAddress) {
+      throw new Error('Recipient address is required');
+    }
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      throw new Error('Amount must be positive');
+    }
+
+    if (!withdrawalMethod || !['bank', 'crypto', 'paypal'].includes(withdrawalMethod.toLowerCase())) {
+      throw new Error('Valid withdrawal method is required');
+    }
+
+    const wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+
+    const currentBalance = new Decimal(wallet.balances.get(validatedCurrency) || 0);
+    if (currentBalance.lessThan(numericAmount)) {
+      throw new Error(`Insufficient ${validatedCurrency} balance`);
+    }
+
+    // Debit funds from sender's wallet immediately
+    wallet.balances.set(validatedCurrency, currentBalance.minus(numericAmount).toNumber());
+
+    // Record the withdrawal request as PENDING
+    wallet.transactions.push({
+      type: 'withdrawal',
+      currency: validatedCurrency,
+      amount: numericAmount.toNumber(),
+      recipientAddress,
+      withdrawalMethod,
+      status: 'PENDING',
+      timestamp: new Date(),
+    });
+
+    await wallet.save({ session });
+    await session.commitTransaction();
+
+    // Optional: Send email confirmation for withdrawal request
+    const user = await User.findById(userId);
+    if (user) {
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: 'Withdrawal Request Received',
+          template: 'withdrawalRequested',
+          data: {
+            name: user.name,
+            amount: numericAmount.toFixed(2),
+            currency: validatedCurrency,
+            recipientAddress: recipientAddress,
+            withdrawalMethod: withdrawalMethod,
+          },
+        });
+      } catch (emailError) {
+        logger.error(`Error sending withdrawal request email: ${emailError.message}`);
+      }
+    }
+
+    res.status(202).json(
+      formatResponse(true, 'Withdrawal request initiated successfully. It will be processed shortly.', {
+        withdrawalId: wallet.transactions[wallet.transactions.length - 1]._id,
+        status: 'PENDING',
+      })
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Withdrawal request error for user ${req.user._id}: ${error.message}`, error);
+
+    if (res.headersSent) {
+      return;
+    }
+
+    res.status(400).json(formatResponse(false, error.message || 'An unexpected error occurred during withdrawal request.'));
+  } finally {
+    session.endSession();
+  }
+};
+
+// Withdraw Funds
+export const withdrawFunds = async (req, res) => {
+  const session = await Wallet.startSession();
+  session.startTransaction();
+
+  try {
+    const { currency, amount, destinationAddress } = req.body;
+    const user = await User.findById(req.user._id);
+    const numericAmount = new Decimal(amount);
+
+    // Validate request
+    await validateCurrency(currency);
+    if (!destinationAddress) {
+      throw new Error('Destination address required');
+    }
+    if (!user.isProPlus || user.kycStatus !== 'VERIFIED') {
+      throw new Error('Pro+ subscription and KYC verification required');
+    }
+
+    const wallet = await Wallet.findOne({ userId: user._id }).session(session);
+    const currentBalance = new Decimal(wallet.balances.get(currency) || 0);
+
+    if (currentBalance.lessThan(numericAmount)) {
+      throw new Error(`Insufficient ${currency} balance`);
+    }
+
+    // Update balance and record transaction
+    wallet.balances.set(currency, currentBalance.minus(numericAmount).toNumber());
+    wallet.transactions.push({
+      type: 'withdrawal',
+      currency,
+      amount: numericAmount.toNumber(),
+      destinationAddress,
+      status: 'PENDING',
+      timestamp: new Date(),
+      networkFee: new Decimal(0.0005).toNumber(), // Example fee
+    });
+
+    await wallet.save({ session });
+    await session.commitTransaction();
+
+    res.json(
+      formatResponse(true, 'Withdrawal request received', {
+        processingTime: '1-3 business days',
+        transactionFee: 0.0005,
+      })
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Withdrawal failed: ${error.message}`);
+    res.status(400).json(formatResponse(false, error.message));
+  } finally {
+    session.endSession();
+  }
+};
