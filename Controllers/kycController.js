@@ -18,40 +18,58 @@ export const submitKYC = async (req, res) => {
       metadata: { fileCount: Object.keys(req.files).length, docType },
     });
 
+    // --- Start of merged validation from uploadKycDoc ---
+    // Validate docType from req.body
+    if (!docType) {
+      return res.status(400).json(formatResponse(false, 'docType is required.'));
+    }
+
+    const allowedDocTypes = ['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID'];
+    const formattedDocType = docType.toUpperCase(); // Ensure consistency
+    if (!allowedDocTypes.includes(formattedDocType)) {
+      return res.status(400).json(
+        formatResponse(false, 'Invalid document type. Allowed types: PASSPORT, DRIVERS_LICENSE, NATIONAL_ID')
+      );
+    }
+    // --- End of merged validation ---
+
     const user = await User.findById(userId);
     if (!user) {
-      throw new Error('User not found');
+      // Use formatResponse consistently for all API responses
+      return res.status(404).json(formatResponse(false, 'User not found'));
     }
 
-    // Check if selfie is uploaded
+    // Check if selfie is uploaded (already present, important for KYC)
     if (!selfie || selfie.length === 0) {
-      return res.status(400).json(formatResponse(false, 'Selfie image is required.'));
+      return res.status(400).json(formatResponse(false, 'Selfie image is required for KYC submission.'));
     }
 
+    // Prepare the new KYC document entry
     const newKycDocument = {
-      docType: docType.toUpperCase(), // Ensure consistency with the enum
-      frontFileUrl: idFront ? idFront[0].filename : null,
-      backFileUrl: idBack ? idBack[0].filename : null,
-      selfieFileUrl: selfie[0].filename, // Store selfie filename
-      status: 'pending',
+      docType: formattedDocType, // Use the validated and formatted docType
+      frontFileUrl: idFront && idFront.length > 0 ? idFront[0].filename : null,
+      backFileUrl: idBack && idBack.length > 0 ? idBack[0].filename : null,
+      selfieFileUrl: selfie[0].filename,
+      status: 'pending', // Initial status for new submission
       uploadedAt: new Date(),
     };
 
     // Add the new document to the kycDocuments array
     user.kycDocuments.push(newKycDocument);
 
-    // Update overall KYC status based on all documents
+    // Update overall KYC status based on all documents (existing logic)
     const allDocs = user.kycDocuments;
     const allApproved = allDocs.every(
       (doc) =>
         (doc.status === 'verified') ||
-        (doc.frontStatus === 'verified' && doc.backStatus === 'verified') // All required parts verified
+        (doc.frontStatus === 'verified' && doc.backStatus === 'verified' && doc.selfieStatus === 'verified') // Ensure all parts verified
     );
     const hasRejection = allDocs.some(
       (doc) =>
         (doc.status === 'rejected') ||
         doc.frontStatus === 'rejected' ||
-        doc.backStatus === 'rejected' // Any part rejected
+        doc.backStatus === 'rejected' ||
+        doc.selfieStatus === 'rejected' // Any part rejected
     );
 
     if (allApproved) {
@@ -69,7 +87,7 @@ export const submitKYC = async (req, res) => {
     await AuditService.logAction({
       userId,
       action: 'kyc_submission_complete',
-      details: `KYC submitted with docType: ${docType}`,
+      details: `KYC submitted with docType: ${formattedDocType}`,
     });
 
     // Send confirmation email
@@ -78,13 +96,13 @@ export const submitKYC = async (req, res) => {
         to: userEmail,
         subject: 'KYC Submission Received',
         template: 'kycSubmitted',
-        data: { name: user.name, docType },
+        data: { name: user.name, docType: formattedDocType },
       });
     } catch (emailError) {
       logger.error(`Failed to send KYC submission email to ${userEmail}: ${emailError.message}`);
     }
 
-    res.json(formatResponse(true, 'KYC documents submitted successfully.', { kycStatus: user.kycStatus }));
+    res.json(formatResponse(true, 'KYC documents submitted successfully.', { kycStatus: user.kycStatus, documents: user.kycDocuments }));
   } catch (error) {
     logger.error(`Error during KYC submission for user ${userEmail}: ${error.message}`, error);
     res.status(500).json(formatResponse(false, 'Server error during KYC submission.', { error: error.message }));
