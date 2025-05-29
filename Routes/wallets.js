@@ -20,8 +20,4 @@ router.get('/deposit-address', authenticate, walletController.getDepositAddress)
 // Get user balances
 router.get('/balances', authenticate, walletController.getUserBalances);
 
-// Route for sending funds internally to another user on the platform
-// POST /api/wallet/send-internal
-router.post('/send-internal', authenticate, requireKYC, walletController.sendInternalFunds);
-
 export default router;
