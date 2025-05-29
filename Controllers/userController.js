@@ -61,54 +61,6 @@ export const updateSecurity = async (req, res) => {
   }
 };
 
-// Upload KYC Document
-export const uploadKycDoc = async (req, res) => {
-  try {
-    const { docType, fileURL } = req.body;
-
-    // Validate input
-    if (!docType || !fileURL) {
-      return res.status(400).json(formatResponse(false, 'Both docType and fileURL are required'));
-    }
-
-    // Validate document type
-    const allowedDocTypes = ['PASSPORT', 'DRIVERS_LICENSE', 'NATIONAL_ID'];
-    if (!allowedDocTypes.includes(docType)) {
-      return res.status(400).json(
-        formatResponse(false, 'Invalid document type. Allowed types: PASSPORT, DRIVERS_LICENSE, NATIONAL_ID')
-      );
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        $push: {
-          kycDocs: {
-            docType,
-            fileURL,
-            status: 'PENDING_REVIEW',
-            uploadedAt: new Date(),
-          },
-        },
-      },
-      { new: true, runValidators: true }
-    ).select('kycDocs');
-
-    if (!updatedUser) {
-      return res.status(404).json(formatResponse(false, 'User not found'));
-    }
-
-    res.json(
-      formatResponse(true, 'Document uploaded for verification', {
-        kycStatus: updatedUser.kycStatus,
-        documents: updatedUser.kycDocs,
-      })
-    );
-  } catch (error) {
-    res.status(500).json(formatResponse(false, 'Server error', { error: error.message }));
-  }
-};
-
 // Get Dashboard Data
 export const getDashboardData = async (req, res) => {
   try {
