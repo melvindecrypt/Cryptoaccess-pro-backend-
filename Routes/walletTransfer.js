@@ -13,9 +13,6 @@ const router = express.Router();
 // Get deposit address
 router.get('/deposit-address', authenticate, walletController.getDepositAddress);
 
-// Withdraw funds
-router.post('/withdraw', authenticate, requireKYC, walletController.withdrawFunds);
-
 // Supported currencies from your Wallet model
 const SUPPORTED_CURRENCIES = ['BTC', 'ETH', 'USDT', 'BNB', 'SOL'];
 
