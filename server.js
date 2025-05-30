@@ -133,7 +133,7 @@ const withdrawalRoutes = await import('./routes/withdrawal.js'); // Import the n
 const currencyRoutes = await import('./routes/currency.js');
 const kycRoutes = await import('./routes/kyc.js');
 const notificationRoutes = await import('./routes/notifications.js');
-const propPlusRoutes = await import('./routes/propPlus.js');
+const proPlusRoutes = await import('./routes/proPlus.js');
 const referralRoutes = await import('./routes/referrals.js');
 const userRoutes = await import('./routes/user.js');
 
