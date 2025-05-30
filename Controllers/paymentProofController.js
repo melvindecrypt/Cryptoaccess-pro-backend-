@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import path from 'path';
 import fs from 'fs';
 import Transaction from '../models/Transaction.js';
+import { formatResponse } from '../utils/helpers.js';
 import PaymentProof from '../models/PaymentProof.js'; // Import the PaymentProof model
 import { ACCESS_FEE_USD, PRO_PLUS_FEE_USD, PRO_PLUS_SUBSCRIPTION_DURATION_DAYS } from '../config/constants.js';
 import {
@@ -355,3 +356,38 @@ export const viewPaymentProofFile = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to retrieve file.', error: error.message });
   }
 };
+
+const SUPPORTED_METHODS = ['MoonPay', 'Transak'];
+
+export const handlePaymentMethod = async (req, res) => {
+  try {
+    const { paymentMethod } = req.body;
+
+    // Validate input
+    if (!paymentMethod) {
+      return res.status(400).json(
+        formatResponse(false, 'Payment method is required')
+      );
+    }
+
+    // Simulate unavailable payment methods
+    if (SUPPORTED_METHODS.includes(paymentMethod)) {
+      return res.status(503).json(
+        formatResponse(false, 'Currently unavailable. Contact support', {
+          supportEmail: process.env.SUPPORT_EMAIL,
+        })
+      );
+    }
+
+    // Handle unknown payment methods
+    return res.status(400).json(
+      formatResponse(false, 'Invalid payment method')
+    );
+  } catch (error) {
+    console.error('Payment method error:', error);
+    return res.status(500).json(
+      formatResponse(false, 'Internal server error')
+    );
+  }
+};
+
