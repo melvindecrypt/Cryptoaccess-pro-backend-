@@ -4,7 +4,6 @@ import adminAuth from '../middleware/adminAuth.js';
 import paymentProofController from '../controllers/paymentProofController.js';
 import multer from 'multer';
 import path from 'path';
-import { formatResponse } from '../utils/helpers.js';
 
 const router = express.Router();
 
@@ -18,54 +17,15 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Route to initiate the access fee process and get wallet addresses
+// User routes
 router.get('/access-fee', authenticate, paymentProofController.initiateAccessFee);
+router.post('/access-fee/upload-proof', authenticate, upload.single('proof'), paymentProofController.uploadPaymentProof);
 
-// Route for users to upload payment proof
-router.post(
-  '/access-fee/upload-proof',
-  authenticate,
-  upload.single('proof'),
-  paymentProofController.uploadPaymentProof
-);
-
-// Admin routes to view and update payment proofs
+// Admin routes
 router.get('/admin/payment-proofs', adminAuth, paymentProofController.getAllPaymentProofs);
 router.put('/admin/payment-proofs/:id', adminAuth, paymentProofController.updateProofStatus);
 
-// Supported payment methods
-const SUPPORTED_METHODS = ['MoonPay', 'Transak'];
-
-router.post('/payment-method', async (req, res) => {
-  try {
-    const { paymentMethod } = req.body;
-
-    // Validate input
-    if (!paymentMethod) {
-      return res.status(400).json(
-        formatResponse(false, 'Payment method is required')
-      );
-    }
-
-    // Simulate unavailable payment methods
-    if (SUPPORTED_METHODS.includes(paymentMethod)) {
-      return res.status(503).json(
-        formatResponse(false, 'Currently unavailable. Contact support', {
-          supportEmail: process.env.SUPPORT_EMAIL,
-        })
-      );
-    }
-
-    // Handle unknown payment methods
-    return res.status(400).json(
-      formatResponse(false, 'Invalid payment method')
-    );
-  } catch (error) {
-    console.error('Payment method error:', error);
-    return res.status(500).json(
-      formatResponse(false, 'Internal server error')
-    );
-  }
-});
+// Payment method route (moved to controller)
+router.post('/payment-method', paymentProofController.handlePaymentMethod);
 
 export default router;
