@@ -153,7 +153,7 @@ app.use('/api/withdraw', withdrawalRoutes.default);
 app.use('/api/currency', currencyRoutes.default);
 app.use('/api/kyc', kycRoutes.default);
 app.use('/api/notifications', notificationRoutes.default);
-app.use('/api/pro', proPlusRoutes.default);
+app.use('/api/', proPlusRoutes.default);
 app.use('/api/referrals', referralRoutes.default);
 app.use('/api/user', userRoutes.default);
 
