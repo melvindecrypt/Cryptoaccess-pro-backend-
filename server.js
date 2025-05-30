@@ -150,10 +150,10 @@ app.use('/api/admin/settings', adminSettingsRoutes.default); // Mount admin sett
 app.use('/api/charts', chartRoutes.default);
 app.use('/api/exchange', exchangeRoutes.default);
 app.use('/api/withdraw', withdrawalRoutes.default);
-app.use('/api', currencyRoutes.default);
+app.use('/api/currency', currencyRoutes.default);
 app.use('/api/kyc', kycRoutes.default);
 app.use('/api/notifications', notificationRoutes.default);
-app.use('/api', propPlusRoutes.default);
+app.use('/api/pro', proPlusRoutes.default);
 app.use('/api/referrals', referralRoutes.default);
 app.use('/api/user', userRoutes.default);
 
