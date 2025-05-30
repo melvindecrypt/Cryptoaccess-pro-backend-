@@ -9,7 +9,7 @@ const router = express.Router();
 // Routes
 
 // Get the user's wallet details (View wallet)
-router.get('/wallet', authenticate, walletController.getWallet);
+router.get('/gwallet', authenticate, walletController.getWallet);
 
 // Simulate deposit of funds
 router.post('/deposit', authenticate, walletController.depositFunds);
