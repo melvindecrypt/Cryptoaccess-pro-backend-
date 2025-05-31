@@ -108,57 +108,6 @@ export const confirmPaymentForProPlus = async (req, res) => {
   }
 };
 
-// User endpoints
-export const notifyPaymentForProPlus = async (req, res) => {
-  const session = await User.startSession();
-  session.startTransaction();
-
-  try {
-    const { transactionId, screenshotUrl } = req.body;
-
-    // Validate input
-    if (!transactionId || !screenshotUrl) {
-      return res.status(400).json(formatResponse(false, 'Transaction ID and proof required'));
-    }
-
-    const user = await User.findById(req.user._id).session(session);
-
-    // Check existing status
-    if (user.subscription.isProPlus) {
-      return res.status(409).json(formatResponse(false, 'Pro+ subscription already active'));
-    }
-
-    // Store payment evidence
-    user.subscription.paymentStatus = 'pending';
-    user.subscription.paymentEvidence = {
-      transactionId,
-      screenshot: screenshotUrl,
-      timestamp: new Date(),
-    };
-
-    await user.save({ session });
-    await session.commitTransaction();
-
-    logger.info(`Payment notification received`, {
-      userId: user._id,
-      transactionId,
-    });
-
-    res.json(
-      formatResponse(true, 'Payment details submitted for review', {
-        nextSteps: 'Will be reviewed within 24 hours',
-        contact: 'support@Melvindecrypt@gmail.com',
-      })
-    );
-  } catch (error) {
-    await session.abortTransaction();
-    logger.error(`Payment notification failed: ${error.message}`);
-    res.status(500).json(formatResponse(false, 'Payment notification failed'));
-  } finally {
-    session.endSession();
-  }
-};
-
 // Admin endpoints
 export const getPendingPayments = async (req, res) => {
   try {
