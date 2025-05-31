@@ -1,7 +1,5 @@
 import express from 'express';
 import { authenticate } from '../middlewares/AuthMiddleware.js';
-import requireVerifiedEmail from '../middlewares/requireVerifiedEmail.js';
-import { requireKYC } from '../middlewares/requireKYC.js';
 import walletController from '../controllers/walletController.js';
 
 const router = express.Router();
@@ -16,8 +14,5 @@ router.post('/deposit', authenticate, walletController.depositFunds);
 
 // Get deposit address
 router.get('/deposit-address', authenticate, walletController.getDepositAddress);
-
-// Get user balances
-router.get('/balances', authenticate, walletController.getUserBalances);
 
 export default router;
