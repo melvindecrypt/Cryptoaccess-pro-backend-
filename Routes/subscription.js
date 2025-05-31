@@ -4,9 +4,6 @@ import { authenticate, isAdmin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// User routes
-router.post('/notify-payment', authenticate, subscriptionController.notifyPaymentForProPlus);
-
 router.get('/pro-plus', authenticate, subscriptionController.getProPlusPlan);
 
 // Admin routes
