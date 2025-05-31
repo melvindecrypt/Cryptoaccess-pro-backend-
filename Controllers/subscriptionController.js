@@ -33,7 +33,7 @@ const proPlusPaymentDetails = {
     'Dedicated support',
   ],
   paymentInstructions:
-    'Please send a one-time payment of $299.99 (or equivalent in your chosen cryptocurrency) to one of the wallets below. After making the payment, upload your proof of payment (transaction ID and/or screenshot) to notify for review.',
+    'Please send a one-time payment of $299.99 (or equivalent in your chosen cryptocurrency) to one of the wallets below. Be sure to upload your proof of payment (transaction ID and/or screenshot) to for review.',
 };
 
 // Admin endpoints
