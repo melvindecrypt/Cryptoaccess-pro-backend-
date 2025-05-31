@@ -185,44 +185,6 @@ export const updateProofStatus = async (req, res) => {
   }
 };
 
-// Initiate Pro+ Subscription Payment
-export const initiateProPlusPayment = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    res.status(200).json({
-      success: true,
-      message: 'Initiate Pro+ subscription payment.',
-      fee: PRO_PLUS_FEE_USD,
-      paymentAddresses: {
-        BTC: BTC_WALLET_ADDRESS,
-        ETH: ETH_WALLET_ADDRESS,
-        SOL: SOL_WALLET_ADDRESS,
-        BNB: BNB_WALLET_ADDRESS,
-        'USDT (ERC20)': USDT_ERC20_WALLET_ADDRESS,
-        'USDC (ERC20)': USDC_ERC20_WALLET_ADDRESS,
-        DAI: DAI_WALLET_ADDRESS,
-        XRP: XRP_WALLET_ADDRESS,
-        DOGE: DOGE_WALLET_ADDRESS,
-        TRX: TRX_WALLET_ADDRESS,
-        'USDT (TRC20)': USDT_TRC20_WALLET_ADDRESS,
-        LTC: LTC_WALLET_ADDRESS,
-        MNT: MNT_WALLET_ADDRESS,
-        instructions: `Pay ${PRO_PLUS_FEE_USD} USD equivalent in your chosen cryptocurrency to the address below and upload proof of payment for Pro+ subscription.`,
-      },
-      user: {
-        id: userId,
-      },
-    });
-  } catch (error) {
-    console.error('Initiate Pro+ payment error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Server Error',
-      message: error.message,
-    });
-  }
-};
-
 // Upload Pro+ Payment Proof
 export const uploadProPlusPaymentProof = async (req, res) => {
   try {
