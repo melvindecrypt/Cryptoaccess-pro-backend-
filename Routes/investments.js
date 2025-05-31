@@ -11,9 +11,6 @@ router.get('/plans', authenticate, investmentController.viewPlans);
 // Start a new investment
 router.post('/invest', authenticate, requireVerifiedEmail, investmentController.invest);
 
-// Track user's current investments
-router.get('/my-investments', authenticate, investmentController.trackInvestment);
-
 // View details of a specific investment
 router.get('/:id', authenticate, investmentController.getInvestmentDetails);
 
