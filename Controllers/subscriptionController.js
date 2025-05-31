@@ -26,6 +26,7 @@ const proPlusPaymentDetails = {
     'Advanced charting tools',
     'Unlimited account balance',
     'LNF',
+    'Investments',
     'Faster execution speed of up to 15ms',
     'Higher trading limits',
     'Access to our top-end Trading Bots',
