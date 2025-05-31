@@ -17,9 +17,6 @@ const proPlusStorage = multer.diskStorage({
 });
 const uploadProPlus = multer({ storage: proPlusStorage });
 
-// Route to initiate the Pro+ payment process and get wallet addresses
-router.get('/pro-plus/payment-info', authenticate, paymentProofController.initiateProPlusPayment);
-
 // Route for users to upload Pro+ payment proof
 router.post(
   '/pro-plus/upload-proof',
