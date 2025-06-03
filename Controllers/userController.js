@@ -152,8 +152,11 @@ export const getSettings = async (req, res) => {
 // Update Settings
 export const updateSettings = async (req, res) => {
   try {
-    const { name, surname, phone } = req.body;
+    // Destructure all expected updateable fields, including 'language'
+    const { name, surname, phone, language } = req.body;
     const updateFields = {};
+
+    // Conditionally add fields to updateFields if they are provided in the request body
     if (name !== undefined) {
       updateFields.name = name;
     }
@@ -163,28 +166,45 @@ export const updateSettings = async (req, res) => {
     if (phone !== undefined) {
       updateFields.phone = phone;
     }
+    // *** NEW: Add language to updateFields if it's provided ***
+    if (language !== undefined) {
+      updateFields.language = language;
+    }
+
+    // Optional: Return an error if no fields are provided for update
+    if (Object.keys(updateFields).length === 0) {
+        return res.status(400).json(formatResponse(false, 'No fields provided for update.'));
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
+      req.user._id, // Assuming req.user._id contains the authenticated user's ID
       { $set: updateFields },
-      { new: true, runValidators: true, select: 'name surname phone email /* Keep email in select for response */' }
+      {
+        new: true, // Return the updated document
+        runValidators: true, // Run schema validators on update
+        // Select all fields you want in the response, including the new 'language' field
+        select: 'name surname phone email language'
+      }
     );
 
     if (!updatedUser) {
       return res.status(404).json(formatResponse(false, 'User not found'));
     }
 
+    // Send back the updated user details, including language
     res.json(
       formatResponse(true, 'Profile updated successfully.', {
         user: {
           name: updatedUser.name,
           surname: updatedUser.surname,
           phone: updatedUser.phone,
-          email: updatedUser.email, // Include email in the response
+          email: updatedUser.email,
+          language: updatedUser.language, // Include language in the response
         },
       })
     );
   } catch (error) {
+    console.error('Error updating settings:', error); // Log the actual error for debugging
     res.status(500).json(formatResponse(false, 'Server error', { error: error.message }));
   }
 };
