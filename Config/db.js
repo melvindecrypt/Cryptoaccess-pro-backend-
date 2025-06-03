@@ -1,36 +1,55 @@
 import mongoose from 'mongoose';
-import logger from '../utils/logger.js'; // Import the logger
+import logger from '../utils/logger.js'; // Custom logger
 
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      ssl: true, // Use SSL if needed
-      tlsAllowInvalidCertificates: false, // Adjust based on your security requirements
+      ssl: true,
+      tlsAllowInvalidCertificates: false,
       maxPoolSize: 50,
       minPoolSize: 10,
       socketTimeoutMS: 30000,
       serverSelectionTimeoutMS: 5000,
     });
-    logger.info('MongoDB securely connected'); // Using logger for success message
+
+    logger.info('✅ MongoDB securely connected');
+
+    // Connection open listener
+    mongoose.connection.once('open', () => {
+      logger.info('🔗 MongoDB connection is open and ready');
+    });
+
+    // Connection error listener
+    mongoose.connection.on('error', (err) => {
+      logger.error(`❌ MongoDB connection error: ${err}`);
+    });
+
+    // Disconnection listener
+    mongoose.connection.on('disconnected', () => {
+      logger.warn('⚠️ MongoDB connection disconnected');
+    });
+
   } catch (error) {
-    logger.error(`Database connection failed: ${error.message}`); // Using logger for error message
-    process.exit(1); // Exit the process on failure to connect
+    logger.error(`❌ Database connection failed: ${error.message}`);
+    process.exit(1); // Exit process if unable to connect
   }
 };
 
-// Export the connectDB function to be used elsewhere
 export default connectDB;
 
-// Graceful shutdown handling
-process.on('SIGINT', async () => {
+// Graceful shutdown
+const shutdown = async () => {
   try {
     await mongoose.connection.close();
-    logger.info('MongoDB disconnected on app termination');
+    logger.info('🛑 MongoDB disconnected gracefully');
     process.exit(0);
   } catch (error) {
-    logger.error(`Error during MongoDB disconnection: ${error.message}`);
-    process.exit(1); // Exit on disconnection failure
+    logger.error(`❗ Error during MongoDB disconnection: ${error.message}`);
+    process.exit(1);
   }
-});
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
