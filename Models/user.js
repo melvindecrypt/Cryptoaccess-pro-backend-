@@ -177,40 +177,6 @@ const userSchema = new mongoose.Schema(
       default: ['view'],
     },
 
-  import mongoose from 'mongoose';
-
-const userSchema = new mongoose.Schema(
-  {
-    // Essential User Fields (Assuming these exist in your full schema)
-    // For example:
-    // email: {
-    //   type: String,
-    //   required: true,
-    //   unique: true,
-    //   lowercase: true,
-    //   trim: true,
-    // },
-    // password: {
-    //   type: String,
-    //   required: true,
-    //   select: false, // Don't return password by default
-    // },
-    // verificationToken: String,
-    // isVerified: {
-    //   type: Boolean,
-    //   default: false,
-    // },
-    // failedLoginAttempts: {
-    //   type: Number,
-    //   default: 0,
-    //   select: false,
-    // },
-    // lockUntil: {
-    //   type: Number, // Stores a Unix timestamp
-    //   select: false,
-    // },
-
-
     // ----- Additional Fields for User Profile & Settings -----
     language: {
       type: String,
@@ -227,8 +193,6 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       trim: true
-      // You might want to add validation rules for phone numbers here,
-      // e.g., match: /^\+\d{1,3}\d{10}$/ for international numbers, or custom validation
     },
     withdrawalWhitelist: [
       {
@@ -283,20 +247,6 @@ const userSchema = new mongoose.Schema(
     },
   }
 );
-
-// You might also have pre-save hooks for password hashing, etc.
-// For example:
-// userSchema.pre('save', async function(next) {
-//   if (this.isModified('password')) {
-//     this.password = await bcrypt.hash(this.password, 10);
-//   }
-//   next();
-// });
-
-
-export default mongoose.model('User', userSchema);
-
-
 
 // ================== Utility Functions ==================
 const generateUniqueWalletId = async () => {
