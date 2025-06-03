@@ -177,42 +177,126 @@ const userSchema = new mongoose.Schema(
       default: ['view'],
     },
 
-    // ----- Additional Fields -----
+  import mongoose from 'mongoose';
+
+const userSchema = new mongoose.Schema(
+  {
+    // Essential User Fields (Assuming these exist in your full schema)
+    // For example:
+    // email: {
+    //   type: String,
+    //   required: true,
+    //   unique: true,
+    //   lowercase: true,
+    //   trim: true,
+    // },
+    // password: {
+    //   type: String,
+    //   required: true,
+    //   select: false, // Don't return password by default
+    // },
+    // verificationToken: String,
+    // isVerified: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+    // failedLoginAttempts: {
+    //   type: Number,
+    //   default: 0,
+    //   select: false,
+    // },
+    // lockUntil: {
+    //   type: Number, // Stores a Unix timestamp
+    //   select: false,
+    // },
+
+
+    // ----- Additional Fields for User Profile & Settings -----
     language: {
       type: String,
-      default: 'en', // Or your preferred default language
+      default: 'en', // Or your preferred default language like 'en'
     },
-    name: { type: String },
-    surname: { type: String },
-    phone: { type: String }, // You might want to add validation rules for phone numbers
+    name: {
+      type: String,
+      trim: true // It's good practice to trim whitespace from string inputs
+    },
+    surname: {
+      type: String,
+      trim: true
+    },
+    phone: {
+      type: String,
+      trim: true
+      // You might want to add validation rules for phone numbers here,
+      // e.g., match: /^\+\d{1,3}\d{10}$/ for international numbers, or custom validation
+    },
     withdrawalWhitelist: [
       {
-        address: String,
-        currency: String,
-        label: String,
+        address: {
+          type: String,
+          required: true,
+          trim: true
+        },
+        currency: {
+          type: String,
+          required: true,
+          uppercase: true, // Store currency symbols in uppercase
+          trim: true
+        },
+        label: {
+          type: String,
+          trim: true
+        },
+        _id: false // Prevents Mongoose from creating an _id for subdocuments in this array
       },
     ],
     isDeleted: {
       type: Boolean,
       default: false,
-      select: false,
+      select: false, // Don't return this field by default in queries
     },
-    deletionMarkedAt: Date,
+    deletionMarkedAt: Date, // Date when the user was marked for deletion
   },
   {
-    timestamps: true,
-    versionKey: false,
+    timestamps: true, // Adds createdAt and updatedAt fields
+    versionKey: false, // Disables the __v field
     toJSON: {
-      virtuals: true,
+      virtuals: true, // Include virtuals when converting to JSON
+      transform: function (doc, ret) {
+        // Remove sensitive fields from the JSON output
+        delete ret.password;
+        delete ret.verificationToken;
+        delete ret.failedLoginAttempts;
+        delete ret.lockUntil; // Assuming this is part of your full User schema
+        return ret;
+      },
+    },
+    toObject: {
+      virtuals: true, // Also include virtuals when converting to a plain JavaScript object
       transform: function (doc, ret) {
         delete ret.password;
         delete ret.verificationToken;
         delete ret.failedLoginAttempts;
+        delete ret.lockUntil; // Assuming this is part of your full User schema
         return ret;
       },
     },
   }
 );
+
+// You might also have pre-save hooks for password hashing, etc.
+// For example:
+// userSchema.pre('save', async function(next) {
+//   if (this.isModified('password')) {
+//     this.password = await bcrypt.hash(this.password, 10);
+//   }
+//   next();
+// });
+
+
+export default mongoose.model('User', userSchema);
+
+
 
 // ================== Utility Functions ==================
 const generateUniqueWalletId = async () => {
