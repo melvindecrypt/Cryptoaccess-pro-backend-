@@ -39,7 +39,6 @@ async function initializeTradingPairs() {
     const crossPairs = [
       { symbol: "AVAX/BTC", base: "AVAX", quote: "BTC" },
       { symbol: "SHIB/ETH", base: "SHIB", quote: "ETH" },
-      { symbol: "DOT/USDT", base: "DOT", quote: "USDT" },
       { symbol: "LINK/XRP", base: "LINK", quote: "XRP" },
       { symbol: "MATIC/BNB", base: "MATIC", quote: "BNB" },
       { symbol: "LTC/SOL", base: "LTC", quote: "SOL" },
@@ -65,7 +64,6 @@ async function initializeTradingPairs() {
       { symbol: "ALGO/SOL", base: "ALGO", quote: "SOL" },
       { symbol: "KAS/USDC", base: "KAS", quote: "USDC" },
       { symbol: "STX/DOGE", base: "STX", quote: "DOGE" },
-      { symbol: "QNT/ADA", base: "QNT", quote: "ADA" },
       { symbol: "FTM/TRX", base: "FTM", quote: "TRX" },
       { symbol: "THETA/BTC", base: "THETA", quote: "BTC" },
       { symbol: "FLOW/ETH", base: "FLOW", quote: "ETH" },
