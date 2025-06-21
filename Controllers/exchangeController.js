@@ -5,6 +5,7 @@ import Wallet from '../models/wallet.js';
 import Decimal from 'decimal.js';
 import Currency from '../models/currency.js';
 import Transaction from '../models/transaction.js';
+import { getSimulatedBidAskPrices, AVAILABLE_TRADING_PAIRS, getSimulatedExchangeRate } from '../utils/exchangeUtils.js';
 
 // 1. Global variable to store available trading pairs
 let AVAILABLE_TRADING_PAIRS = [];
@@ -495,47 +496,62 @@ export const buyCurrency = async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
   try {
-    const { baseCurrency, quoteCurrency, amount } = req.body; // Amount to spend in quoteCurrency
+    const { baseCurrency, quoteCurrency, amount } = req.body;
     const userId = req.user._id;
+
     const numericAmount = new Decimal(amount);
     const baseCurrencyUpper = baseCurrency.toUpperCase();
     const quoteCurrencyUpper = quoteCurrency.toUpperCase();
-    await validateCurrency(baseCurrencyUpper);
-    await validateCurrency(quoteCurrencyUpper);
-    if (numericAmount.lessThanOrEqualTo(0)) {
-      throw new Error('Amount must be positive'); // Changed to throw Error for consistency
+
+    if (!baseCurrency || !quoteCurrency || !amount) {
+      throw new Error('Missing required buy parameters (baseCurrency, quoteCurrency, amount).');
     }
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      throw new Error('Amount must be positive.');
+    }
+
+    const isPairAvailable = AVAILABLE_TRADING_PAIRS.some(
+      pair => pair.base === baseCurrencyUpper && pair.quote === quoteCurrencyUpper
+    );
+    if (!isPairAvailable) {
+      throw new Error(`Trading pair ${baseCurrencyUpper}/${quoteCurrencyUpper} is not available.`);
+    }
+
     const wallet = await Wallet.findOne({ userId }).session(session);
     if (!wallet) {
-      throw new Error('Wallet not found'); // Changed to throw Error for consistency
+      throw new Error('Wallet not found');
     }
-    const quoteBalance = new Decimal(wallet.balances.get(quoteCurrencyUpper) || 0); // Use .get()
-    const currentPrice = await getSimulatedExchangeRate(baseCurrencyUpper, quoteCurrencyUpper); // Price of base in quote
-    const baseAmountToBuy = numericAmount.dividedBy(currentPrice);
+
+    const quoteBalance = new Decimal(wallet.balances.get(quoteCurrencyUpper) || 0);
+
+    const { ask: currentAskPrice } = await getSimulatedBidAskPrices(baseCurrencyUpper, quoteCurrencyUpper);
+    const baseAmountToBuy = numericAmount.dividedBy(currentAskPrice);
+
     if (quoteBalance.lessThan(numericAmount)) {
-      throw new Error(`Insufficient ${quoteCurrencyUpper} balance`); // Changed to throw Error for consistency
+      throw new Error(`Insufficient ${quoteCurrencyUpper} balance. Available: ${quoteBalance.toFixed(8)}`);
     }
-    // Update balances
+
     await wallet.updateBalance(quoteCurrencyUpper, numericAmount.negated(), 'decrement', session);
-    await wallet.updateBalance(baseCurrencyUpper, baseAmountToBuy, 'increment', session); // Pass Decimal object
-    // Record transaction
+    await wallet.updateBalance(baseCurrencyUpper, baseAmountToBuy, 'increment', session);
+
     await Transaction.create({
       userId,
       walletId: wallet._id,
       type: 'buy',
-      fromCurrency: quoteCurrencyUpper, // Currency spent
-      toCurrency: baseCurrencyUpper, // Currency received
-      amount: numericAmount.toNumber(), // Amount spent
-      receivedAmount: baseAmountToBuy.toNumber(), // Amount received
-      rate: currentPrice.toNumber(),
+      fromCurrency: quoteCurrencyUpper,
+      toCurrency: baseCurrencyUpper,
+      amount: numericAmount.toNumber(),
+      receivedAmount: baseAmountToBuy.toNumber(),
+      rate: currentAskPrice.toNumber(),
       status: 'COMPLETED',
       timestamp: new Date()
     }, { session });
+
     await session.commitTransaction();
     res.json(formatResponse(true, `Successfully bought ${baseAmountToBuy.toFixed(8)} ${baseCurrencyUpper}`, { receivedAmount: baseAmountToBuy.toNumber() }));
   } catch (error) {
     await session.abortTransaction();
-    logger.error(`Buy error: ${error.message}`, error); // Added error object to logger
+    logger.error(`Buy error: ${error.message}`, error);
     res.status(400).json(formatResponse(false, error.message || 'An unexpected error occurred during the buy operation.'));
   } finally {
     session.endSession();
@@ -546,47 +562,62 @@ export const sellCurrency = async (req, res) => {
   const session = await Wallet.startSession();
   session.startTransaction();
   try {
-    const { baseCurrency, quoteCurrency, amount } = req.body; // Amount of baseCurrency to sell
+    const { baseCurrency, quoteCurrency, amount } = req.body;
     const userId = req.user._id;
+
     const numericAmount = new Decimal(amount);
     const baseCurrencyUpper = baseCurrency.toUpperCase();
     const quoteCurrencyUpper = quoteCurrency.toUpperCase();
-    await validateCurrency(baseCurrencyUpper);
-    await validateCurrency(quoteCurrencyUpper);
-    if (numericAmount.lessThanOrEqualTo(0)) {
-      throw new Error('Amount must be positive'); // Changed to throw Error
+
+    if (!baseCurrency || !quoteCurrency || !amount) {
+      throw new Error('Missing required sell parameters (baseCurrency, quoteCurrency, amount).');
     }
+    if (numericAmount.lessThanOrEqualTo(0)) {
+      throw new Error('Amount must be positive.');
+    }
+
+    const isPairAvailable = AVAILABLE_TRADING_PAIRS.some(
+      pair => pair.base === baseCurrencyUpper && pair.quote === quoteCurrencyUpper
+    );
+    if (!isPairAvailable) {
+      throw new Error(`Trading pair ${baseCurrencyUpper}/${quoteCurrencyUpper} is not available.`);
+    }
+
     const wallet = await Wallet.findOne({ userId }).session(session);
     if (!wallet) {
-      throw new Error('Wallet not found'); // Changed to throw Error
+      throw new Error('Wallet not found');
     }
-    const baseBalance = new Decimal(wallet.balances.get(baseCurrencyUpper) || 0); // Use .get()
-    const currentPrice = await getSimulatedExchangeRate(baseCurrencyUpper, quoteCurrencyUpper); // Price of base in quote
-    const quoteAmountToReceive = numericAmount.multipliedBy(currentPrice);
+
+    const baseBalance = new Decimal(wallet.balances.get(baseCurrencyUpper) || 0);
+
+    const { bid: currentBidPrice } = await getSimulatedBidAskPrices(baseCurrencyUpper, quoteCurrencyUpper);
+    const quoteAmountToReceive = numericAmount.multipliedBy(currentBidPrice);
+
     if (baseBalance.lessThan(numericAmount)) {
-      throw new Error(`Insufficient ${baseCurrencyUpper} balance`); // Changed to throw Error
+      throw new Error(`Insufficient ${baseCurrencyUpper} balance. Available: ${baseBalance.toFixed(8)}`);
     }
-    // Update balances
+
     await wallet.updateBalance(baseCurrencyUpper, numericAmount.negated(), 'decrement', session);
-    await wallet.updateBalance(quoteCurrencyUpper, quoteAmountToReceive, 'increment', session); // Pass Decimal object
-    // Record transaction
+    await wallet.updateBalance(quoteCurrencyUpper, quoteAmountToReceive, 'increment', session);
+
     await Transaction.create({
       userId,
       walletId: wallet._id,
       type: 'sell',
-      fromCurrency: baseCurrencyUpper, // Currency spent
-      toCurrency: quoteCurrencyUpper, // Currency received
-      amount: numericAmount.toNumber(), // Amount sold
-      receivedAmount: quoteAmountToReceive.toNumber(), // Amount received
-      rate: currentPrice.toNumber(),
+      fromCurrency: baseCurrencyUpper,
+      toCurrency: quoteCurrencyUpper,
+      amount: numericAmount.toNumber(),
+      receivedAmount: quoteAmountToReceive.toNumber(),
+      rate: currentBidPrice.toNumber(),
       status: 'COMPLETED',
       timestamp: new Date()
     }, { session });
+
     await session.commitTransaction();
     res.json(formatResponse(true, `Successfully sold ${numericAmount.toFixed(8)} ${baseCurrencyUpper}`, { receivedAmount: quoteAmountToReceive.toNumber() }));
   } catch (error) {
     await session.abortTransaction();
-    logger.error(`Sell error: ${error.message}`, error); // Added error object to logger
+    logger.error(`Sell error: ${error.message}`, error);
     res.status(400).json(formatResponse(false, error.message || 'An unexpected error occurred during the sell operation.'));
   } finally {
     session.endSession();
@@ -598,17 +629,15 @@ const orderBooks = {};
 const getOrderBook = (pair) => {
   if (!orderBooks[pair]) {
     orderBooks[pair] = {
-      buyOrders: [], // Array of { userId, price, amount } sorted by price (descending)
-      sellOrders: [], // Array of { userId, price, amount } sorted by price (ascending)
+      buyOrders: [],
+      sellOrders: [],
     };
   }
   return orderBooks[pair];
 };
 
-// Function to sort buy orders by price (highest first)
 const sortBuyOrders = (a, b) => new Decimal(b.price).minus(a.price).toNumber();
 
-// Function to sort sell orders by price (lowest first)
 const sortSellOrders = (a, b) => new Decimal(a.price).minus(b.price).toNumber();
 
 export const getExchangePairs = async (req, res) => {
