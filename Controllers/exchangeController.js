@@ -344,7 +344,6 @@ async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
     'COMP/USDT': new Decimal(50), 'USDT/COMP': new Decimal(1).div(50),
     'MKR/USDT': new Decimal(2500), 'USDT/MKR': new Decimal(1).div(2500),
     'SUSHI/USDT': new Decimal(0.7), 'USDT/SUSHI': new Decimal(1).div(0.7),
-    'DOT/USDT': new Decimal(6), 'USDT/DOT': new Decimal(1).div(6),
     'ETH/BTC': new Decimal(3500).div(68000), 'BTC/ETH': new Decimal(68000).div(3500), // ≈ 0.05147
     'SOL/BTC': new Decimal(150).div(68000), 'BTC/SOL': new Decimal(68000).div(150), // SOL/USD ≈ 150
     'XRP/BTC': new Decimal(0.5).div(68000), 'BTC/XRP': new Decimal(68000).div(0.5), // XRP/USD ≈ 0.5
@@ -386,7 +385,6 @@ async function getSimulatedExchangeRate(fromCurrency, toCurrency) {
         'ALGO/SOL': new Decimal(0.005), 'SOL/ALGO': new Decimal(1).div(0.005),
         'KAS/USDC': new Decimal(0.15), 'USDC/KAS': new Decimal(1).div(0.15),
         'STX/DOGE': new Decimal(12), 'DOGE/STX': new Decimal(1).div(12),
-        'QNT/ADA': new Decimal(100), 'ADA/QNT': new Decimal(1).div(100),
         'FTM/TRX': new Decimal(15), 'TRX/FTM': new Decimal(1).div(15),
         'THETA/BTC': new Decimal(0.00008), 'BTC/THETA': new Decimal(1).div(0.00008),
         'FLOW/ETH': new Decimal(0.0004), 'ETH/FLOW': new Decimal(1).div(0.0004),
