@@ -19,7 +19,7 @@ router.get('/settings', authMiddleware, adminAuth, adminController.getSettings);
 router.put('/settings', authMiddleware, adminAuth, adminController.updateSettings);
 
 // Exchange Spread Settings
-router.get('/exchange/spread-settings', authMiddleware, adminAuth, adminSettingsController.getSpreadSettings);
+router.get('/spread-settings', authMiddleware, adminAuth, adminSettingsController.getSpreadSettings);
 router.post('/exchange/spread-settings', authMiddleware, adminAuth, adminSettingsController.updateSpreadSettings);
 
 export default router;
