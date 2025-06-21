@@ -791,18 +791,37 @@ async function executeTrade(pair, buyerId, sellerId, amount, price, session) {
 export const getMarketData = async (req, res) => {
   try {
     const { pair } = req.query;
-    const pairUpper = pair.toUpperCase(); // Ensure pair is uppercase for lookup
+    const pairUpper = pair.toUpperCase();
+
     if (!pairUpper || !AVAILABLE_TRADING_PAIRS.some(p => p.symbol === pairUpper)) {
       return res.status(400).json(formatResponse(false, 'Invalid trading pair'));
     }
+
     const orderBook = getOrderBook(pairUpper);
-    res.json(formatResponse(true, `Order book for ${pairUpper}`, {
-      buyOrders: orderBook.buyOrders.slice(0, 10), // Top 10 bids
-      sellOrders: orderBook.sellOrders.slice(0, 10), // Top 10 asks
-      // You might also include recent trades here in a real platform
+    let lastPrice = 0;
+    let midPrice = 0;
+
+    const bestBid = orderBook.buyOrders.length > 0 ? new Decimal(orderBook.buyOrders[0].price) : null;
+    const bestAsk = orderBook.sellOrders.length > 0 ? new Decimal(orderBook.sellOrders[0].price) : null;
+
+    if (bestBid && bestAsk) {
+      midPrice = bestBid.plus(bestAsk).dividedBy(2).toNumber();
+      lastPrice = midPrice;
+    } else {
+      const [baseC, quoteC] = pairUpper.split('/');
+      const { mid } = await getSimulatedBidAskPrices(baseC, quoteC);
+      lastPrice = mid.toNumber();
+      midPrice = mid.toNumber();
+    }
+
+    res.json(formatResponse(true, `Market data for ${pairUpper}`, {
+      buyOrders: orderBook.buyOrders.slice(0, 10),
+      sellOrders: orderBook.sellOrders.slice(0, 10),
+      lastPrice,
+      midPrice,
     }));
   } catch (error) {
-    logger.error(`Error fetching market data: ${error.message}`, error);
+    logger.error(`Error fetching market data for ${req.query.pair}: ${error.message}`, error);
     res.status(500).json(formatResponse(false, 'Server error fetching market data'));
   }
 };
