@@ -16,4 +16,19 @@ router.post('/notifications', adminAuth, adminController.notificationService);
 router.get('/settings', adminAuth, adminController.getSettings);
 router.put('/settings', adminAuth, adminController.updateSettings);
 
+const express = require('express');
+const router = express.Router();
+
+// Import authentication and authorization middleware
+const { adminAuth } = require('../middleware/adminAuth'); // Assuming your admin auth middleware
+const { authMiddleware } = require('../middleware/authMiddleware'); // Assuming your general auth middleware
+
+// Import the new admin settings controller
+const adminSettingsController = require('../controllers/adminSettingsController');
+
+// --- Admin Exchange Spread Settings ---
+// All admin routes should use authMiddleware first, then adminAuth
+router.get('/exchange/spread-settings', authMiddleware, adminAuth, adminSettingsController.getSpreadSettings);
+router.post('/exchange/spread-settings', authMiddleware, adminAuth, adminSettingsController.updateSpreadSettings);
+
 export default router;
